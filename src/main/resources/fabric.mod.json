@@ -3,15 +3,15 @@
 	"id": "voidstain_hypoidol",
 	"version": "${version}",
 	"name": "Voidstain Hypoidol",
-	"description": "This is an example description! Tell everyone what your mod is about!",
+	"description": "When the Voidstain is Hypoidol???",
 	"authors": [
-		"Me!"
+		"Phanastrae"
 	],
 	"contact": {
-		"homepage": "https://fabricmc.net/",
-		"sources": "https://github.com/FabricMC/fabric-example-mod"
+		"homepage": "https://github.com/Phanastrae/voidstain_hypoidol",
+		"sources": "https://github.com/Phanastrae/voidstain_hypoidol"
 	},
-	"license": "CC0-1.0",
+	"license": "MIT",
 	"icon": "assets/voidstain_hypoidol/icon.png",
 	"environment": "*",
 	"entrypoints": {
