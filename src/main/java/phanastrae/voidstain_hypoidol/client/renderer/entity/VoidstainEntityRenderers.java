@@ -1,4 +1,4 @@
-package phanastrae.voidstain_hypoidol.client;
+package phanastrae.voidstain_hypoidol.client.renderer.entity;
 
 import net.minecraft.client.renderer.entity.EntityRenderers;
 import phanastrae.voidstain_hypoidol.common.entity.VoidstainEntityTypes;

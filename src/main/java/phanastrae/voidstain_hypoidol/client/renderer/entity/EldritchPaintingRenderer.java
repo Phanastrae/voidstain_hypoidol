@@ -1,4 +1,4 @@
-package phanastrae.voidstain_hypoidol.client;
+package phanastrae.voidstain_hypoidol.client.renderer.entity;
 
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
@@ -19,6 +19,7 @@ import net.minecraft.data.AtlasIds;
 import net.minecraft.resources.Identifier;
 import net.minecraft.util.Mth;
 import net.minecraft.world.level.Level;
+import phanastrae.voidstain_hypoidol.client.VoidstainHypoidolClient;
 import phanastrae.voidstain_hypoidol.common.entity.EldritchPaintingEntity;
 
 public class EldritchPaintingRenderer extends EntityRenderer<EldritchPaintingEntity, EldritchPaintingRenderState> {
@@ -32,17 +33,22 @@ public class EldritchPaintingRenderer extends EntityRenderer<EldritchPaintingEnt
 
     @Override
     public void submit(EldritchPaintingRenderState state, PoseStack poseStack, SubmitNodeCollector submitNodeCollector, CameraRenderState camera) {
+        VoidstainHypoidolClient.initTarget();
+        if (!VoidstainHypoidolClient.TEXTURE_FILLED) {
+            return;
+        }
+
         poseStack.pushPose();
         poseStack.mulPose(Axis.YP.rotationDegrees(180 - state.direction.get2DDataValue() * 90));
 
-        TextureAtlasSprite frontSprite = this.paintingsAtlas.getSprite(BACK_SPRITE_LOCATION); // TODO front sprite
         TextureAtlasSprite backSprite = this.paintingsAtlas.getSprite(BACK_SPRITE_LOCATION);
         this.renderPainting(
                 poseStack, submitNodeCollector,
                 RenderTypes.entitySolidZOffsetForward(backSprite.atlasLocation()),
+                RenderTypes.entitySolidZOffsetForward(VoidstainHypoidolClient.TARGET_ID),
                 state.lightCoordsPerBlock,
                 EldritchPaintingEntity.getWidth(), EldritchPaintingEntity.getHeight(),
-                frontSprite, backSprite
+                backSprite
         );
 
         poseStack.popPose();
@@ -104,10 +110,15 @@ public class EldritchPaintingRenderer extends EntityRenderer<EldritchPaintingEnt
         }
     }
 
-    private void renderPainting(PoseStack poseStack, SubmitNodeCollector submitNodeCollector, RenderType renderType, int[] lightCoordsMap, int width, int height, TextureAtlasSprite frontSprite, TextureAtlasSprite backSprite) {
-        submitNodeCollector.submitCustomGeometry(poseStack, renderType, (pose, buffer) -> {
-            float edgeHalfWidth = EldritchPaintingEntity.HALF_DEPTH;
+    private void renderPainting(PoseStack poseStack, SubmitNodeCollector submitNodeCollector, RenderType renderType, RenderType renderType2, int[] lightCoordsMap, int width, int height, TextureAtlasSprite backSprite) {
+        float edgeHalfWidth = EldritchPaintingEntity.HALF_DEPTH;
 
+        double deltaU = 1.0 / width;
+        double deltaV = 1.0 / height;
+        float offsetX = -width / 2.0f;
+        float offsetY = -height / 2.0f;
+
+        submitNodeCollector.submitCustomGeometry(poseStack, renderType, (pose, buffer) -> {
             float backU0 = backSprite.getU0();
             float backU1 = backSprite.getU1();
             float backV0 = backSprite.getV0();
@@ -122,32 +133,14 @@ public class EldritchPaintingRenderer extends EntityRenderer<EldritchPaintingEnt
             float leftRightU1 = backSprite.getU(EldritchPaintingEntity.DEPTH);
             float leftRightV0 = backSprite.getV0();
             float leftRightV1 = backSprite.getV1();
-
-            double deltaU = 1.0 / width;
-            double deltaV = 1.0 / height;
-            float offsetX = -width / 2.0f;
-            float offsetY = -height / 2.0f;
-
             for (int segmentX = 0; segmentX < width; ++segmentX) {
                 for (int segmentY = 0; segmentY < height; ++segmentY) {
-                    float frontU0 = frontSprite.getU(1 - (float) (deltaU * ((segmentX + 1))));
-                    float frontU1 = frontSprite.getU(1 - (float) (deltaU * segmentX));
-                    float frontV0 = frontSprite.getV(1 - (float) (deltaV * (segmentY + 1)));
-                    float frontV1 = frontSprite.getV(1 - (float) (deltaV * segmentY));
-
                     float x0 = offsetX + segmentX;
                     float x1 = offsetX + segmentX + 1;
                     float y0 = offsetY + segmentY;
                     float y1 = offsetY + segmentY + 1;
 
                     int lightCoords = lightCoordsMap[segmentX + segmentY * width];
-
-                    face(pose, buffer, lightCoords,
-                            x1, x0, y0, y1,
-                            -edgeHalfWidth, -edgeHalfWidth, -edgeHalfWidth, -edgeHalfWidth,
-                            frontU0, frontU1, frontV1, frontV0,
-                            0, 0, -1
-                    );
 
                     face(pose, buffer, lightCoords,
                             x0, x1, y0, y1,
@@ -191,6 +184,32 @@ public class EldritchPaintingRenderer extends EntityRenderer<EldritchPaintingEnt
                                 1, 0, 0
                         );
                     }
+                }
+            }
+        });
+
+        submitNodeCollector.submitCustomGeometry(poseStack, renderType2, (pose, buffer) -> {
+            for (int segmentX = 0; segmentX < width; ++segmentX) {
+                for (int segmentY = 0; segmentY < height; ++segmentY) {
+                    float frontU0 = 1 - (float) (deltaU * ((segmentX + 1)));
+                    float frontU1 = 1 - (float) (deltaU * segmentX);
+                    // v coords are one minus what they would be otherwise, since screen texture is flipped compared to painting textures
+                    float frontV0 = (float) (deltaV * (segmentY + 1));
+                    float frontV1 = (float) (deltaV * segmentY);
+
+                    float x0 = offsetX + segmentX;
+                    float x1 = offsetX + segmentX + 1;
+                    float y0 = offsetY + segmentY;
+                    float y1 = offsetY + segmentY + 1;
+
+                    int lightCoords = lightCoordsMap[segmentX + segmentY * width];
+
+                    face(pose, buffer, lightCoords,
+                            x1, x0, y0, y1,
+                            -edgeHalfWidth, -edgeHalfWidth, -edgeHalfWidth, -edgeHalfWidth,
+                            frontU0, frontU1, frontV1, frontV0,
+                            0, 0, -1
+                    );
                 }
             }
         });
