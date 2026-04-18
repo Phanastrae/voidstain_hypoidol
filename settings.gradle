@@ -10,4 +10,4 @@ pluginManagement {
 }
 
 // Should match your modid
-rootProject.name = 'voidstain-hypoidol'
+rootProject.name = 'voidstain_hypoidol'

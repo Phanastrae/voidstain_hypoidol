@@ -1,6 +1,6 @@
 {
 	"schemaVersion": 1,
-	"id": "voidstain-hypoidol",
+	"id": "voidstain_hypoidol",
 	"version": "${version}",
 	"name": "Voidstain Hypoidol",
 	"description": "This is an example description! Tell everyone what your mod is about!",
@@ -12,7 +12,7 @@
 		"sources": "https://github.com/FabricMC/fabric-example-mod"
 	},
 	"license": "CC0-1.0",
-	"icon": "assets/voidstain-hypoidol/icon.png",
+	"icon": "assets/voidstain_hypoidol/icon.png",
 	"environment": "*",
 	"entrypoints": {
 		"main": [
@@ -23,7 +23,7 @@
 		]
 	},
 	"mixins": [
-		"voidstain-hypoidol.mixins.json"
+		"voidstain_hypoidol.mixins.json"
 	],
 	"depends": {
 		"fabricloader": ">=0.19.2",
