@@ -1,17 +1,17 @@
-package phanastrae.voidstain_hypoidol.common;
+package phanastrae.voidstain_hypoidol.common.item;
 
 import net.minecraft.core.Registry;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.world.item.Item;
-import phanastrae.voidstain_hypoidol.VoidstainHypoidol;
+import phanastrae.voidstain_hypoidol.common.VoidstainHypoidol;
 
 import java.util.function.Function;
 
 public class VoidstainItems {
 
-    public static final Item ELDRITCH_PAINTING = register("eldritch_painting", Item::new, p());
+    public static final Item ELDRITCH_PAINTING = register("eldritch_painting", EldritchPaintingItem::new, p());
 
     public static void init() {
     }

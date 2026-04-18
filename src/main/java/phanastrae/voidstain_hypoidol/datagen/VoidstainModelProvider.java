@@ -5,7 +5,7 @@ import net.fabricmc.fabric.api.datagen.v1.FabricPackOutput;
 import net.minecraft.client.data.models.BlockModelGenerators;
 import net.minecraft.client.data.models.ItemModelGenerators;
 import net.minecraft.client.data.models.model.ModelTemplates;
-import phanastrae.voidstain_hypoidol.common.VoidstainItems;
+import phanastrae.voidstain_hypoidol.common.item.VoidstainItems;
 
 public class VoidstainModelProvider extends FabricModelProvider {
     public VoidstainModelProvider(FabricPackOutput output) {

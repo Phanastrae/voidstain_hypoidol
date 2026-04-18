@@ -16,7 +16,10 @@
 	"environment": "*",
 	"entrypoints": {
 		"main": [
-			"phanastrae.voidstain_hypoidol.VoidstainHypoidol"
+			"phanastrae.voidstain_hypoidol.common.VoidstainHypoidol"
+		],
+		"client": [
+			"phanastrae.voidstain_hypoidol.client.VoidstainHypoidolClient"
 		],
 		"fabric-datagen": [
 			"phanastrae.voidstain_hypoidol.datagen.VoidstainHypoidolDataGenerator"
