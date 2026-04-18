@@ -19,7 +19,7 @@
 			"phanastrae.voidstain_hypoidol.VoidstainHypoidol"
 		],
 		"fabric-datagen": [
-			"phanastrae.voidstain_hypoidol.VoidstainHypoidolDataGenerator"
+			"phanastrae.voidstain_hypoidol.datagen.VoidstainHypoidolDataGenerator"
 		]
 	},
 	"mixins": [
