@@ -13,7 +13,6 @@ public class EldritchCanvas {
     private final RenderTargetTexture targetTexture;
 
     private boolean needsFilling = false;
-    private boolean isFilled = false;
 
     public EldritchCanvas(String id) {
         this.id = id;
@@ -47,18 +46,7 @@ public class EldritchCanvas {
         return this.needsFilling;
     }
 
-    public void markNeedsFilling() {
-        this.needsFilling = true;
-    }
-
-    public boolean isFilled() {
-        return this.isFilled;
-    }
-
-    public void setFilled(boolean filled) {
-        this.isFilled = filled;
-        if (filled) {
-            this.needsFilling = false;
-        }
+    public void markNeedsFilling(boolean value) {
+        this.needsFilling = value;
     }
 }

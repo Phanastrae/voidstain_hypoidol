@@ -3,6 +3,7 @@ package phanastrae.voidstain_hypoidol.client;
 import net.fabricmc.api.ClientModInitializer;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientLifecycleEvents;
 import net.fabricmc.fabric.api.client.rendering.v1.InvalidateRenderStateCallback;
+import net.fabricmc.fabric.api.client.rendering.v1.level.LevelRenderEvents;
 import phanastrae.voidstain_hypoidol.client.gui.VoidstainDebugScreenEntries;
 import phanastrae.voidstain_hypoidol.client.renderer.EldritchCanvasHandler;
 import phanastrae.voidstain_hypoidol.client.renderer.entity.VoidstainEntityRenderers;
@@ -19,5 +20,7 @@ public class VoidstainHypoidolClient implements ClientModInitializer {
 
         // called on F3 + A, dimension change, and world join
         InvalidateRenderStateCallback.EVENT.register(EldritchCanvasHandler::clearCanvases);
+
+        LevelRenderEvents.AFTER_OPAQUE_TERRAIN.register((context) -> EldritchCanvasHandler.fillCanvases());
     }
 }

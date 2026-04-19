@@ -12,6 +12,7 @@ import net.minecraft.client.renderer.rendertype.RenderType;
 import net.minecraft.resources.Identifier;
 import net.minecraft.util.RandomSource;
 import net.minecraft.util.Util;
+import org.joml.Matrix4fStack;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -24,15 +25,6 @@ public class EldritchCanvasHandler {
     private static final RandomSource RANDOM = RandomSource.create();
     private static int ACTIVE_CANVASES;
 
-    public static EldritchCanvas getCanvas(String canvasId) {
-        return CANVAS_MAP.computeIfAbsent(canvasId, EldritchCanvas::new);
-    }
-
-    public static void fillCanvases() {
-        ACTIVE_CANVASES = 0;
-        CANVAS_MAP.forEach((_, canvas) -> fillCanvas(canvas));
-    }
-
     public static final BiFunction<String, Identifier, RenderType> CANVAS_RENDER_TYPE = Util.memoize((canvasId, textureId) -> {
         OutputTarget target = new OutputTarget("canvas_target", () -> getCanvas(canvasId).getTarget());
         RenderSetup state = RenderSetup.builder(RenderPipelines.GUI_TEXTURED)
@@ -43,13 +35,37 @@ public class EldritchCanvasHandler {
         return RenderType.create("eldritch_canvas", state);
     });
 
+    public static EldritchCanvas getCanvas(String canvasId) {
+        return CANVAS_MAP.computeIfAbsent(canvasId, EldritchCanvas::new);
+    }
+
+    public static void clearCanvases() {
+        CANVAS_MAP.forEach((_, canvas) -> canvas.close());
+        CANVAS_MAP.clear();
+        ACTIVE_CANVASES = 0;
+    }
+
+    public static void close() {
+        clearCanvases();
+        CANVAS_PROJECTION_MATRIX_BUFFER.close();
+    }
+
+    public static void fillCanvases() {
+        ACTIVE_CANVASES = 0;
+        CANVAS_MAP.forEach((_, canvas) -> {
+            if (canvas.needsFilling()) {
+                fillCanvas(canvas);
+                canvas.markNeedsFilling(false);
+            }
+        });
+    }
+
     public static void fillCanvas(EldritchCanvas canvas) {
-        if (!canvas.needsFilling()) {
-            canvas.setFilled(false);
-            return;
-        }
-        canvas.setFilled(true);
         ACTIVE_CANVASES++;
+
+        Matrix4fStack modelViewStack = RenderSystem.getModelViewStack();
+        modelViewStack.pushMatrix();
+        modelViewStack.identity();
 
         RenderSystem.backupProjectionMatrix();
         Projection projection = new Projection();
@@ -83,6 +99,8 @@ public class EldritchCanvasHandler {
         }
 
         RenderSystem.restoreProjectionMatrix();
+
+        modelViewStack.popMatrix();
     }
 
     private static void drawQuad(BufferBuilder builder, float x0, float x1, float y0, float y1) {
@@ -90,16 +108,6 @@ public class EldritchCanvasHandler {
         builder.addVertex(x0, y1, 0.0f).setUv(0, 1).setColor(255, 255, 255, 255);
         builder.addVertex(x1, y1, 0.0f).setUv(1, 1).setColor(255, 255, 255, 255);
         builder.addVertex(x1, y0, 0.0f).setUv(1, 0).setColor(255, 255, 255, 255);
-    }
-
-    public static void clearCanvases() {
-        CANVAS_MAP.forEach((_, canvas) -> canvas.close());
-        CANVAS_MAP.clear();
-    }
-
-    public static void close() {
-        clearCanvases();
-        CANVAS_PROJECTION_MATRIX_BUFFER.close();
     }
 
     public static String getCanvasStatistics() {
