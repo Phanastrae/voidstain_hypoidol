@@ -19,7 +19,8 @@ import net.minecraft.data.AtlasIds;
 import net.minecraft.resources.Identifier;
 import net.minecraft.util.Mth;
 import net.minecraft.world.level.Level;
-import phanastrae.voidstain_hypoidol.client.VoidstainHypoidolClient;
+import phanastrae.voidstain_hypoidol.client.renderer.EldritchCanvas;
+import phanastrae.voidstain_hypoidol.client.renderer.EldritchCanvasHandler;
 import phanastrae.voidstain_hypoidol.common.entity.EldritchPaintingEntity;
 
 public class EldritchPaintingRenderer extends EntityRenderer<EldritchPaintingEntity, EldritchPaintingRenderState> {
@@ -33,8 +34,9 @@ public class EldritchPaintingRenderer extends EntityRenderer<EldritchPaintingEnt
 
     @Override
     public void submit(EldritchPaintingRenderState state, PoseStack poseStack, SubmitNodeCollector submitNodeCollector, CameraRenderState camera) {
-        VoidstainHypoidolClient.initTarget();
-        if (!VoidstainHypoidolClient.TEXTURE_FILLED) {
+        EldritchCanvas canvas = EldritchCanvasHandler.getCanvas();
+        canvas.markNeedsFilling();
+        if (!canvas.isFilled()) {
             return;
         }
 
@@ -45,7 +47,7 @@ public class EldritchPaintingRenderer extends EntityRenderer<EldritchPaintingEnt
         this.renderPainting(
                 poseStack, submitNodeCollector,
                 RenderTypes.entitySolidZOffsetForward(backSprite.atlasLocation()),
-                RenderTypes.entitySolidZOffsetForward(VoidstainHypoidolClient.TARGET_ID),
+                RenderTypes.entitySolidZOffsetForward(canvas.getIdentifier()),
                 state.lightCoordsPerBlock,
                 EldritchPaintingEntity.getWidth(), EldritchPaintingEntity.getHeight(),
                 backSprite
