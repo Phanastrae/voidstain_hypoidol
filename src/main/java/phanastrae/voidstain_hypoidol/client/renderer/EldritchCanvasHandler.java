@@ -22,12 +22,14 @@ public class EldritchCanvasHandler {
     private static final ProjectionMatrixBuffer CANVAS_PROJECTION_MATRIX_BUFFER = new ProjectionMatrixBuffer("voidstain_canvas");
     private static final Map<String, EldritchCanvas> CANVAS_MAP = new HashMap<>();
     private static final RandomSource RANDOM = RandomSource.create();
+    private static int ACTIVE_CANVASES;
 
     public static EldritchCanvas getCanvas(String canvasId) {
         return CANVAS_MAP.computeIfAbsent(canvasId, EldritchCanvas::new);
     }
 
     public static void fillCanvases() {
+        ACTIVE_CANVASES = 0;
         CANVAS_MAP.forEach((_, canvas) -> fillCanvas(canvas));
     }
 
@@ -48,6 +50,7 @@ public class EldritchCanvasHandler {
             return;
         }
         canvas.setFilled(true);
+        ACTIVE_CANVASES++;
 
         RenderSystem.backupProjectionMatrix();
         Projection projection = new Projection();
@@ -94,5 +97,9 @@ public class EldritchCanvasHandler {
         CANVAS_MAP.forEach((_, canvas) -> canvas.close());
         CANVAS_MAP.clear();
         CANVAS_PROJECTION_MATRIX_BUFFER.close();
+    }
+
+    public static String getCanvasStatistics() {
+        return "(VsHi) Canvases: " + ACTIVE_CANVASES + "/" + CANVAS_MAP.size();
     }
 }
