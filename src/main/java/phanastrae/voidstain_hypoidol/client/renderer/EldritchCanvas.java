@@ -7,6 +7,7 @@ import phanastrae.voidstain_hypoidol.common.VoidstainHypoidol;
 
 public class EldritchCanvas {
 
+    private final String id;
     private final Identifier identifier;
     private final TextureTarget target;
     private final RenderTargetTexture targetTexture;
@@ -14,17 +15,24 @@ public class EldritchCanvas {
     private boolean needsFilling = false;
     private boolean isFilled = false;
 
-    public EldritchCanvas(String name) {
-        this.identifier = VoidstainHypoidol.id(name).withPrefix("prefix/");
+    public EldritchCanvas(String id) {
+        this.id = id;
+        this.identifier = VoidstainHypoidol.id(id).withPrefix("prefix/");
+
         int pixelsPerBlock = 64;
-        this.target = new TextureTarget("Canvas " + name, 3 * pixelsPerBlock, 3 * pixelsPerBlock, false);
+        this.target = new TextureTarget("Canvas " + id, 3 * pixelsPerBlock, 3 * pixelsPerBlock, false);
         this.targetTexture = new RenderTargetTexture(this.target);
+
         Minecraft.getInstance().getTextureManager().register(this.identifier, this.targetTexture);
     }
 
     public void close() {
         this.target.destroyBuffers();
         this.targetTexture.close();
+    }
+
+    public String getId() {
+        return this.id;
     }
 
     public Identifier getIdentifier() {

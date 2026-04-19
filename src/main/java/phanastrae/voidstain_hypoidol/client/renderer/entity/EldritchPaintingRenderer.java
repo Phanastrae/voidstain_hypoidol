@@ -34,7 +34,7 @@ public class EldritchPaintingRenderer extends EntityRenderer<EldritchPaintingEnt
 
     @Override
     public void submit(EldritchPaintingRenderState state, PoseStack poseStack, SubmitNodeCollector submitNodeCollector, CameraRenderState camera) {
-        EldritchCanvas canvas = EldritchCanvasHandler.getCanvas();
+        EldritchCanvas canvas = EldritchCanvasHandler.getCanvas(String.valueOf(state.id));
         canvas.markNeedsFilling();
         if (!canvas.isFilled()) {
             return;
@@ -110,6 +110,8 @@ public class EldritchPaintingRenderer extends EntityRenderer<EldritchPaintingEnt
                 state.lightCoordsPerBlock[segmentX + segmentY * width] = LevelRenderer.getLightCoords(level, new BlockPos(x, y, z));
             }
         }
+
+        state.id = entity.id;
     }
 
     private void renderPainting(PoseStack poseStack, SubmitNodeCollector submitNodeCollector, RenderType renderType, RenderType renderType2, int[] lightCoordsMap, int width, int height, TextureAtlasSprite backSprite) {

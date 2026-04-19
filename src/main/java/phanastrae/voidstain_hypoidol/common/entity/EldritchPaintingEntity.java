@@ -35,6 +35,8 @@ public class EldritchPaintingEntity extends HangingEntity {
             v.getAxis().isHorizontal() ? DataResult.success(v) : DataResult.error(() -> "Expected a horizontal direction")
     );
 
+    public int id = this.random.nextInt();
+
     public EldritchPaintingEntity(EntityType<? extends EldritchPaintingEntity> type, Level level) {
         super(type, level);
     }

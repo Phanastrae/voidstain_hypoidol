@@ -6,4 +6,5 @@ import net.minecraft.core.Direction;
 public class EldritchPaintingRenderState extends EntityRenderState {
     public Direction direction = Direction.NORTH;
     public int[] lightCoordsPerBlock = new int[0];
+    public int id;
 }

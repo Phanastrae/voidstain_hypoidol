@@ -10,37 +10,32 @@ import net.minecraft.client.renderer.rendertype.OutputTarget;
 import net.minecraft.client.renderer.rendertype.RenderSetup;
 import net.minecraft.client.renderer.rendertype.RenderType;
 import net.minecraft.resources.Identifier;
+import net.minecraft.util.RandomSource;
 import net.minecraft.util.Util;
-import org.jetbrains.annotations.Nullable;
 
+import java.util.HashMap;
+import java.util.Map;
 import java.util.function.BiFunction;
 
 public class EldritchCanvasHandler {
 
-    public static final ProjectionMatrixBuffer CANVAS_PROJECTION_MATRIX_BUFFER = new ProjectionMatrixBuffer("voidstain_canvas");
+    private static final ProjectionMatrixBuffer CANVAS_PROJECTION_MATRIX_BUFFER = new ProjectionMatrixBuffer("voidstain_canvas");
+    private static final Map<String, EldritchCanvas> CANVAS_MAP = new HashMap<>();
+    private static final RandomSource RANDOM = RandomSource.create();
 
-    @Nullable
-    private static EldritchCanvas CANVAS;
-
-    public static EldritchCanvas getCanvas() {
-        if (CANVAS == null) {
-            CANVAS = new EldritchCanvas("canvas");
-        }
-        return CANVAS;
+    public static EldritchCanvas getCanvas(String canvasId) {
+        return CANVAS_MAP.computeIfAbsent(canvasId, EldritchCanvas::new);
     }
 
     public static void fillCanvases() {
-        EldritchCanvas canvas = CANVAS;
-        if (canvas == null) {
-            return;
-        }
-        fillCanvas(canvas);
+        CANVAS_MAP.forEach((_, canvas) -> fillCanvas(canvas));
     }
 
-    public static final BiFunction<EldritchCanvas, Identifier, RenderType> CANVAS_RENDER_TYPE = Util.memoize((canvas, id) -> {
+    public static final BiFunction<String, Identifier, RenderType> CANVAS_RENDER_TYPE = Util.memoize((canvasId, textureId) -> {
+        EldritchCanvas canvas = getCanvas(canvasId);
         OutputTarget target = new OutputTarget("canvas_target", canvas::getTarget);
         RenderSetup state = RenderSetup.builder(RenderPipelines.GUI_TEXTURED)
-                .withTexture("Sampler0", id)
+                .withTexture("Sampler0", textureId)
                 .setOutputTarget(target)
                 .createRenderSetup();
 
@@ -70,9 +65,11 @@ public class EldritchCanvasHandler {
                 Identifier.withDefaultNamespace("textures/block/diamond_block.png"),
                 Identifier.withDefaultNamespace("textures/block/netherite_block.png")
         };
+
+        RANDOM.setSeed(413 + canvas.getId().hashCode());
         for (int x = 0; x < 3; x++) {
             for (int y = 0; y < 3; y++) {
-                RenderType type = CANVAS_RENDER_TYPE.apply(canvas, ids[x + 3 * y]);
+                RenderType type = CANVAS_RENDER_TYPE.apply(canvas.getId(), ids[RANDOM.nextInt(ids.length)]);
 
                 BufferBuilder builder = Tesselator.getInstance().begin(VertexFormat.Mode.QUADS, DefaultVertexFormat.POSITION_TEX_COLOR);
                 drawQuad(builder, x / 3f, (x + 1) / 3f, y / 3f, (y + 1) / 3f);
@@ -94,9 +91,8 @@ public class EldritchCanvasHandler {
     }
 
     public static void close() {
-        if (CANVAS != null) {
-            CANVAS.close();
-        }
+        CANVAS_MAP.forEach((_, canvas) -> canvas.close());
+        CANVAS_MAP.clear();
         CANVAS_PROJECTION_MATRIX_BUFFER.close();
     }
 }
