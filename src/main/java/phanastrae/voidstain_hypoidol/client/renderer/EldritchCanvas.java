@@ -13,6 +13,7 @@ public class EldritchCanvas {
     private final RenderTargetTexture targetTexture;
 
     private boolean needsFilling = false;
+    private long lastTimeNeeded = System.nanoTime();
 
     public EldritchCanvas(String id) {
         this.id = id;
@@ -46,7 +47,16 @@ public class EldritchCanvas {
         return this.needsFilling;
     }
 
-    public void markNeedsFilling(boolean value) {
-        this.needsFilling = value;
+    public void markNeedsFilling() {
+        this.needsFilling = true;
+        this.lastTimeNeeded = System.nanoTime();
+    }
+
+    public void markFilled() {
+        this.needsFilling = false;
+    }
+
+    public long timeSinceLastNeeded() {
+        return System.nanoTime() - this.lastTimeNeeded;
     }
 }

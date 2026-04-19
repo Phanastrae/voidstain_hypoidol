@@ -14,7 +14,9 @@ import net.minecraft.util.RandomSource;
 import net.minecraft.util.Util;
 import org.joml.Matrix4fStack;
 
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.function.BiFunction;
 
@@ -24,6 +26,8 @@ public class EldritchCanvasHandler {
     private static final Map<String, EldritchCanvas> CANVAS_MAP = new HashMap<>();
     private static final RandomSource RANDOM = RandomSource.create();
     private static int ACTIVE_CANVASES;
+
+    private static long LAST_CLEAR = System.nanoTime();
 
     public static final BiFunction<String, Identifier, RenderType> CANVAS_RENDER_TYPE = Util.memoize((canvasId, textureId) -> {
         OutputTarget target = new OutputTarget("canvas_target", () -> getCanvas(canvasId).getTarget());
@@ -43,6 +47,7 @@ public class EldritchCanvasHandler {
         CANVAS_MAP.forEach((_, canvas) -> canvas.close());
         CANVAS_MAP.clear();
         ACTIVE_CANVASES = 0;
+        LAST_CLEAR = System.nanoTime();
     }
 
     public static void close() {
@@ -50,14 +55,34 @@ public class EldritchCanvasHandler {
         CANVAS_PROJECTION_MATRIX_BUFFER.close();
     }
 
-    public static void fillCanvases() {
+    public static void updateCanvases() {
+        tryClearOldCanvases();
+
         ACTIVE_CANVASES = 0;
         CANVAS_MAP.forEach((_, canvas) -> {
             if (canvas.needsFilling()) {
                 fillCanvas(canvas);
-                canvas.markNeedsFilling(false);
+                canvas.markFilled();
             }
         });
+    }
+
+    public static void tryClearOldCanvases() {
+        long time = System.nanoTime();
+        if (Math.abs(time - LAST_CLEAR) > 5 * 1E9) {
+            LAST_CLEAR = time;
+
+            List<String> removeList = new ArrayList<>();
+            for (EldritchCanvas canvas : CANVAS_MAP.values()) {
+                if (!canvas.needsFilling() && Math.abs(canvas.timeSinceLastNeeded()) > 15 * 1E9) {
+                    removeList.add(canvas.getId());
+                }
+            }
+
+            for (String key : removeList) {
+                CANVAS_MAP.remove(key);
+            }
+        }
     }
 
     public static void fillCanvas(EldritchCanvas canvas) {

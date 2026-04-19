@@ -21,6 +21,6 @@ public class VoidstainHypoidolClient implements ClientModInitializer {
         // called on F3 + A, dimension change, and world join
         InvalidateRenderStateCallback.EVENT.register(EldritchCanvasHandler::clearCanvases);
 
-        LevelRenderEvents.AFTER_OPAQUE_TERRAIN.register((context) -> EldritchCanvasHandler.fillCanvases());
+        LevelRenderEvents.AFTER_OPAQUE_TERRAIN.register((context) -> EldritchCanvasHandler.updateCanvases());
     }
 }

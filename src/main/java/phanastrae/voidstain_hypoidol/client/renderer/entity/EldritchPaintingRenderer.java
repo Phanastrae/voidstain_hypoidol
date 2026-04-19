@@ -108,7 +108,7 @@ public class EldritchPaintingRenderer extends EntityRenderer<EldritchPaintingEnt
         }
 
         state.id = entity.id;
-        EldritchCanvasHandler.getCanvas(String.valueOf(state.id)).markNeedsFilling(true);
+        EldritchCanvasHandler.getCanvas(String.valueOf(state.id)).markNeedsFilling();
     }
 
     private void renderPainting(PoseStack poseStack, SubmitNodeCollector submitNodeCollector, RenderType renderType, RenderType renderType2, int[] lightCoordsMap, int width, int height, TextureAtlasSprite backSprite) {
