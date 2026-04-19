@@ -12,6 +12,6 @@ public class MinecraftMixin {
 
     @Inject(method = "renderFrame", at = @At("HEAD"))
     private void voidstain_hypoidol$renderFrame(boolean advanceGameTime, CallbackInfo ci) {
-        EldritchCanvasHandler.fillCanvases((Minecraft) (Object) this);
+        EldritchCanvasHandler.fillCanvases();
     }
 }

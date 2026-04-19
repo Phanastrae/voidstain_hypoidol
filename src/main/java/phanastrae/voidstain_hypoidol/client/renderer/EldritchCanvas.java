@@ -22,12 +22,17 @@ public class EldritchCanvas {
         Minecraft.getInstance().getTextureManager().register(this.identifier, this.targetTexture);
     }
 
+    public void close() {
+        this.target.destroyBuffers();
+        this.targetTexture.close();
+    }
+
     public Identifier getIdentifier() {
         return this.identifier;
     }
 
-    public RenderTargetTexture getTexture() {
-        return this.targetTexture;
+    public TextureTarget getTarget() {
+        return this.target;
     }
 
     public boolean needsFilling() {
