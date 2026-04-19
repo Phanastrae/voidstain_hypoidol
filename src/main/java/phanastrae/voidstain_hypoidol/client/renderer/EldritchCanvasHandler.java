@@ -34,8 +34,7 @@ public class EldritchCanvasHandler {
     }
 
     public static final BiFunction<String, Identifier, RenderType> CANVAS_RENDER_TYPE = Util.memoize((canvasId, textureId) -> {
-        EldritchCanvas canvas = getCanvas(canvasId);
-        OutputTarget target = new OutputTarget("canvas_target", canvas::getTarget);
+        OutputTarget target = new OutputTarget("canvas_target", () -> getCanvas(canvasId).getTarget());
         RenderSetup state = RenderSetup.builder(RenderPipelines.GUI_TEXTURED)
                 .withTexture("Sampler0", textureId)
                 .setOutputTarget(target)
@@ -93,9 +92,13 @@ public class EldritchCanvasHandler {
         builder.addVertex(x1, y0, 0.0f).setUv(1, 0).setColor(255, 255, 255, 255);
     }
 
-    public static void close() {
+    public static void clearCanvases() {
         CANVAS_MAP.forEach((_, canvas) -> canvas.close());
         CANVAS_MAP.clear();
+    }
+
+    public static void close() {
+        clearCanvases();
         CANVAS_PROJECTION_MATRIX_BUFFER.close();
     }
 

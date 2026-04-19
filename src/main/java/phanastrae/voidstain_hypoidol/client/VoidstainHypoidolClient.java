@@ -2,6 +2,7 @@ package phanastrae.voidstain_hypoidol.client;
 
 import net.fabricmc.api.ClientModInitializer;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientLifecycleEvents;
+import net.fabricmc.fabric.api.client.rendering.v1.InvalidateRenderStateCallback;
 import phanastrae.voidstain_hypoidol.client.gui.VoidstainDebugScreenEntries;
 import phanastrae.voidstain_hypoidol.client.renderer.EldritchCanvasHandler;
 import phanastrae.voidstain_hypoidol.client.renderer.entity.VoidstainEntityRenderers;
@@ -12,8 +13,11 @@ public class VoidstainHypoidolClient implements ClientModInitializer {
         VoidstainEntityRenderers.init();
         VoidstainDebugScreenEntries.init();
 
-        ClientLifecycleEvents.CLIENT_STOPPING.register((_) -> {
+        ClientLifecycleEvents.CLIENT_STOPPING.register((minecraft) -> {
             EldritchCanvasHandler.close();
         });
+
+        // called on F3 + A, dimension change, and world join
+        InvalidateRenderStateCallback.EVENT.register(EldritchCanvasHandler::clearCanvases);
     }
 }
