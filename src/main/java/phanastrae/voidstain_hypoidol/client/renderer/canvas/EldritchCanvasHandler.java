@@ -1,6 +1,12 @@
 package phanastrae.voidstain_hypoidol.client.renderer.canvas;
 
-import java.util.*;
+import phanastrae.voidstain_hypoidol.client.VoidstainHypoidolClient;
+import phanastrae.voidstain_hypoidol.common.hypoverse.Hypoverse;
+
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 public class EldritchCanvasHandler {
     private static final Map<String, EldritchCanvas> CANVAS_MAP = new HashMap<>();
@@ -12,6 +18,11 @@ public class EldritchCanvasHandler {
     }
 
     public static EldritchCanvas getCanvas(String canvasId) {
+        if (VoidstainHypoidolClient.HYPOVERSE == null) {
+            VoidstainHypoidolClient.HYPOVERSE = new Hypoverse(); // TODO do not do this here
+        }
+        VoidstainHypoidolClient.HYPOVERSE.getOrCreateLevel(canvasId); // TODO change how this works
+
         return CANVAS_MAP.computeIfAbsent(canvasId, EldritchCanvas::new);
     }
 
