@@ -1,15 +1,9 @@
 package phanastrae.voidstain_hypoidol.client.renderer.canvas;
 
-import phanastrae.voidstain_hypoidol.client.VoidstainHypoidolClient;
-import phanastrae.voidstain_hypoidol.common.hypoverse.Hypoverse;
-
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 public class EldritchCanvasHandler {
-    private static final Map<String, EldritchCanvas> CANVAS_MAP = new HashMap<>();
+    private static final Map<UUID, CanvasTexture> CANVAS_MAP = new HashMap<>();
     private static int ACTIVE_CANVASE_COUNT;
     private static int FRAMES_SINCE_LAST_CLEAR = 0;
 
@@ -17,13 +11,8 @@ public class EldritchCanvasHandler {
         clearCanvases();
     }
 
-    public static EldritchCanvas getCanvas(String canvasId) {
-        if (VoidstainHypoidolClient.HYPOVERSE == null) {
-            VoidstainHypoidolClient.HYPOVERSE = new Hypoverse(); // TODO do not do this here
-        }
-        VoidstainHypoidolClient.HYPOVERSE.getOrCreateLevel(canvasId); // TODO change how this works
-
-        return CANVAS_MAP.computeIfAbsent(canvasId, EldritchCanvas::new);
+    public static CanvasTexture getCanvas(UUID uuid) {
+        return CANVAS_MAP.computeIfAbsent(uuid, CanvasTexture::new);
     }
 
     public static void clearCanvases() {
@@ -38,17 +27,23 @@ public class EldritchCanvasHandler {
         if (FRAMES_SINCE_LAST_CLEAR > 200) {
             FRAMES_SINCE_LAST_CLEAR = 0;
 
-            List<String> removeList = new ArrayList<>();
-            for (EldritchCanvas canvas : CANVAS_MAP.values()) {
+            List<UUID> removeList = new ArrayList<>();
+            for (CanvasTexture canvas : CANVAS_MAP.values()) {
                 canvas.clearChecksSinceLastUse++;
                 if (canvas.clearChecksSinceLastUse >= 2) {
                     removeList.add(canvas.getCanvasId());
                 }
             }
 
-            for (String key : removeList) {
-                CANVAS_MAP.remove(key);
+            for (UUID uuid : removeList) {
+                CANVAS_MAP.remove(uuid);
             }
+        }
+    }
+
+    public static void removeCanvas(UUID uuid) {
+        if (CANVAS_MAP.containsKey(uuid)) {
+            CANVAS_MAP.remove(uuid).close();
         }
     }
 
@@ -57,6 +52,6 @@ public class EldritchCanvasHandler {
     }
 
     public static String getCanvasStatistics() {
-        return "(VsHi) Canvases: " + ACTIVE_CANVASE_COUNT + "/" + CANVAS_MAP.size();
+        return "(VsHi) Canvas Textures: " + ACTIVE_CANVASE_COUNT + "/" + CANVAS_MAP.size();
     }
 }

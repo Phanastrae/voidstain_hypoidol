@@ -6,8 +6,8 @@ import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
 import net.fabricmc.fabric.api.client.rendering.v1.InvalidateRenderStateCallback;
 import net.fabricmc.fabric.api.client.rendering.v1.level.LevelRenderEvents;
 import net.minecraft.client.Minecraft;
-import org.jetbrains.annotations.Nullable;
 import phanastrae.voidstain_hypoidol.client.gui.VoidstainDebugScreenEntries;
+import phanastrae.voidstain_hypoidol.client.network.VoidstainClientPacketListener;
 import phanastrae.voidstain_hypoidol.client.renderer.canvas.EldritchCanvasHandler;
 import phanastrae.voidstain_hypoidol.client.renderer.canvas.EldritchCanvasRenderer;
 import phanastrae.voidstain_hypoidol.client.renderer.entity.VoidstainEntityRenderers;
@@ -15,13 +15,14 @@ import phanastrae.voidstain_hypoidol.common.hypoverse.Hypoverse;
 
 public class VoidstainHypoidolClient implements ClientModInitializer {
 
-    @Nullable
-    public static Hypoverse HYPOVERSE;
+    public static Hypoverse HYPOVERSE = new Hypoverse();
 
     @Override
     public void onInitializeClient() {
         VoidstainEntityRenderers.init();
         VoidstainDebugScreenEntries.init();
+
+        VoidstainClientPacketListener.init();
 
         ClientLifecycleEvents.CLIENT_STOPPING.register(VoidstainHypoidolClient::close);
 
@@ -32,8 +33,8 @@ public class VoidstainHypoidolClient implements ClientModInitializer {
 
         LevelRenderEvents.AFTER_OPAQUE_TERRAIN.register((context) -> EldritchCanvasRenderer.render());
 
-        ClientTickEvents.END_LEVEL_TICK.register((level -> {
-            if (HYPOVERSE != null) {
+        ClientTickEvents.START_LEVEL_TICK.register((level -> {
+            if (level == Minecraft.getInstance().level) { // if (somehow) multiple levels are being ticked, only tick with the main one
                 HYPOVERSE.tick(level.tickRateManager().runsNormally());
             }
         }));
@@ -42,9 +43,7 @@ public class VoidstainHypoidolClient implements ClientModInitializer {
     public static void resetData() {
         // called on world leave
         EldritchCanvasHandler.clearCanvases();
-        if (HYPOVERSE != null) {
-            HYPOVERSE = null;
-        }
+        HYPOVERSE = new Hypoverse();
     }
 
     private static void close(Minecraft minecraft) {

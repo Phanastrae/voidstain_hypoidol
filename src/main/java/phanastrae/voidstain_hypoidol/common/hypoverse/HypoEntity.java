@@ -5,15 +5,15 @@ import net.minecraft.util.RandomSource;
 public class HypoEntity {
 
     private final RandomSource random = RandomSource.create();
-    private final HypoLevel hypoLevel;
+    private final HypoZone zone;
     public float ox;
     public float oy;
     public float x;
     public float y;
     public int horrorId;
 
-    public HypoEntity(HypoLevel hypoLevel) {
-        this.hypoLevel = hypoLevel;
+    public HypoEntity(HypoZone zone) {
+        this.zone = zone;
         this.horrorId = random.nextInt(3);
     }
 

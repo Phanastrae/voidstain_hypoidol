@@ -4,12 +4,17 @@ import com.mojang.serialization.Codec;
 import com.mojang.serialization.DataResult;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
+import net.minecraft.core.UUIDUtil;
 import net.minecraft.network.protocol.Packet;
 import net.minecraft.network.protocol.game.ClientGamePacketListener;
 import net.minecraft.network.protocol.game.ClientboundAddEntityPacket;
+import net.minecraft.network.syncher.EntityDataAccessor;
+import net.minecraft.network.syncher.SynchedEntityData;
 import net.minecraft.server.level.ServerEntity;
 import net.minecraft.server.level.ServerLevel;
+import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.sounds.SoundEvents;
+import net.minecraft.util.Mth;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.decoration.HangingEntity;
@@ -22,27 +27,40 @@ import net.minecraft.world.level.storage.ValueOutput;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
 import org.jspecify.annotations.Nullable;
+import phanastrae.voidstain_hypoidol.common.hypoverse.Hypoverse;
 import phanastrae.voidstain_hypoidol.common.item.VoidstainItems;
+import phanastrae.voidstain_hypoidol.common.network.HypoverseWatcher;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Optional;
+import java.util.UUID;
 
 public class EldritchPaintingEntity extends HangingEntity {
+    private static final EntityDataAccessor<Optional<UUID>> DATA_CANVAS_UUID = SynchedEntityData.defineId(EldritchPaintingEntity.class, VoidstainEntityDataSerializers.OPTIONAL_UUID);
+
+    public static final String KEY_FACING = "facing";
+    public static final String KEY_CANVAS_UUID = "canvas_uuid";
+
     public static final float DEPTH = 0.0625f;
     public static final float HALF_DEPTH = DEPTH / 2;
     private static final float SHIFT_TO_BLOCK_WALL = 0.5F - HALF_DEPTH;
-    public static final String KEY_FACING = "facing";
+
+    private final List<ServerPlayer> watchingPlayers = new ArrayList<>();
+    private boolean connectedToHypoverse = false;
+
     public static final Codec<Direction> HORIZONTAL_CODEC = Direction.CODEC.validate((v) ->
             v.getAxis().isHorizontal() ? DataResult.success(v) : DataResult.error(() -> "Expected a horizontal direction")
     );
 
-    public int id = this.random.nextInt();
-
     public EldritchPaintingEntity(EntityType<? extends EldritchPaintingEntity> type, Level level) {
         super(type, level);
+        this.setCanvasUUID(Mth.createInsecureUUID(this.random));
     }
 
     public EldritchPaintingEntity(Level level, BlockPos blockPos) {
         super(VoidstainEntityTypes.ELDRITCH_PAINTING, level, blockPos);
+        this.setCanvasUUID(Mth.createInsecureUUID(this.random));
     }
 
     public static Optional<EldritchPaintingEntity> create(Level level, BlockPos pos, Direction direction) {
@@ -56,16 +74,80 @@ public class EldritchPaintingEntity extends HangingEntity {
     }
 
     @Override
+    protected void defineSynchedData(SynchedEntityData.Builder entityData) {
+        super.defineSynchedData(entityData);
+        entityData.define(DATA_CANVAS_UUID, Optional.empty());
+    }
+
+    @Override
     protected void addAdditionalSaveData(ValueOutput output) {
         output.store(KEY_FACING, HORIZONTAL_CODEC, this.getDirection());
+        this.getCanvasUUID().ifPresent(uuid -> output.store(KEY_CANVAS_UUID, UUIDUtil.CODEC, uuid));
         super.addAdditionalSaveData(output);
     }
 
     @Override
     protected void readAdditionalSaveData(ValueInput input) {
         Direction direction = input.read(KEY_FACING, HORIZONTAL_CODEC).orElse(Direction.SOUTH);
+        input.read(KEY_CANVAS_UUID, UUIDUtil.CODEC).ifPresent(this::setCanvasUUID);
         super.readAdditionalSaveData(input);
         this.setDirection(direction);
+    }
+
+    @Override
+    public void tick() {
+        if (this.connectToHypoverse()) {
+            this.getCanvasUUID().ifPresent(canvasUUID -> this.watchingPlayers.forEach(player -> HypoverseWatcher.fromPlayer(player).startWatchingCanvas(canvasUUID, player)));
+        }
+    }
+
+    @Override
+    public void startSeenByPlayer(ServerPlayer player) {
+        super.startSeenByPlayer(player);
+
+        this.watchingPlayers.add(player);
+        if (this.connectedToHypoverse) {
+            this.getCanvasUUID().ifPresent(uuid -> HypoverseWatcher.fromPlayer(player).startWatchingCanvas(uuid, player));
+        }
+    }
+
+    @Override
+    public void stopSeenByPlayer(ServerPlayer player) {
+        super.stopSeenByPlayer(player);
+
+        this.watchingPlayers.remove(player);
+        this.getCanvasUUID().ifPresent(uuid -> HypoverseWatcher.fromPlayer(player).stopWatchingCanvas(uuid, player));
+    }
+
+    @Override
+    public void onRemoval(RemovalReason reason) {
+        this.disconnectFromHypoverse();
+        super.onRemoval(reason);
+    }
+
+    private boolean connectToHypoverse() {
+        if (!this.level().isClientSide() && !this.connectedToHypoverse) {
+            this.connectedToHypoverse = true;
+            Hypoverse hypoverse = Hypoverse.fromLevel(this.level());
+            if (hypoverse != null) {
+                Optional<UUID> uuid = this.getCanvasUUID();
+                uuid.ifPresent(hypoverse::connectCanvas);
+                if (uuid.isPresent()) {
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+
+    private void disconnectFromHypoverse() {
+        if (!this.level().isClientSide() && this.connectedToHypoverse) {
+            this.connectedToHypoverse = false;
+            Hypoverse hypoverse = Hypoverse.fromLevel(this.level());
+            if (hypoverse != null) {
+                this.getCanvasUUID().ifPresent(hypoverse::disconnectCanvas);
+            }
+        }
     }
 
     @Override
@@ -143,5 +225,18 @@ public class EldritchPaintingEntity extends HangingEntity {
 
     public static int getHeight() {
         return 3;
+    }
+
+    private void setCanvasUUID(UUID canvasUUID) {
+        this.getCanvasUUID().ifPresent(cUUID -> {
+            this.watchingPlayers.forEach(player -> HypoverseWatcher.fromPlayer(player).stopWatchingCanvas(cUUID, player));
+        });
+
+        this.disconnectFromHypoverse();
+        this.entityData.set(DATA_CANVAS_UUID, Optional.of(canvasUUID));
+    }
+
+    public Optional<UUID> getCanvasUUID() {
+        return this.entityData.get(DATA_CANVAS_UUID);
     }
 }

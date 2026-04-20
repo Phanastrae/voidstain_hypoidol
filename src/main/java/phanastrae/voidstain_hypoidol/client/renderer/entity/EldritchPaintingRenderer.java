@@ -19,7 +19,7 @@ import net.minecraft.data.AtlasIds;
 import net.minecraft.resources.Identifier;
 import net.minecraft.util.Mth;
 import net.minecraft.world.level.Level;
-import phanastrae.voidstain_hypoidol.client.renderer.canvas.EldritchCanvas;
+import phanastrae.voidstain_hypoidol.client.renderer.canvas.CanvasTexture;
 import phanastrae.voidstain_hypoidol.client.renderer.canvas.EldritchCanvasHandler;
 import phanastrae.voidstain_hypoidol.client.renderer.canvas.EldritchCanvasRenderer;
 import phanastrae.voidstain_hypoidol.common.entity.EldritchPaintingEntity;
@@ -35,7 +35,13 @@ public class EldritchPaintingRenderer extends EntityRenderer<EldritchPaintingEnt
 
     @Override
     public void submit(EldritchPaintingRenderState state, PoseStack poseStack, SubmitNodeCollector submitNodeCollector, CameraRenderState camera) {
-        EldritchCanvas canvas = EldritchCanvasHandler.getCanvas(state.id);
+        if (state.canvasUUID == null) {
+            return;
+        }
+        CanvasTexture canvas = EldritchCanvasHandler.getCanvas(state.canvasUUID);
+        if (!canvas.isFilled()) {
+            return;
+        }
 
         poseStack.pushPose();
         poseStack.mulPose(Axis.YP.rotationDegrees(180 - state.direction.get2DDataValue() * 90));
@@ -108,8 +114,13 @@ public class EldritchPaintingRenderer extends EntityRenderer<EldritchPaintingEnt
             }
         }
 
-        state.id = String.valueOf(entity.id);
-        EldritchCanvasRenderer.ALL_CANVAS_RENDER_STATE.activeCanvasIds.add(state.id);
+        entity.getCanvasUUID().ifPresentOrElse(uuid -> {
+            state.canvasUUID = uuid;
+
+            EldritchCanvasRenderer.ALL_CANVAS_RENDER_STATE.activeCanvasIds.add(uuid);
+        }, () -> {
+            state.canvasUUID = null;
+        });
     }
 
     private void renderPainting(PoseStack poseStack, SubmitNodeCollector submitNodeCollector, RenderType renderType, RenderType renderType2, int[] lightCoordsMap, int width, int height, TextureAtlasSprite backSprite) {

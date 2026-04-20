@@ -6,21 +6,24 @@ import net.minecraft.resources.Identifier;
 import phanastrae.voidstain_hypoidol.client.renderer.RenderTargetTexture;
 import phanastrae.voidstain_hypoidol.common.VoidstainHypoidol;
 
-public class EldritchCanvas {
+import java.util.UUID;
 
-    private final String canvasId;
+public class CanvasTexture {
+
+    private final UUID canvasId;
     private final Identifier textureIdentifier;
     private final TextureTarget target;
     private final RenderTargetTexture targetTexture;
+    private boolean filled = false;
 
     public int clearChecksSinceLastUse = 0;
 
-    public EldritchCanvas(String id) {
-        this.canvasId = id;
-        this.textureIdentifier = VoidstainHypoidol.id(id).withPrefix("canvas/");
+    public CanvasTexture(UUID uuid) {
+        this.canvasId = uuid;
+        this.textureIdentifier = VoidstainHypoidol.id(uuid.toString()).withPrefix("canvas/");
 
         int pixelsPerBlock = 64;
-        this.target = new TextureTarget("Canvas " + id, 3 * pixelsPerBlock, 3 * pixelsPerBlock, false);
+        this.target = new TextureTarget("Canvas " + uuid, 3 * pixelsPerBlock, 3 * pixelsPerBlock, false);
         this.targetTexture = new RenderTargetTexture(this.target);
 
         Minecraft.getInstance().getTextureManager().register(this.textureIdentifier, this.targetTexture);
@@ -31,8 +34,12 @@ public class EldritchCanvas {
         this.targetTexture.close();
     }
 
-    public String getCanvasId() {
+    public UUID getCanvasId() {
         return this.canvasId;
+    }
+
+    public RenderTargetTexture getTargetTexture() {
+        return this.targetTexture;
     }
 
     public Identifier getTextureIdentifier() {
@@ -41,5 +48,13 @@ public class EldritchCanvas {
 
     public TextureTarget getTarget() {
         return this.target;
+    }
+
+    public void markFilled() {
+        this.filled = true;
+    }
+
+    public boolean isFilled() {
+        return this.filled;
     }
 }
