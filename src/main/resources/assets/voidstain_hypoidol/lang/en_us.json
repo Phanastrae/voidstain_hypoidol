@@ -3,5 +3,6 @@
 
   "entity.voidstain_hypoidol.eldritch_painting": "Eldritch Painting",
 
-  "item.voidstain_hypoidol.eldritch_painting": "Eldritch Painting"
+  "item.voidstain_hypoidol.eldritch_painting": "Eldritch Painting",
+  "item.voidstain_hypoidol.eldritch_painting.canvas_uuid": "Canvas UUID: %s"
 }

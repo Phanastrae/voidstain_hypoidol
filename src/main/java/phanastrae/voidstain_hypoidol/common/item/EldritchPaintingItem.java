@@ -1,13 +1,18 @@
 package phanastrae.voidstain_hypoidol.common.item;
 
+import net.minecraft.ChatFormatting;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
+import net.minecraft.network.chat.Component;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.decoration.HangingEntity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.HangingEntityItem;
+import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.TooltipFlag;
+import net.minecraft.world.item.component.TooltipDisplay;
 import net.minecraft.world.item.context.UseOnContext;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.gameevent.GameEvent;
@@ -15,6 +20,7 @@ import phanastrae.voidstain_hypoidol.common.entity.EldritchPaintingEntity;
 import phanastrae.voidstain_hypoidol.common.entity.VoidstainEntityTypes;
 
 import java.util.Optional;
+import java.util.function.Consumer;
 
 public class EldritchPaintingItem extends HangingEntityItem {
     public EldritchPaintingItem(Properties properties) {
@@ -53,5 +59,16 @@ public class EldritchPaintingItem extends HangingEntityItem {
         }
 
         return InteractionResult.CONSUME;
+    }
+
+    @Override
+    public void appendHoverText(ItemStack itemStack, Item.TooltipContext context, TooltipDisplay display, Consumer<Component> builder, TooltipFlag tooltipFlag) {
+        if (display.shows(VoidstainDataComponents.CANVAS_DATA)) {
+            CanvasData canvasData = itemStack.get(VoidstainDataComponents.CANVAS_DATA);
+            if (canvasData != null) {
+                builder.accept(Component.translatable("painting.dimensions", 3, 3));
+                builder.accept(Component.translatable("item.voidstain_hypoidol.eldritch_painting.canvas_uuid", canvasData.uuid()).withStyle(ChatFormatting.LIGHT_PURPLE));
+            }
+        }
     }
 }

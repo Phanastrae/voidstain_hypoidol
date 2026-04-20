@@ -5,6 +5,8 @@ import com.mojang.serialization.DataResult;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.core.UUIDUtil;
+import net.minecraft.core.component.DataComponentGetter;
+import net.minecraft.core.component.DataComponentType;
 import net.minecraft.network.protocol.Packet;
 import net.minecraft.network.protocol.game.ClientGamePacketListener;
 import net.minecraft.network.protocol.game.ClientboundAddEntityPacket;
@@ -28,6 +30,8 @@ import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
 import org.jspecify.annotations.Nullable;
 import phanastrae.voidstain_hypoidol.common.hypoverse.Hypoverse;
+import phanastrae.voidstain_hypoidol.common.item.CanvasData;
+import phanastrae.voidstain_hypoidol.common.item.VoidstainDataComponents;
 import phanastrae.voidstain_hypoidol.common.item.VoidstainItems;
 import phanastrae.voidstain_hypoidol.common.network.HypoverseWatcher;
 
@@ -92,6 +96,30 @@ public class EldritchPaintingEntity extends HangingEntity {
         input.read(KEY_CANVAS_UUID, UUIDUtil.CODEC).ifPresent(this::setCanvasUUID);
         super.readAdditionalSaveData(input);
         this.setDirection(direction);
+    }
+
+    @Override
+    public <T> @Nullable T get(DataComponentType<? extends T> type) {
+        if (type == VoidstainDataComponents.CANVAS_DATA) {
+            Optional<UUID> canvasUUID = this.getCanvasUUID();
+            return canvasUUID.<T>map(value -> castComponentValue(type, value)).orElse(null);
+        }
+        return super.get(type);
+    }
+
+    @Override
+    protected void applyImplicitComponents(DataComponentGetter components) {
+        this.applyImplicitComponentIfPresent(components, VoidstainDataComponents.CANVAS_DATA);
+        super.applyImplicitComponents(components);
+    }
+
+    @Override
+    protected <T> boolean applyImplicitComponent(DataComponentType<T> type, T value) {
+        if (type == VoidstainDataComponents.CANVAS_DATA) {
+            this.setCanvasUUID(castComponentValue(VoidstainDataComponents.CANVAS_DATA, value).uuid());
+            return true;
+        }
+        return super.applyImplicitComponent(type, value);
     }
 
     @Override
@@ -181,11 +209,20 @@ public class EldritchPaintingEntity extends HangingEntity {
         }
 
         this.playSound(SoundEvents.PAINTING_BREAK, 1.0f, 1.0f);
-        if (causedBy instanceof Player player && player.hasInfiniteMaterials()) {
+
+        ItemStack dropItem = this.getAsItem();
+        if (causedBy instanceof Player player && player.hasInfiniteMaterials() && player.getInventory().contains(dropItem)) {
             return;
         }
 
-        this.spawnAtLocation(level, VoidstainItems.ELDRITCH_PAINTING);
+        this.spawnAtLocation(level, dropItem);
+    }
+
+    public ItemStack getAsItem() {
+        ItemStack stack = VoidstainItems.ELDRITCH_PAINTING.getDefaultInstance();
+        Optional<UUID> canvasUUID = this.getCanvasUUID();
+        canvasUUID.ifPresent(value -> stack.set(VoidstainDataComponents.CANVAS_DATA, new CanvasData(value)));
+        return stack;
     }
 
     @Override
@@ -216,7 +253,7 @@ public class EldritchPaintingEntity extends HangingEntity {
 
     @Override
     public ItemStack getPickResult() {
-        return new ItemStack(VoidstainItems.ELDRITCH_PAINTING);
+        return this.getAsItem();
     }
 
     public static int getWidth() {
