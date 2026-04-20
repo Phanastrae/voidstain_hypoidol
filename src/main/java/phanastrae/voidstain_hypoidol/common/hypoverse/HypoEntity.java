@@ -12,9 +12,9 @@ public class HypoEntity {
     public float y;
     public int horrorId;
 
-    public HypoEntity(HypoZone zone) {
+    public HypoEntity(HypoZone zone, int horrorId) {
         this.zone = zone;
-        this.horrorId = random.nextInt(3);
+        this.horrorId = horrorId;
     }
 
     public void tick(boolean runsNormally) {

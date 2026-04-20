@@ -1,11 +1,15 @@
 package phanastrae.voidstain_hypoidol.common.hypoverse;
 
 import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking;
+import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
 import net.minecraft.util.RandomSource;
+import phanastrae.voidstain_hypoidol.common.network.AddHypoEntityPayload;
 import phanastrae.voidstain_hypoidol.common.network.HypoverseWatcher;
+import phanastrae.voidstain_hypoidol.common.network.StartWatchingHypoZonePayload;
 import phanastrae.voidstain_hypoidol.common.network.UpdateHypoZonePayload;
 
 import java.util.*;
+import java.util.function.Supplier;
 
 public class HypoZone {
 
@@ -24,10 +28,6 @@ public class HypoZone {
         this.uuid = uuid;
         this.random.setSeed(uuid.hashCode());
         this.backgroundId = backgroundId;
-
-        for (int i = 0; i < random.nextIntBetweenInclusive(1, 3); i++) {
-            this.entities.add(new HypoEntity(this));
-        }
     }
 
     public void tick(boolean runsNormally) {
@@ -63,13 +63,29 @@ public class HypoZone {
         this.watchers.remove(watcher);
     }
 
+    public void addEntity(HypoEntity hypoEntity) {
+        this.entities.add(hypoEntity);
+        this.sendToAllWatchers(() -> new AddHypoEntityPayload(this.uuid, hypoEntity.horrorId));
+    }
+
+    public void updateNewWatcher(HypoverseWatcher watcher) {
+        ServerPlayNetworking.send(watcher.getPlayer(), new StartWatchingHypoZonePayload(this.uuid, this.getBackgroundId()));
+        for (HypoEntity entity : this.entities) {
+            ServerPlayNetworking.send(watcher.getPlayer(), new AddHypoEntityPayload(this.uuid, entity.horrorId));
+        }
+    }
+
     public void sendUpdates() {
+        this.sendToAllWatchers(() -> new UpdateHypoZonePayload(this.uuid, this.backgroundId));
+        this.markNotDirty();
+    }
+
+    public void sendToAllWatchers(Supplier<CustomPacketPayload> payloadSupplier) {
         if (!this.watchers.isEmpty()) {
-            UpdateHypoZonePayload payload = new UpdateHypoZonePayload(this.uuid, this.backgroundId);
+            CustomPacketPayload payload = payloadSupplier.get();
             this.watchers.forEach(watcher -> {
                 ServerPlayNetworking.send(watcher.getPlayer(), payload);
             });
         }
-        this.markNotDirty();
     }
 }

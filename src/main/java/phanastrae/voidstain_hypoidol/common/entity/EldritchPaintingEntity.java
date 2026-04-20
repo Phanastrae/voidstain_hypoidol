@@ -33,6 +33,7 @@ import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
 import org.jspecify.annotations.Nullable;
 import phanastrae.voidstain_hypoidol.common.hypoverse.EldritchCanvas;
+import phanastrae.voidstain_hypoidol.common.hypoverse.HypoEntity;
 import phanastrae.voidstain_hypoidol.common.hypoverse.HypoZone;
 import phanastrae.voidstain_hypoidol.common.hypoverse.Hypoverse;
 import phanastrae.voidstain_hypoidol.common.item.CanvasData;
@@ -214,7 +215,9 @@ public class EldritchPaintingEntity extends HangingEntity {
             return InteractionResult.SUCCESS;
         }
         Optional<UUID> canvasUUID = this.getCanvasUUID();
-        if (canvasUUID.isPresent() && !itemStack.isEmpty() && itemStack.is(Items.BLAZE_POWDER)) {
+        boolean isBlaze = itemStack.is(Items.BLAZE_POWDER);
+        boolean isGhast = itemStack.is(Items.GHAST_TEAR);
+        if (canvasUUID.isPresent() && !itemStack.isEmpty() && (isBlaze || isGhast)) {
             if (player.level().isClientSide()) {
                 return InteractionResult.SUCCESS_SERVER;
             } else {
@@ -224,16 +227,22 @@ public class EldritchPaintingEntity extends HangingEntity {
                     if (canvas != null) {
                         HypoZone zone = hypoverse.getZone(canvas.getZoneId());
                         if (zone != null) {
-                            int bgId = zone.getBackgroundId();
-                            for (int i = 0; i < 100; i++) {
-                                int newId = this.random.nextInt(3);
-                                if (bgId != newId) {
-                                    if (!player.hasInfiniteMaterials()) {
-                                        itemStack.split(1);
+                            if (isBlaze) {
+                                int bgId = zone.getBackgroundId();
+                                for (int i = 0; i < 100; i++) {
+                                    int newId = this.random.nextInt(3);
+                                    if (bgId != newId) {
+                                        if (!player.hasInfiniteMaterials()) {
+                                            itemStack.split(1);
+                                        }
+                                        zone.setBackgroundId(newId);
+                                        return InteractionResult.SUCCESS_SERVER;
                                     }
-                                    zone.setBackgroundId(newId);
-                                    return InteractionResult.SUCCESS_SERVER;
                                 }
+                            } else if (isGhast) {
+                                HypoEntity hypoEntity = new HypoEntity(zone, this.random.nextInt(3));
+                                zone.addEntity(hypoEntity);
+                                return InteractionResult.SUCCESS_SERVER;
                             }
                         }
                     }

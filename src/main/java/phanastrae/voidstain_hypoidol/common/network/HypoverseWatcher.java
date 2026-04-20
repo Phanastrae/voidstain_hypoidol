@@ -5,6 +5,7 @@ import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.server.network.ServerGamePacketListenerImpl;
 import phanastrae.voidstain_hypoidol.common.duck.HypoverseWatcherAccess;
 import phanastrae.voidstain_hypoidol.common.hypoverse.EldritchCanvas;
+import phanastrae.voidstain_hypoidol.common.hypoverse.HypoEntity;
 import phanastrae.voidstain_hypoidol.common.hypoverse.HypoZone;
 import phanastrae.voidstain_hypoidol.common.hypoverse.Hypoverse;
 
@@ -39,7 +40,8 @@ public class HypoverseWatcher {
                     HypoZone zone = hypoverse.getZone(zoneUUID);
                     if (zone != null) {
                         zone.addWatcher(this);
-                        ServerPlayNetworking.send(player, new StartWatchingHypoZonePayload(zone.uuid, zone.getBackgroundId()));
+
+                        zone.updateNewWatcher(this);
                     }
                 }
             }
