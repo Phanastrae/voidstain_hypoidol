@@ -19,8 +19,9 @@ import net.minecraft.data.AtlasIds;
 import net.minecraft.resources.Identifier;
 import net.minecraft.util.Mth;
 import net.minecraft.world.level.Level;
-import phanastrae.voidstain_hypoidol.client.renderer.EldritchCanvas;
-import phanastrae.voidstain_hypoidol.client.renderer.EldritchCanvasHandler;
+import phanastrae.voidstain_hypoidol.client.renderer.canvas.EldritchCanvas;
+import phanastrae.voidstain_hypoidol.client.renderer.canvas.EldritchCanvasHandler;
+import phanastrae.voidstain_hypoidol.client.renderer.canvas.EldritchCanvasRenderer;
 import phanastrae.voidstain_hypoidol.common.entity.EldritchPaintingEntity;
 
 public class EldritchPaintingRenderer extends EntityRenderer<EldritchPaintingEntity, EldritchPaintingRenderState> {
@@ -34,7 +35,7 @@ public class EldritchPaintingRenderer extends EntityRenderer<EldritchPaintingEnt
 
     @Override
     public void submit(EldritchPaintingRenderState state, PoseStack poseStack, SubmitNodeCollector submitNodeCollector, CameraRenderState camera) {
-        EldritchCanvas canvas = EldritchCanvasHandler.getCanvas(String.valueOf(state.id));
+        EldritchCanvas canvas = EldritchCanvasHandler.getCanvas(state.id);
 
         poseStack.pushPose();
         poseStack.mulPose(Axis.YP.rotationDegrees(180 - state.direction.get2DDataValue() * 90));
@@ -43,7 +44,7 @@ public class EldritchPaintingRenderer extends EntityRenderer<EldritchPaintingEnt
         this.renderPainting(
                 poseStack, submitNodeCollector,
                 RenderTypes.entitySolidZOffsetForward(backSprite.atlasLocation()),
-                RenderTypes.entitySolidZOffsetForward(canvas.getIdentifier()),
+                RenderTypes.entitySolidZOffsetForward(canvas.getTextureIdentifier()),
                 state.lightCoordsPerBlock,
                 EldritchPaintingEntity.getWidth(), EldritchPaintingEntity.getHeight(),
                 backSprite
@@ -107,8 +108,8 @@ public class EldritchPaintingRenderer extends EntityRenderer<EldritchPaintingEnt
             }
         }
 
-        state.id = entity.id;
-        EldritchCanvasHandler.getCanvas(String.valueOf(state.id)).markNeedsFilling();
+        state.id = String.valueOf(entity.id);
+        EldritchCanvasRenderer.ALL_CANVAS_RENDER_STATE.activeCanvasIds.add(state.id);
     }
 
     private void renderPainting(PoseStack poseStack, SubmitNodeCollector submitNodeCollector, RenderType renderType, RenderType renderType2, int[] lightCoordsMap, int width, int height, TextureAtlasSprite backSprite) {

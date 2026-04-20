@@ -6,8 +6,8 @@ import net.fabricmc.fabric.api.client.rendering.v1.InvalidateRenderStateCallback
 import net.fabricmc.fabric.api.client.rendering.v1.level.LevelRenderEvents;
 import net.minecraft.client.Minecraft;
 import phanastrae.voidstain_hypoidol.client.gui.VoidstainDebugScreenEntries;
-import phanastrae.voidstain_hypoidol.client.renderer.EldritchCanvasHandler;
-import phanastrae.voidstain_hypoidol.client.renderer.EldritchCanvasRenderer;
+import phanastrae.voidstain_hypoidol.client.renderer.canvas.EldritchCanvasHandler;
+import phanastrae.voidstain_hypoidol.client.renderer.canvas.EldritchCanvasRenderer;
 import phanastrae.voidstain_hypoidol.client.renderer.entity.VoidstainEntityRenderers;
 
 public class VoidstainHypoidolClient implements ClientModInitializer {
@@ -21,7 +21,9 @@ public class VoidstainHypoidolClient implements ClientModInitializer {
         // called on F3 + A, dimension change, and world join
         InvalidateRenderStateCallback.EVENT.register(EldritchCanvasHandler::clearCanvases);
 
-        LevelRenderEvents.AFTER_OPAQUE_TERRAIN.register((context) -> EldritchCanvasHandler.updateCanvases());
+        LevelRenderEvents.END_EXTRACTION.register((context -> EldritchCanvasRenderer.extract(context.deltaTracker(), context.level().getGameTime())));
+
+        LevelRenderEvents.AFTER_OPAQUE_TERRAIN.register((context) -> EldritchCanvasRenderer.render());
     }
 
     private static void close(Minecraft minecraft) {
