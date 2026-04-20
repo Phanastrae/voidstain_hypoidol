@@ -32,10 +32,7 @@ import net.minecraft.world.level.storage.ValueOutput;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
 import org.jspecify.annotations.Nullable;
-import phanastrae.voidstain_hypoidol.common.hypoverse.EldritchCanvas;
-import phanastrae.voidstain_hypoidol.common.hypoverse.HypoEntity;
-import phanastrae.voidstain_hypoidol.common.hypoverse.HypoZone;
-import phanastrae.voidstain_hypoidol.common.hypoverse.Hypoverse;
+import phanastrae.voidstain_hypoidol.common.hypoverse.*;
 import phanastrae.voidstain_hypoidol.common.item.CanvasData;
 import phanastrae.voidstain_hypoidol.common.item.VoidstainDataComponents;
 import phanastrae.voidstain_hypoidol.common.item.VoidstainItems;
@@ -162,13 +159,11 @@ public class EldritchPaintingEntity extends HangingEntity {
     private boolean connectToHypoverse() {
         if (!this.level().isClientSide() && !this.connectedToHypoverse) {
             this.connectedToHypoverse = true;
-            Hypoverse hypoverse = Hypoverse.fromLevel(this.level());
-            if (hypoverse != null) {
-                Optional<UUID> uuid = this.getCanvasUUID();
-                uuid.ifPresent(hypoverse::connectCanvas);
-                if (uuid.isPresent()) {
-                    return true;
-                }
+            ServerHypoverse hypoverse = Hypoverse.fromServer(((ServerLevel) this.level()).getServer());
+            Optional<UUID> uuid = this.getCanvasUUID();
+            uuid.ifPresent(hypoverse::connectCanvas);
+            if (uuid.isPresent()) {
+                return true;
             }
         }
         return false;
@@ -177,10 +172,8 @@ public class EldritchPaintingEntity extends HangingEntity {
     private void disconnectFromHypoverse() {
         if (!this.level().isClientSide() && this.connectedToHypoverse) {
             this.connectedToHypoverse = false;
-            Hypoverse hypoverse = Hypoverse.fromLevel(this.level());
-            if (hypoverse != null) {
-                this.getCanvasUUID().ifPresent(hypoverse::disconnectCanvas);
-            }
+            ServerHypoverse hypoverse = Hypoverse.fromServer(((ServerLevel) this.level()).getServer());
+            this.getCanvasUUID().ifPresent(hypoverse::disconnectCanvas);
         }
     }
 
@@ -240,7 +233,7 @@ public class EldritchPaintingEntity extends HangingEntity {
                                     }
                                 }
                             } else if (isGhast) {
-                                HypoEntity hypoEntity = new HypoEntity(zone, this.random.nextInt(3));
+                                HypoEntity hypoEntity = new HypoEntity(this.random.nextInt(3));
                                 zone.addEntity(hypoEntity);
                                 return InteractionResult.SUCCESS_SERVER;
                             }

@@ -9,6 +9,7 @@ import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import phanastrae.voidstain_hypoidol.common.duck.HypoverseAccess;
 import phanastrae.voidstain_hypoidol.common.hypoverse.Hypoverse;
+import phanastrae.voidstain_hypoidol.common.hypoverse.ServerHypoverse;
 
 @Mixin(MinecraftServer.class)
 public class MinecraftServerMixin implements HypoverseAccess {
@@ -19,7 +20,7 @@ public class MinecraftServerMixin implements HypoverseAccess {
 
     @Inject(method = "createLevels", at = @At("RETURN"))
     private void voidstain_hypoidol$createHypoverse(CallbackInfo ci) {
-        this.hypoverse = new Hypoverse();
+        this.hypoverse = new ServerHypoverse((MinecraftServer) (Object) this);
     }
 
     @Override

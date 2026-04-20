@@ -15,8 +15,7 @@ public class VoidstainClientPacketListener {
 
     public static void init() {
         register(StartWatchingHypoZonePayload.TYPE, ((payload, context) -> {
-            Hypoverse hypoverse = VoidstainHypoidolClient.HYPOVERSE;
-            hypoverse.putZone(payload.uuid(), new HypoZone(hypoverse, payload.uuid(), payload.backgroundId()));
+            VoidstainHypoidolClient.HYPOVERSE.putZone(payload.uuid(), new HypoZone(payload.uuid(), payload.backgroundId()));
         }));
 
         register(UpdateHypoZonePayload.TYPE, ((payload, context) -> {
@@ -39,7 +38,7 @@ public class VoidstainClientPacketListener {
             if (zone == null) {
                 VoidstainHypoidol.LOGGER.warn("Received payload for missing HypoZone " + payload.zoneUUID());
             } else {
-                zone.addEntity(new HypoEntity(zone, payload.horrorId()));
+                zone.addEntity(new HypoEntity(payload.horrorId()));
             }
         }));
 

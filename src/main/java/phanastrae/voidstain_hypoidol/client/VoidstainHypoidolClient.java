@@ -7,15 +7,15 @@ import net.fabricmc.fabric.api.client.rendering.v1.InvalidateRenderStateCallback
 import net.fabricmc.fabric.api.client.rendering.v1.level.LevelRenderEvents;
 import net.minecraft.client.Minecraft;
 import phanastrae.voidstain_hypoidol.client.gui.VoidstainDebugScreenEntries;
+import phanastrae.voidstain_hypoidol.client.hypoverse.ClientHypoverse;
 import phanastrae.voidstain_hypoidol.client.network.VoidstainClientPacketListener;
 import phanastrae.voidstain_hypoidol.client.renderer.canvas.EldritchCanvasHandler;
 import phanastrae.voidstain_hypoidol.client.renderer.canvas.EldritchCanvasRenderer;
 import phanastrae.voidstain_hypoidol.client.renderer.entity.VoidstainEntityRenderers;
-import phanastrae.voidstain_hypoidol.common.hypoverse.Hypoverse;
 
 public class VoidstainHypoidolClient implements ClientModInitializer {
 
-    public static Hypoverse HYPOVERSE = new Hypoverse();
+    public static ClientHypoverse HYPOVERSE = new ClientHypoverse();
 
     @Override
     public void onInitializeClient() {
@@ -43,7 +43,7 @@ public class VoidstainHypoidolClient implements ClientModInitializer {
     public static void resetData() {
         // called on world leave
         EldritchCanvasHandler.clearCanvases();
-        HYPOVERSE = new Hypoverse();
+        HYPOVERSE = new ClientHypoverse();
     }
 
     private static void close(Minecraft minecraft) {
