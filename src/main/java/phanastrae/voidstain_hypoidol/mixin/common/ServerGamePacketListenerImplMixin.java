@@ -27,7 +27,7 @@ public abstract class ServerGamePacketListenerImplMixin
     }
 
     @Unique
-    private final HypoverseWatcher hypoverseWatcher = new HypoverseWatcher();
+    private final HypoverseWatcher hypoverseWatcher = new HypoverseWatcher((ServerGamePacketListenerImpl) (Object) this);
 
     @Override
     public HypoverseWatcher voidstain_hypoidol$getHypoverseWatcher() {

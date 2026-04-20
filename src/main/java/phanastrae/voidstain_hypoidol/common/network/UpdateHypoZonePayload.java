@@ -9,14 +9,14 @@ import phanastrae.voidstain_hypoidol.common.VoidstainHypoidol;
 
 import java.util.UUID;
 
-public record StartWatchingHypoZonePayload(UUID uuid, int backgroundId) implements CustomPacketPayload {
-    public static final CustomPacketPayload.Type<StartWatchingHypoZonePayload> TYPE = new CustomPacketPayload.Type<>(VoidstainHypoidol.id("start_watching_hypozone"));
-    public static final StreamCodec<FriendlyByteBuf, StartWatchingHypoZonePayload> STREAM_CODEC = StreamCodec.composite(
+public record UpdateHypoZonePayload(UUID uuid, int backgroundId) implements CustomPacketPayload {
+    public static final Type<UpdateHypoZonePayload> TYPE = new Type<>(VoidstainHypoidol.id("update_hypozone"));
+    public static final StreamCodec<FriendlyByteBuf, UpdateHypoZonePayload> STREAM_CODEC = StreamCodec.composite(
             UUIDUtil.STREAM_CODEC,
-            StartWatchingHypoZonePayload::uuid,
+            UpdateHypoZonePayload::uuid,
             ByteBufCodecs.INT,
-            StartWatchingHypoZonePayload::backgroundId,
-            StartWatchingHypoZonePayload::new
+            UpdateHypoZonePayload::backgroundId,
+            UpdateHypoZonePayload::new
     );
 
     @Override

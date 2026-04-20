@@ -76,7 +76,7 @@ public class EldritchCanvasRenderer {
 
         hypoverse.forEachZone(zone -> {
             HypoZoneRenderState levelRenderState = new HypoZoneRenderState();
-            levelRenderState.backgroundId = zone.backgroundId;
+            levelRenderState.backgroundId = zone.getBackgroundId();
 
             for (HypoEntity entity : zone.entities) {
                 HypoEntityRenderState entityRenderState = new HypoEntityRenderState();

@@ -22,11 +22,25 @@ public class Hypoverse {
     private final IdWatcher zoneIdWatcher = new IdWatcher();
 
     public void tick(boolean runsNormally) {
-        this.zones.values().forEach(level -> level.tick(runsNormally));
+        this.zones.values().forEach(zone -> zone.tick(runsNormally));
+        this.zones.forEach((uuid, zone) -> {
+            if (zone.isDirty()) {
+                zone.sendUpdates();
+            }
+        });
+    }
+
+    @Nullable
+    public HypoZone getZone(UUID id) {
+        return this.zones.getOrDefault(id, null);
     }
 
     public HypoZone getOrCreateZone(UUID id) {
-        return this.zones.computeIfAbsent(id, (uuid) -> new HypoZone(this, uuid));
+        return this.zones.computeIfAbsent(id, (uuid) -> new HypoZone(this, uuid, random.nextInt(3)));
+    }
+
+    public void putZone(UUID id, HypoZone zone) {
+        this.zones.put(id, zone);
     }
 
     public void removeZone(UUID uuid) {
