@@ -35,8 +35,9 @@ public abstract class Hypoverse {
         return this.zones.getOrDefault(id, null);
     }
 
-    public void removeZone(UUID uuid) {
-        this.zones.remove(uuid);
+    @Nullable
+    public HypoZone removeZone(UUID uuid) {
+        return this.zones.remove(uuid);
     }
 
     @Nullable

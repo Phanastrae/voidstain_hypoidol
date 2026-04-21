@@ -1,6 +1,8 @@
 package phanastrae.voidstain_hypoidol.common.hypoverse.hypoentity;
 
 import net.minecraft.nbt.CompoundTag;
+import net.minecraft.sounds.SoundEvents;
+import net.minecraft.sounds.SoundSource;
 import phanastrae.voidstain_hypoidol.common.hypoverse.HypoZone;
 import phanastrae.voidstain_hypoidol.common.network.UpdateHorrorFullnessPayload;
 
@@ -54,6 +56,7 @@ public class HorrorHypoEntity extends HypoEntity {
     public void eat(MorselHypoEntity morsel) {
         morsel.setRemoved();
         this.setFullness(this.fullness + 100);
+        this.playSound(SoundEvents.GENERIC_EAT.value(), SoundSource.NEUTRAL, 0.08f, 1.2f + this.random.nextFloat() * 0.3f);
     }
 
     public void setFullness(float fullness) {
@@ -80,6 +83,6 @@ public class HorrorHypoEntity extends HypoEntity {
     }
 
     public float getSizeModifier() {
-        return 0.125f * (float)Math.pow(2, 3 * Math.clamp(this.fullness / 4000, 0, 1));
+        return 0.125f * (float) Math.pow(2, 3 * Math.clamp(this.fullness / 4000, 0, 1));
     }
 }

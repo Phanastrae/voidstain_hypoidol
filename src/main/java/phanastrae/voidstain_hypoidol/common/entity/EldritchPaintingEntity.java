@@ -15,7 +15,9 @@ import net.minecraft.network.syncher.SynchedEntityData;
 import net.minecraft.server.level.ServerEntity;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.sounds.SoundEvent;
 import net.minecraft.sounds.SoundEvents;
+import net.minecraft.sounds.SoundSource;
 import net.minecraft.util.Mth;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
@@ -168,7 +170,7 @@ public class EldritchPaintingEntity extends HangingEntity {
             this.connectedToHypoverse = true;
             ServerHypoverse hypoverse = Hypoverse.fromServer(((ServerLevel) this.level()).getServer());
             Optional<UUID> uuid = this.getCanvasUUID();
-            uuid.ifPresent(hypoverse::connectCanvas);
+            uuid.ifPresent(id -> hypoverse.connectCanvas(id, this));
             if (uuid.isPresent()) {
                 return true;
             }
@@ -180,7 +182,7 @@ public class EldritchPaintingEntity extends HangingEntity {
         if (!this.level().isClientSide() && this.connectedToHypoverse) {
             this.connectedToHypoverse = false;
             ServerHypoverse hypoverse = Hypoverse.fromServer(((ServerLevel) this.level()).getServer());
-            this.getCanvasUUID().ifPresent(hypoverse::disconnectCanvas);
+            this.getCanvasUUID().ifPresent(id -> hypoverse.disconnectCanvas(id, this));
         }
     }
 
@@ -243,7 +245,7 @@ public class EldritchPaintingEntity extends HangingEntity {
                                 }
                             } else if (isGhast) {
                                 HypoEntity hypoEntity = new HorrorHypoEntity(zone, this.random.nextInt(3));
-                                Vec2 pos = getCanvasPosition(location);
+                                Vec2 pos = relativePosToCanvasPos(location);
                                 hypoEntity.setPos(pos.x, pos.y);
                                 zone.addEntity(hypoEntity);
 
@@ -253,7 +255,7 @@ public class EldritchPaintingEntity extends HangingEntity {
                                 return InteractionResult.SUCCESS_SERVER;
                             } else if (isFood) {
                                 HypoEntity hypoEntity = new MorselHypoEntity(zone);
-                                Vec2 pos = getCanvasPosition(location);
+                                Vec2 pos = relativePosToCanvasPos(location);
                                 hypoEntity.setPos(pos.x, pos.y);
                                 zone.addEntity(hypoEntity);
 
@@ -270,22 +272,38 @@ public class EldritchPaintingEntity extends HangingEntity {
         return super.interact(player, hand, location);
     }
 
-    public Vec2 getCanvasPosition(Vec3 clickPos) {
+    public Vec2 relativePosToCanvasPos(Vec3 entityRelativePos) {
         Direction forwardsDirection = this.getDirection();
         Direction canvasXPlusDirection = forwardsDirection.getCounterClockWise();
-
         Vec3 canvasXVec = canvasXPlusDirection.getUnitVec3();
         Vec3 canvasYVec = Direction.UP.getUnitVec3();
-
         float width = getWidth();
         float height = getWidth();
 
-        Vec3 relativePos = clickPos.add(canvasXVec.scale(width / 2f)).add(canvasYVec.scale(height / 2f));
+        Vec3 originOffset = entityRelativePos.add(canvasXVec.scale(width / 2f)).add(canvasYVec.scale(height / 2f));
 
-        float canvasX = (float) relativePos.dot(canvasXVec);
-        float canvasY = (float) relativePos.dot(canvasYVec);
+        float canvasX = (float) originOffset.dot(canvasXVec);
+        float canvasY = (float) originOffset.dot(canvasYVec);
 
         return new Vec2(canvasX, canvasY);
+    }
+
+    public Vec3 canvasPosToRelativePos(Vec2 canvasPos) {
+        Direction forwardsDirection = this.getDirection();
+        Direction canvasXPlusDirection = forwardsDirection.getCounterClockWise();
+        Vec3 canvasXVec = canvasXPlusDirection.getUnitVec3();
+        Vec3 canvasYVec = Direction.UP.getUnitVec3();
+        float width = getWidth();
+        float height = getWidth();
+
+        Vec3 originOffset = canvasXVec.scale(canvasPos.x).add(canvasYVec.scale(canvasPos.y));
+        return originOffset.subtract(canvasXVec.scale(width / 2f)).subtract(canvasYVec.scale(height / 2f));
+    }
+
+    public void playCanvasSound(float x, float y, SoundEvent soundEvent, SoundSource source, float volume, float pitch) {
+        Vec3 entityRelativePos = canvasPosToRelativePos(new Vec2(x, y));
+        Vec3 worldPos = this.position().add(entityRelativePos);
+        this.level().playSound(this, worldPos.x, worldPos.y, worldPos.z, soundEvent, source, volume, pitch);
     }
 
     @Override

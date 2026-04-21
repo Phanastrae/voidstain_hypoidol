@@ -6,6 +6,8 @@ import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.network.codec.StreamCodec;
 import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
+import net.minecraft.sounds.SoundEvent;
+import net.minecraft.sounds.SoundSource;
 import net.minecraft.util.Mth;
 import net.minecraft.util.RandomSource;
 import net.minecraft.world.item.component.TypedEntityData;
@@ -171,6 +173,14 @@ public abstract class HypoEntity {
             this.needsSync = false;
         }
         this.syncTickCount++;
+    }
+
+    public void playSound(SoundEvent soundEvent, SoundSource source, float volume, float pitch) {
+        this.zone.playSound(this.x, this.y, soundEvent, source, volume, pitch);
+    }
+
+    public void playSound(float x, float y, SoundEvent soundEvent, SoundSource source, float volume, float pitch) {
+        this.zone.playSound(x, y, soundEvent, source, volume, pitch);
     }
 
     public abstract float getWidth();

@@ -6,6 +6,8 @@ import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking;
 import net.minecraft.core.UUIDUtil;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
+import net.minecraft.sounds.SoundEvent;
+import net.minecraft.sounds.SoundSource;
 import net.minecraft.util.RandomSource;
 import net.minecraft.world.item.component.TypedEntityData;
 import net.minecraft.world.level.saveddata.SavedData;
@@ -34,6 +36,7 @@ public class HypoZone extends SavedData {
 
     private final RandomSource random = RandomSource.create();
     private final Set<HypoverseWatcher> watchers = new HashSet<>();
+    private final Set<EldritchCanvas> linkedCanvases = new HashSet<>();
 
     public final UUID uuid;
     private int backgroundId;
@@ -142,6 +145,14 @@ public class HypoZone extends SavedData {
         this.watchers.remove(watcher);
     }
 
+    public void addLinkedCanvas(EldritchCanvas canvas) {
+        this.linkedCanvases.add(canvas);
+    }
+
+    public void removeLinkedCanvas(EldritchCanvas canvas) {
+        this.linkedCanvases.remove(canvas);
+    }
+
     public void addEntity(HypoEntity entity) {
         this.entities.add(entity);
         this.sendToAllWatchers(() -> getPayload(entity));
@@ -174,5 +185,9 @@ public class HypoZone extends SavedData {
                 ServerPlayNetworking.send(watcher.getPlayer(), payload);
             });
         }
+    }
+
+    public void playSound(float x, float y, SoundEvent soundEvent, SoundSource source, float volume, float pitch) {
+        this.linkedCanvases.forEach(canvas -> canvas.playSound(x, y, soundEvent, source, volume, pitch));
     }
 }
