@@ -39,6 +39,7 @@ public abstract class HypoEntity {
     public float y;
     public float vx;
     public float vy;
+    private boolean isRemoved = false;
 
     private int syncTickCount;
     private final int updateInterval = 10;
@@ -104,8 +105,15 @@ public abstract class HypoEntity {
         return this.uuid;
     }
 
+    public HypoZone getZone() {
+        return this.zone;
+    }
+
     public void tick(boolean runsNormally, boolean onServer) {
         if (runsNormally) {
+            float hWidth = this.getWidth() / 2;
+            float hHeight = this.getHeight() / 2;
+
             this.ox = x;
             this.oy = y;
 
@@ -115,26 +123,26 @@ public abstract class HypoEntity {
             this.x += this.vx;
             this.y += this.vy;
 
-            if (this.x < 0 && this.vx < 0) {
-                this.x = 0;
+            if (this.x < hWidth && this.vx < 0) {
+                this.x = hWidth;
                 this.vx = -this.vx;
                 this.needsSync = true;
             }
 
-            if (this.x > 3 && this.vx > 0) {
-                this.x = 3;
+            if (this.x > 3 - hWidth && this.vx > 0) {
+                this.x = 3 - hWidth;
                 this.vx = -this.vx;
                 this.needsSync = true;
             }
 
-            if (this.y < 0 && this.vy < 0) {
-                this.y = 0;
+            if (this.y < hHeight && this.vy < 0) {
+                this.y = hHeight;
                 this.vy = -this.vy;
                 this.needsSync = true;
             }
 
-            if (this.y > 3 && this.vy > 0) {
-                this.y = 3;
+            if (this.y > 3 - hHeight && this.vy > 0) {
+                this.y = 3 - hHeight;
                 this.vy = -this.vy;
                 this.needsSync = true;
             }
@@ -163,5 +171,17 @@ public abstract class HypoEntity {
             this.needsSync = false;
         }
         this.syncTickCount++;
+    }
+
+    public abstract float getWidth();
+
+    public abstract float getHeight();
+
+    public void setRemoved() {
+        this.isRemoved = true;
+    }
+
+    public boolean isRemoved() {
+        return this.isRemoved;
     }
 }

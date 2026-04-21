@@ -13,10 +13,7 @@ import net.minecraft.world.level.saveddata.SavedDataType;
 import phanastrae.voidstain_hypoidol.common.VoidstainHypoidol;
 import phanastrae.voidstain_hypoidol.common.hypoverse.hypoentity.HypoEntity;
 import phanastrae.voidstain_hypoidol.common.hypoverse.hypoentity.HypoEntityType;
-import phanastrae.voidstain_hypoidol.common.network.AddHypoEntityPayload;
-import phanastrae.voidstain_hypoidol.common.network.HypoverseWatcher;
-import phanastrae.voidstain_hypoidol.common.network.StartWatchingHypoZonePayload;
-import phanastrae.voidstain_hypoidol.common.network.UpdateHypoZonePayload;
+import phanastrae.voidstain_hypoidol.common.network.*;
 
 import java.util.*;
 import java.util.function.Supplier;
@@ -77,12 +74,38 @@ public class HypoZone extends SavedData {
         this.entities.forEach(e -> e.tick(runsNormally, onServer));
 
         if (onServer) {
-            this.setDirty();
+            this.entities.forEach(e -> {
+                if (e.isRemoved()) {
+                    this.sendToAllWatchers(() -> new RemoveHypoEntityPayload(e.getUuid()));
+                }
+            });
+            this.entities.removeIf(HypoEntity::isRemoved);
 
             if (!this.watchers.isEmpty()) {
                 this.entities.forEach(e -> e.sendChanges((payload) -> this.sendToAllWatchers(() -> payload)));
             }
+
+            this.setDirty();
         }
+    }
+
+    public Collection<HypoEntity> getEntitiesInArea(float minX, float maxX, float minY, float maxY) {
+        List<HypoEntity> es = new ArrayList<>();
+        for (HypoEntity entity : this.entities) {
+            if (entity.isRemoved()) {
+                continue;
+            }
+
+            float eminX = entity.x - entity.getWidth() / 2;
+            float emaxX = entity.x + entity.getHeight() / 2;
+            float eminY = entity.y - entity.getWidth() / 2;
+            float emaxY = entity.y + entity.getHeight() / 2;
+
+            if (eminX <= maxX && minX <= emaxX && eminY <= maxY && minY <= emaxY) {
+                es.add(entity);
+            }
+        }
+        return es;
     }
 
     public void setBackgroundId(int backgroundId) {

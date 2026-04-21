@@ -85,6 +85,7 @@ public class EldritchCanvasRenderer {
                 if (entity instanceof HorrorHypoEntity horrorHypoEntity) {
                     HorrorRenderState state = new HorrorRenderState();
                     state.horrorId = horrorHypoEntity.getHorrorId();
+                    state.sizeModifier = horrorHypoEntity.getSizeModifier();
 
                     entityRenderState = state;
                 } else {
@@ -146,12 +147,16 @@ public class EldritchCanvasRenderer {
                 float dx = entityRenderState.x / 3;
                 float dy = entityRenderState.y / 3;
                 if (entityRenderState instanceof HorrorRenderState horrorRenderState) {
+                    float sx = 1 / 6f * horrorRenderState.sizeModifier;
+                    float sy = 1 / 6f * horrorRenderState.sizeModifier;
                     drawWithTexture(canvasTexture, HORROR_IDENTIFIERS[horrorRenderState.horrorId], (builder) -> {
-                        drawQuad(builder, -1 / 6f + dx, 1 / 6f + dx, -1 / 6f + dy, 1 / 6f + dy);
+                        drawQuad(builder, dx - sx, dx + sx, dy - sy, dy + sy);
                     });
                 } else {
+                    float sx = 1 / 12f;
+                    float sy = 1 / 12f;
                     drawWithTexture(canvasTexture, MORSEL_IDENTIFIER, (builder) -> {
-                        drawQuad(builder, -1 / 12f + dx, 1 / 12f + dx, -1 / 12f + dy, 1 / 12f + dy);
+                        drawQuad(builder, dx - sx, dx + sx, dy - sy, dy + sy);
                     });
                 }
             }

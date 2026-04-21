@@ -9,6 +9,7 @@ import phanastrae.voidstain_hypoidol.common.VoidstainHypoidol;
 import phanastrae.voidstain_hypoidol.common.hypoverse.EldritchCanvas;
 import phanastrae.voidstain_hypoidol.common.hypoverse.HypoZone;
 import phanastrae.voidstain_hypoidol.common.hypoverse.Hypoverse;
+import phanastrae.voidstain_hypoidol.common.hypoverse.hypoentity.HorrorHypoEntity;
 import phanastrae.voidstain_hypoidol.common.hypoverse.hypoentity.HypoEntity;
 import phanastrae.voidstain_hypoidol.common.network.*;
 
@@ -55,6 +56,31 @@ public class VoidstainClientPacketListener {
                 entity.setVelocity(payload.vx(), payload.vy());
             } else {
                 VoidstainHypoidol.LOGGER.warn("Received payload for missing HypoEntity {}", payload.entityUUID());
+            }
+        }));
+
+        register(RemoveHypoEntityPayload.TYPE, ((payload, context) -> {
+            ClientHypoverse hypoverse = VoidstainHypoidolClient.HYPOVERSE;
+            HypoEntity entity = hypoverse.entities.get(payload.entityUUID());
+            if (entity != null) {
+                entity.getZone().entities.remove(entity);
+                hypoverse.entities.remove(payload.entityUUID());
+            } else {
+                VoidstainHypoidol.LOGGER.warn("Tried to remove missing HypoEntity {}", payload.entityUUID());
+            }
+        }));
+
+        register(UpdateHorrorFullnessPayload.TYPE, ((payload, context) -> {
+            ClientHypoverse hypoverse = VoidstainHypoidolClient.HYPOVERSE;
+            HypoEntity entity = hypoverse.entities.get(payload.entityUUID());
+            if (entity != null) {
+                if (entity instanceof HorrorHypoEntity horror) {
+                    horror.setFullness(payload.fullness());
+                } else {
+                    VoidstainHypoidol.LOGGER.warn("Tried to set fullness of invalid HypoEntity {}", payload.entityUUID());
+                }
+            } else {
+                VoidstainHypoidol.LOGGER.warn("Tried to update missing HypoEntity {}", payload.entityUUID());
             }
         }));
 

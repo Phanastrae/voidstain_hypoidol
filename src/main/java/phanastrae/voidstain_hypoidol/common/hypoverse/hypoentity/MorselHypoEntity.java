@@ -11,4 +11,14 @@ public class MorselHypoEntity extends HypoEntity {
     public MorselHypoEntity(HypoZone zone) {
         super(HypoEntityTypes.MORSEL, zone);
     }
+
+    @Override
+    public float getWidth() {
+        return 0.4f;
+    }
+
+    @Override
+    public float getHeight() {
+        return 0.4f;
+    }
 }

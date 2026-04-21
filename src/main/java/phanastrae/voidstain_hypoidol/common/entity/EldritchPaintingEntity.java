@@ -251,8 +251,8 @@ public class EldritchPaintingEntity extends HangingEntity {
                                 return InteractionResult.SUCCESS_SERVER;
                             } else if (isFood) {
                                 HypoEntity hypoEntity = new MorselHypoEntity(zone);
-                                zone.addEntity(hypoEntity);
                                 hypoEntity.setPos(1.5f, 1.5f);
+                                zone.addEntity(hypoEntity);
 
                                 if (!player.hasInfiniteMaterials()) {
                                     itemStack.split(1);
