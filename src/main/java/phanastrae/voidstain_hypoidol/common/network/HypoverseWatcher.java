@@ -5,7 +5,6 @@ import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.server.network.ServerGamePacketListenerImpl;
 import phanastrae.voidstain_hypoidol.common.duck.HypoverseWatcherAccess;
 import phanastrae.voidstain_hypoidol.common.hypoverse.EldritchCanvas;
-import phanastrae.voidstain_hypoidol.common.hypoverse.HypoEntity;
 import phanastrae.voidstain_hypoidol.common.hypoverse.HypoZone;
 import phanastrae.voidstain_hypoidol.common.hypoverse.Hypoverse;
 

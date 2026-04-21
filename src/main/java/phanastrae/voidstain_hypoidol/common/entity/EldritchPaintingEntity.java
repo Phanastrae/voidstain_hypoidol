@@ -32,7 +32,13 @@ import net.minecraft.world.level.storage.ValueOutput;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
 import org.jspecify.annotations.Nullable;
-import phanastrae.voidstain_hypoidol.common.hypoverse.*;
+import phanastrae.voidstain_hypoidol.common.hypoverse.EldritchCanvas;
+import phanastrae.voidstain_hypoidol.common.hypoverse.HypoZone;
+import phanastrae.voidstain_hypoidol.common.hypoverse.Hypoverse;
+import phanastrae.voidstain_hypoidol.common.hypoverse.ServerHypoverse;
+import phanastrae.voidstain_hypoidol.common.hypoverse.hypoentity.HorrorHypoEntity;
+import phanastrae.voidstain_hypoidol.common.hypoverse.hypoentity.HypoEntity;
+import phanastrae.voidstain_hypoidol.common.hypoverse.hypoentity.MorselHypoEntity;
 import phanastrae.voidstain_hypoidol.common.item.CanvasData;
 import phanastrae.voidstain_hypoidol.common.item.VoidstainDataComponents;
 import phanastrae.voidstain_hypoidol.common.item.VoidstainItems;
@@ -210,7 +216,8 @@ public class EldritchPaintingEntity extends HangingEntity {
         Optional<UUID> canvasUUID = this.getCanvasUUID();
         boolean isBlaze = itemStack.is(Items.BLAZE_POWDER);
         boolean isGhast = itemStack.is(Items.GHAST_TEAR);
-        if (canvasUUID.isPresent() && !itemStack.isEmpty() && (isBlaze || isGhast)) {
+        boolean isFood = itemStack.is(Items.CHORUS_FRUIT);
+        if (canvasUUID.isPresent() && !itemStack.isEmpty() && (isBlaze || isGhast || isFood)) {
             if (player.level().isClientSide()) {
                 return InteractionResult.SUCCESS_SERVER;
             } else {
@@ -234,7 +241,15 @@ public class EldritchPaintingEntity extends HangingEntity {
                                     }
                                 }
                             } else if (isGhast) {
-                                HypoEntity hypoEntity = new HypoEntity(this.random.nextInt(3));
+                                HypoEntity hypoEntity = new HorrorHypoEntity(zone, this.random.nextInt(3));
+                                zone.addEntity(hypoEntity);
+
+                                if (!player.hasInfiniteMaterials()) {
+                                    itemStack.split(1);
+                                }
+                                return InteractionResult.SUCCESS_SERVER;
+                            } else if (isFood) {
+                                HypoEntity hypoEntity = new MorselHypoEntity(zone);
                                 zone.addEntity(hypoEntity);
 
                                 if (!player.hasInfiniteMaterials()) {

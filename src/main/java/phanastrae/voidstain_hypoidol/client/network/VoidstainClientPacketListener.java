@@ -6,9 +6,9 @@ import phanastrae.voidstain_hypoidol.client.VoidstainHypoidolClient;
 import phanastrae.voidstain_hypoidol.client.renderer.canvas.EldritchCanvasHandler;
 import phanastrae.voidstain_hypoidol.common.VoidstainHypoidol;
 import phanastrae.voidstain_hypoidol.common.hypoverse.EldritchCanvas;
-import phanastrae.voidstain_hypoidol.common.hypoverse.HypoEntity;
 import phanastrae.voidstain_hypoidol.common.hypoverse.HypoZone;
 import phanastrae.voidstain_hypoidol.common.hypoverse.Hypoverse;
+import phanastrae.voidstain_hypoidol.common.hypoverse.hypoentity.HypoEntity;
 import phanastrae.voidstain_hypoidol.common.network.*;
 
 public class VoidstainClientPacketListener {
@@ -22,7 +22,7 @@ public class VoidstainClientPacketListener {
             Hypoverse hypoverse = VoidstainHypoidolClient.HYPOVERSE;
             HypoZone zone = hypoverse.getZone(payload.uuid());
             if (zone == null) {
-                VoidstainHypoidol.LOGGER.warn("Received payload for missing HypoZone " + payload.uuid());
+                VoidstainHypoidol.LOGGER.warn("Received payload for missing HypoZone {}", payload.uuid());
             } else {
                 zone.setBackgroundId(payload.backgroundId());
             }
@@ -36,9 +36,12 @@ public class VoidstainClientPacketListener {
             Hypoverse hypoverse = VoidstainHypoidolClient.HYPOVERSE;
             HypoZone zone = hypoverse.getZone(payload.zoneUUID());
             if (zone == null) {
-                VoidstainHypoidol.LOGGER.warn("Received payload for missing HypoZone " + payload.zoneUUID());
+                VoidstainHypoidol.LOGGER.warn("Received payload for missing HypoZone {}", payload.zoneUUID());
             } else {
-                zone.addEntity(new HypoEntity(payload.horrorId()));
+                HypoEntity entity = HypoEntity.fromData(zone, payload.data());
+                if (entity != null) {
+                    zone.addEntity(entity);
+                }
             }
         }));
 

@@ -18,24 +18,26 @@ import org.joml.Matrix4fStack;
 import phanastrae.voidstain_hypoidol.client.VoidstainHypoidolClient;
 import phanastrae.voidstain_hypoidol.common.VoidstainHypoidol;
 import phanastrae.voidstain_hypoidol.common.hypoverse.EldritchCanvas;
-import phanastrae.voidstain_hypoidol.common.hypoverse.HypoEntity;
 import phanastrae.voidstain_hypoidol.common.hypoverse.Hypoverse;
+import phanastrae.voidstain_hypoidol.common.hypoverse.hypoentity.HorrorHypoEntity;
+import phanastrae.voidstain_hypoidol.common.hypoverse.hypoentity.HypoEntity;
 
 import java.util.UUID;
 import java.util.function.BiFunction;
 import java.util.function.Consumer;
 
 public class EldritchCanvasRenderer {
-    private final static Identifier[] BACKGROUND_IDENTIFIERS = new Identifier[]{
+    private static final Identifier[] BACKGROUND_IDENTIFIERS = new Identifier[]{
             VoidstainHypoidol.id("textures/entity/canvas/painting/background_0.png"),
             VoidstainHypoidol.id("textures/entity/canvas/painting/background_1.png"),
             VoidstainHypoidol.id("textures/entity/canvas/painting/background_2.png")
     };
-    private final static Identifier[] HORROR_IDENTIFIERS = new Identifier[]{
+    private static final Identifier[] HORROR_IDENTIFIERS = new Identifier[]{
             VoidstainHypoidol.id("textures/entity/canvas/painting/horror_0.png"),
             VoidstainHypoidol.id("textures/entity/canvas/painting/horror_1.png"),
             VoidstainHypoidol.id("textures/entity/canvas/painting/horror_2.png")
     };
+    private static final Identifier MORSEL_IDENTIFIER = VoidstainHypoidol.id("textures/entity/canvas/painting/morsel.png");
 
     public static final AllCanvasRenderState ALL_CANVAS_RENDER_STATE = new AllCanvasRenderState();
     public static final HypoverseRenderState HYPOVERSE_RENDER_STATE = new HypoverseRenderState();
@@ -79,10 +81,18 @@ public class EldritchCanvasRenderer {
             levelRenderState.backgroundId = zone.getBackgroundId();
 
             for (HypoEntity entity : zone.entities) {
-                HypoEntityRenderState entityRenderState = new HypoEntityRenderState();
+                HypoEntityRenderState entityRenderState;
+                if (entity instanceof HorrorHypoEntity horrorHypoEntity) {
+                    HorrorRenderState state = new HorrorRenderState();
+                    state.horrorId = horrorHypoEntity.getHorrorId();
+
+                    entityRenderState = state;
+                } else {
+                    entityRenderState = new HypoEntityRenderState();
+                }
+
                 entityRenderState.x = Mth.lerp(partialTick, entity.ox, entity.x);
                 entityRenderState.y = Mth.lerp(partialTick, entity.oy, entity.y);
-                entityRenderState.horrorId = entity.horrorId;
 
                 levelRenderState.entities.add(entityRenderState);
             }
@@ -135,9 +145,15 @@ public class EldritchCanvasRenderer {
             for (HypoEntityRenderState entityRenderState : zoneRenderState.entities) {
                 float dx = entityRenderState.x / 3;
                 float dy = entityRenderState.y / 3;
-                drawWithTexture(canvasTexture, HORROR_IDENTIFIERS[entityRenderState.horrorId], (builder) -> {
-                    drawQuad(builder, 1 / 3f + dx, 2 / 3f + dx, 1 / 3f + dy, 2 / 3f + dy);
-                });
+                if (entityRenderState instanceof HorrorRenderState horrorRenderState) {
+                    drawWithTexture(canvasTexture, HORROR_IDENTIFIERS[horrorRenderState.horrorId], (builder) -> {
+                        drawQuad(builder, 1 / 3f + dx, 2 / 3f + dx, 1 / 3f + dy, 2 / 3f + dy);
+                    });
+                } else {
+                    drawWithTexture(canvasTexture, MORSEL_IDENTIFIER, (builder) -> {
+                        drawQuad(builder, 5 / 12f + dx, 7 / 12f + dx, 5 / 12f + dy, 7 / 12f + dy);
+                    });
+                }
             }
         }
 

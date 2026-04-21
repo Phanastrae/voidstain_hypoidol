@@ -4,11 +4,15 @@ import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking;
 import net.minecraft.core.UUIDUtil;
+import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
 import net.minecraft.util.RandomSource;
+import net.minecraft.world.item.component.TypedEntityData;
 import net.minecraft.world.level.saveddata.SavedData;
 import net.minecraft.world.level.saveddata.SavedDataType;
 import phanastrae.voidstain_hypoidol.common.VoidstainHypoidol;
+import phanastrae.voidstain_hypoidol.common.hypoverse.hypoentity.HypoEntity;
+import phanastrae.voidstain_hypoidol.common.hypoverse.hypoentity.HypoEntityType;
 import phanastrae.voidstain_hypoidol.common.network.AddHypoEntityPayload;
 import phanastrae.voidstain_hypoidol.common.network.HypoverseWatcher;
 import phanastrae.voidstain_hypoidol.common.network.StartWatchingHypoZonePayload;
@@ -21,7 +25,7 @@ public class HypoZone extends SavedData {
     public static final Codec<HypoZone> CODEC = RecordCodecBuilder.create(i -> i.group(
                     UUIDUtil.CODEC.fieldOf("zone_uuid").forGetter(HypoZone::getUuid),
                     Codec.INT.fieldOf("background_id").forGetter(HypoZone::getBackgroundId),
-                    HypoEntity.CODEC.listOf().fieldOf("entities").forGetter(hz -> hz.entities)
+                    HypoEntity.CODEC.listOf().optionalFieldOf("entity_data", List.of()).forGetter(HypoZone::getEntityData)
             ).apply(i, HypoZone::new)
     );
 
@@ -44,11 +48,29 @@ public class HypoZone extends SavedData {
         this(uuid, backgroundId, List.of());
     }
 
-    public HypoZone(UUID uuid, int backgroundId, List<HypoEntity> entities) {
+    public HypoZone(UUID uuid, int backgroundId, List<TypedEntityData<HypoEntityType<?>>> entityData) {
         this.uuid = uuid;
         this.random.setSeed(uuid.hashCode());
         this.backgroundId = backgroundId;
-        this.entities = new ArrayList<>(entities);
+        this.entities = new ArrayList<>();
+        entityData.forEach(data -> {
+            HypoEntity entity = HypoEntity.fromData(this, data);
+            if (entity != null) {
+                this.entities.add(entity);
+            }
+        });
+    }
+
+    public List<TypedEntityData<HypoEntityType<?>>> getEntityData() {
+        if (this.entities.isEmpty()) {
+            return List.of();
+        } else {
+            List<TypedEntityData<HypoEntityType<?>>> data = new ArrayList<>();
+            for (HypoEntity entity : this.entities) {
+                data.add(entity.getData());
+            }
+            return data;
+        }
     }
 
     public void tick(boolean runsNormally) {
@@ -89,17 +111,24 @@ public class HypoZone extends SavedData {
         this.watchers.remove(watcher);
     }
 
-    public void addEntity(HypoEntity hypoEntity) {
-        this.entities.add(hypoEntity);
-        this.sendToAllWatchers(() -> new AddHypoEntityPayload(this.uuid, hypoEntity.horrorId));
+    public void addEntity(HypoEntity entity) {
+        this.entities.add(entity);
+        this.sendToAllWatchers(() -> getPayload(entity));
         this.setDirty();
     }
 
     public void updateNewWatcher(HypoverseWatcher watcher) {
         ServerPlayNetworking.send(watcher.getPlayer(), new StartWatchingHypoZonePayload(this.uuid, this.getBackgroundId()));
         for (HypoEntity entity : this.entities) {
-            ServerPlayNetworking.send(watcher.getPlayer(), new AddHypoEntityPayload(this.uuid, entity.horrorId));
+            CustomPacketPayload payload = getPayload(entity);
+            ServerPlayNetworking.send(watcher.getPlayer(), payload);
         }
+    }
+
+    private AddHypoEntityPayload getPayload(HypoEntity entity) {
+        CompoundTag tag = new CompoundTag();
+        entity.write(tag);
+        return new AddHypoEntityPayload(this.uuid, TypedEntityData.of(entity.getType(), tag));
     }
 
     public void sendUpdates() {

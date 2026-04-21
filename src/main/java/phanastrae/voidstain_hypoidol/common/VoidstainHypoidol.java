@@ -8,6 +8,7 @@ import org.slf4j.LoggerFactory;
 import phanastrae.voidstain_hypoidol.common.entity.VoidstainEntityDataSerializers;
 import phanastrae.voidstain_hypoidol.common.entity.VoidstainEntityTypes;
 import phanastrae.voidstain_hypoidol.common.hypoverse.Hypoverse;
+import phanastrae.voidstain_hypoidol.common.hypoverse.hypoentity.HypoEntityTypes;
 import phanastrae.voidstain_hypoidol.common.item.VoidstainDataComponents;
 import phanastrae.voidstain_hypoidol.common.item.VoidstainItems;
 import phanastrae.voidstain_hypoidol.common.network.VoidstainPayloads;
@@ -22,11 +23,14 @@ public class VoidstainHypoidol implements ModInitializer {
 
     @Override
     public void onInitialize() {
+        VoidstainRegistries.init();
+
         VoidstainDataComponents.init();
         VoidstainItems.init();
         VoidstainCreativeTabs.init();
 
         VoidstainEntityTypes.init();
+        HypoEntityTypes.init();
 
         VoidstainEntityDataSerializers.init();
         VoidstainPayloads.init();
