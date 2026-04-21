@@ -17,13 +17,17 @@ public abstract class Hypoverse {
     protected final Map<UUID, EldritchCanvas> canvases = new HashMap<>();
     protected final Map<UUID, HypoZone> zones = new HashMap<>();
 
-    public void tick(boolean runsNormally) {
-        this.zones.values().forEach(zone -> zone.tick(runsNormally));
-        this.zones.forEach((uuid, zone) -> {
-            if (zone.isClientDirty()) {
-                zone.sendUpdates();
-            }
-        });
+    public abstract void tick(boolean runsNormally);
+
+    protected void tick(boolean runsNormally, boolean onServer) {
+        this.zones.values().forEach(zone -> zone.tick(runsNormally, onServer));
+        if (onServer) {
+            this.zones.forEach((uuid, zone) -> {
+                if (zone.isClientDirty()) {
+                    zone.sendUpdates();
+                }
+            });
+        }
     }
 
     @Nullable

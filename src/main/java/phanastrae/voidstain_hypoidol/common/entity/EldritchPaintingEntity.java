@@ -242,6 +242,7 @@ public class EldritchPaintingEntity extends HangingEntity {
                                 }
                             } else if (isGhast) {
                                 HypoEntity hypoEntity = new HorrorHypoEntity(zone, this.random.nextInt(3));
+                                hypoEntity.setPos(1.5f, 1.5f);
                                 zone.addEntity(hypoEntity);
 
                                 if (!player.hasInfiniteMaterials()) {
@@ -251,6 +252,7 @@ public class EldritchPaintingEntity extends HangingEntity {
                             } else if (isFood) {
                                 HypoEntity hypoEntity = new MorselHypoEntity(zone);
                                 zone.addEntity(hypoEntity);
+                                hypoEntity.setPos(1.5f, 1.5f);
 
                                 if (!player.hasInfiniteMaterials()) {
                                     itemStack.split(1);

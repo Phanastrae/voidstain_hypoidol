@@ -4,6 +4,7 @@ import net.minecraft.nbt.CompoundTag;
 import phanastrae.voidstain_hypoidol.common.hypoverse.HypoZone;
 
 public class HorrorHypoEntity extends HypoEntity {
+    public static final String KEY_HORROR_ID = "horror_id";
 
     private int horrorId;
 
@@ -17,15 +18,15 @@ public class HorrorHypoEntity extends HypoEntity {
     }
 
     @Override
-    public void write(CompoundTag compoundTag) {
-        super.write(compoundTag);
-        compoundTag.putInt("horror_id", this.horrorId);
+    public void write(CompoundTag output) {
+        super.write(output);
+        output.putInt(KEY_HORROR_ID, this.horrorId);
     }
 
     @Override
-    public void read(CompoundTag compoundTag) {
-        super.read(compoundTag);
-        compoundTag.getInt("horror_id").ifPresent(id -> this.horrorId = id);
+    public void read(CompoundTag input) {
+        super.read(input);
+        input.getInt(KEY_HORROR_ID).ifPresent(id -> this.horrorId = id);
     }
 
     public int getHorrorId() {

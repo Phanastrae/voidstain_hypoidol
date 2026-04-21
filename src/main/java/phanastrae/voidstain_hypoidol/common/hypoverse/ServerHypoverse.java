@@ -16,6 +16,11 @@ public class ServerHypoverse extends Hypoverse {
         this.server = server;
     }
 
+    @Override
+    public void tick(boolean runsNormally) {
+        this.tick(runsNormally, true);
+    }
+
     public void connectCanvas(UUID uuid) {
         if (this.canvasIdWatcher.startWatchingId(uuid)) {
             UUID zoneId = this.getOrCreateCanvas(uuid).getZoneId();

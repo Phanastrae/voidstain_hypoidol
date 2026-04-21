@@ -12,7 +12,7 @@ import phanastrae.voidstain_hypoidol.common.hypoverse.hypoentity.HypoEntityType;
 import java.util.UUID;
 
 public record AddHypoEntityPayload(UUID zoneUUID, TypedEntityData<HypoEntityType<?>> data) implements CustomPacketPayload {
-    public static final Type<AddHypoEntityPayload> TYPE = new Type<>(VoidstainHypoidol.id("add_hypo_entity"));
+    public static final Type<AddHypoEntityPayload> TYPE = new Type<>(VoidstainHypoidol.id("add_hypoentity"));
     public static final StreamCodec<RegistryFriendlyByteBuf, AddHypoEntityPayload> STREAM_CODEC = StreamCodec.composite(
             UUIDUtil.STREAM_CODEC,
             AddHypoEntityPayload::zoneUUID,

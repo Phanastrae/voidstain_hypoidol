@@ -3,6 +3,7 @@ package phanastrae.voidstain_hypoidol.client.network;
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking;
 import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
 import phanastrae.voidstain_hypoidol.client.VoidstainHypoidolClient;
+import phanastrae.voidstain_hypoidol.client.hypoverse.ClientHypoverse;
 import phanastrae.voidstain_hypoidol.client.renderer.canvas.EldritchCanvasHandler;
 import phanastrae.voidstain_hypoidol.common.VoidstainHypoidol;
 import phanastrae.voidstain_hypoidol.common.hypoverse.EldritchCanvas;
@@ -33,7 +34,7 @@ public class VoidstainClientPacketListener {
         }));
 
         register(AddHypoEntityPayload.TYPE, ((payload, context) -> {
-            Hypoverse hypoverse = VoidstainHypoidolClient.HYPOVERSE;
+            ClientHypoverse hypoverse = VoidstainHypoidolClient.HYPOVERSE;
             HypoZone zone = hypoverse.getZone(payload.zoneUUID());
             if (zone == null) {
                 VoidstainHypoidol.LOGGER.warn("Received payload for missing HypoZone {}", payload.zoneUUID());
@@ -41,7 +42,19 @@ public class VoidstainClientPacketListener {
                 HypoEntity entity = HypoEntity.fromData(zone, payload.data());
                 if (entity != null) {
                     zone.addEntity(entity);
+                    hypoverse.entities.put(entity.getUuid(), entity);
                 }
+            }
+        }));
+
+        register(UpdateHypoEntityPositionPayload.TYPE, ((payload, context) -> {
+            ClientHypoverse hypoverse = VoidstainHypoidolClient.HYPOVERSE;
+            HypoEntity entity = hypoverse.entities.get(payload.entityUUID());
+            if (entity != null) {
+                entity.setPos(payload.x(), payload.y());
+                entity.setVelocity(payload.vx(), payload.vy());
+            } else {
+                VoidstainHypoidol.LOGGER.warn("Received payload for missing HypoEntity {}", payload.entityUUID());
             }
         }));
 

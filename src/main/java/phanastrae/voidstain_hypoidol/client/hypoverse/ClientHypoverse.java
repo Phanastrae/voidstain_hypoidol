@@ -3,10 +3,20 @@ package phanastrae.voidstain_hypoidol.client.hypoverse;
 import phanastrae.voidstain_hypoidol.common.hypoverse.EldritchCanvas;
 import phanastrae.voidstain_hypoidol.common.hypoverse.HypoZone;
 import phanastrae.voidstain_hypoidol.common.hypoverse.Hypoverse;
+import phanastrae.voidstain_hypoidol.common.hypoverse.hypoentity.HypoEntity;
 
+import java.util.HashMap;
+import java.util.Map;
 import java.util.UUID;
 
 public class ClientHypoverse extends Hypoverse {
+
+    public Map<UUID, HypoEntity> entities = new HashMap<>();
+
+    @Override
+    public void tick(boolean runsNormally) {
+        this.tick(runsNormally, false);
+    }
 
     public void putZone(UUID id, HypoZone zone) {
         this.zones.put(id, zone);

@@ -73,8 +73,16 @@ public class HypoZone extends SavedData {
         }
     }
 
-    public void tick(boolean runsNormally) {
-        this.entities.forEach(e -> e.tick(runsNormally));
+    public void tick(boolean runsNormally, boolean onServer) {
+        this.entities.forEach(e -> e.tick(runsNormally, onServer));
+
+        if (onServer) {
+            this.setDirty();
+
+            if (!this.watchers.isEmpty()) {
+                this.entities.forEach(e -> e.sendChanges((payload) -> this.sendToAllWatchers(() -> payload)));
+            }
+        }
     }
 
     public void setBackgroundId(int backgroundId) {
