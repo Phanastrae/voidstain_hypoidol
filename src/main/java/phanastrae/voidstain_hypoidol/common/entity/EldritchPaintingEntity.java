@@ -225,16 +225,21 @@ public class EldritchPaintingEntity extends HangingEntity {
                                 for (int i = 0; i < 100; i++) {
                                     int newId = this.random.nextInt(3);
                                     if (bgId != newId) {
+                                        zone.setBackgroundId(newId);
+
                                         if (!player.hasInfiniteMaterials()) {
                                             itemStack.split(1);
                                         }
-                                        zone.setBackgroundId(newId);
                                         return InteractionResult.SUCCESS_SERVER;
                                     }
                                 }
                             } else if (isGhast) {
                                 HypoEntity hypoEntity = new HypoEntity(this.random.nextInt(3));
                                 zone.addEntity(hypoEntity);
+
+                                if (!player.hasInfiniteMaterials()) {
+                                    itemStack.split(1);
+                                }
                                 return InteractionResult.SUCCESS_SERVER;
                             }
                         }
