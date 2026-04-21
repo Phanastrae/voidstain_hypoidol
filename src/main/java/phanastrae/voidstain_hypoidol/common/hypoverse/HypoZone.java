@@ -36,6 +36,7 @@ public class HypoZone extends SavedData {
 
     private final RandomSource random = RandomSource.create();
     private final Set<HypoverseWatcher> watchers = new HashSet<>();
+    private final List<HypoverseWatcher> newWatchers = new ArrayList<>();
     private final Set<EldritchCanvas> linkedCanvases = new HashSet<>();
 
     public final UUID uuid;
@@ -76,6 +77,8 @@ public class HypoZone extends SavedData {
     public void tick(boolean runsNormally, boolean onServer) {
         this.entities.forEach(e -> e.tick(runsNormally, onServer));
 
+        this.setDirty();
+
         if (onServer) {
             this.entities.forEach(e -> {
                 if (e.isRemoved()) {
@@ -88,7 +91,11 @@ public class HypoZone extends SavedData {
                 this.entities.forEach(e -> e.sendChanges((payload) -> this.sendToAllWatchers(() -> payload)));
             }
 
-            this.setDirty();
+            if (!this.newWatchers.isEmpty()) {
+                this.updateNewWatchers();
+                this.watchers.addAll(this.newWatchers);
+                this.newWatchers.clear();
+            }
         }
     }
 
@@ -138,11 +145,12 @@ public class HypoZone extends SavedData {
     }
 
     public void addWatcher(HypoverseWatcher watcher) {
-        this.watchers.add(watcher);
+        this.newWatchers.add(watcher);
     }
 
     public void removeWatcher(HypoverseWatcher watcher) {
         this.watchers.remove(watcher);
+        this.newWatchers.remove(watcher);
     }
 
     public void addLinkedCanvas(EldritchCanvas canvas) {
@@ -159,11 +167,10 @@ public class HypoZone extends SavedData {
         this.setDirty();
     }
 
-    public void updateNewWatcher(HypoverseWatcher watcher) {
-        ServerPlayNetworking.send(watcher.getPlayer(), new StartWatchingHypoZonePayload(this.uuid, this.getBackgroundId()));
+    public void updateNewWatchers() {
+        sendToAll(this.newWatchers, () -> new StartWatchingHypoZonePayload(this.uuid, this.getBackgroundId()));
         for (HypoEntity entity : this.entities) {
-            CustomPacketPayload payload = getPayload(entity);
-            ServerPlayNetworking.send(watcher.getPlayer(), payload);
+            sendToAll(this.newWatchers, () -> getPayload(entity));
         }
     }
 
@@ -179,9 +186,13 @@ public class HypoZone extends SavedData {
     }
 
     public void sendToAllWatchers(Supplier<CustomPacketPayload> payloadSupplier) {
-        if (!this.watchers.isEmpty()) {
+        sendToAll(this.watchers, payloadSupplier);
+    }
+
+    public static void sendToAll(Collection<HypoverseWatcher> sendTo, Supplier<CustomPacketPayload> payloadSupplier) {
+        if (!sendTo.isEmpty()) {
             CustomPacketPayload payload = payloadSupplier.get();
-            this.watchers.forEach(watcher -> {
+            sendTo.forEach(watcher -> {
                 ServerPlayNetworking.send(watcher.getPlayer(), payload);
             });
         }

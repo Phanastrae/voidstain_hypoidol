@@ -39,8 +39,6 @@ public class HypoverseWatcher {
                     HypoZone zone = hypoverse.getZone(zoneUUID);
                     if (zone != null) {
                         zone.addWatcher(this);
-
-                        zone.updateNewWatcher(this);
                     }
                 }
             }
