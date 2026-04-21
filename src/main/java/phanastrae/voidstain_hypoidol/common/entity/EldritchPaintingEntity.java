@@ -30,6 +30,7 @@ import net.minecraft.world.level.gamerules.GameRules;
 import net.minecraft.world.level.storage.ValueInput;
 import net.minecraft.world.level.storage.ValueOutput;
 import net.minecraft.world.phys.AABB;
+import net.minecraft.world.phys.Vec2;
 import net.minecraft.world.phys.Vec3;
 import org.jspecify.annotations.Nullable;
 import phanastrae.voidstain_hypoidol.common.hypoverse.EldritchCanvas;
@@ -242,7 +243,8 @@ public class EldritchPaintingEntity extends HangingEntity {
                                 }
                             } else if (isGhast) {
                                 HypoEntity hypoEntity = new HorrorHypoEntity(zone, this.random.nextInt(3));
-                                hypoEntity.setPos(1.5f, 1.5f);
+                                Vec2 pos = getCanvasPosition(location);
+                                hypoEntity.setPos(pos.x, pos.y);
                                 zone.addEntity(hypoEntity);
 
                                 if (!player.hasInfiniteMaterials()) {
@@ -251,7 +253,8 @@ public class EldritchPaintingEntity extends HangingEntity {
                                 return InteractionResult.SUCCESS_SERVER;
                             } else if (isFood) {
                                 HypoEntity hypoEntity = new MorselHypoEntity(zone);
-                                hypoEntity.setPos(1.5f, 1.5f);
+                                Vec2 pos = getCanvasPosition(location);
+                                hypoEntity.setPos(pos.x, pos.y);
                                 zone.addEntity(hypoEntity);
 
                                 if (!player.hasInfiniteMaterials()) {
@@ -265,6 +268,24 @@ public class EldritchPaintingEntity extends HangingEntity {
             }
         }
         return super.interact(player, hand, location);
+    }
+
+    public Vec2 getCanvasPosition(Vec3 clickPos) {
+        Direction forwardsDirection = this.getDirection();
+        Direction canvasXPlusDirection = forwardsDirection.getCounterClockWise();
+
+        Vec3 canvasXVec = canvasXPlusDirection.getUnitVec3();
+        Vec3 canvasYVec = Direction.UP.getUnitVec3();
+
+        float width = getWidth();
+        float height = getWidth();
+
+        Vec3 relativePos = clickPos.add(canvasXVec.scale(width / 2f)).add(canvasYVec.scale(height / 2f));
+
+        float canvasX = (float) relativePos.dot(canvasXVec);
+        float canvasY = (float) relativePos.dot(canvasYVec);
+
+        return new Vec2(canvasX, canvasY);
     }
 
     @Override

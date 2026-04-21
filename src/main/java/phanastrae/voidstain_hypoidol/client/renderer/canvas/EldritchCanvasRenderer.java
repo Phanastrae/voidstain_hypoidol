@@ -121,7 +121,7 @@ public class EldritchCanvasRenderer {
 
         RenderSystem.backupProjectionMatrix();
         Projection projection = new Projection();
-        projection.setupOrtho(-1000.0f, 1000.0f, 1.0f, 1.0f, true);
+        projection.setupOrtho(-1000.0f, 1000.0f, 1.0f, 1.0f, false);
         RenderSystem.setProjectionMatrix(CANVAS_PROJECTION_MATRIX_BUFFER.getBuffer(projection), ProjectionType.ORTHOGRAPHIC);
 
         for (CanvasRenderState renderState : ALL_CANVAS_RENDER_STATE.canvases) {
@@ -180,9 +180,9 @@ public class EldritchCanvasRenderer {
     }
 
     private static void drawQuad(BufferBuilder builder, float x0, float x1, float y0, float y1) {
-        builder.addVertex(x0, y0, 0.0f).setUv(0, 0).setColor(255, 255, 255, 255);
-        builder.addVertex(x0, y1, 0.0f).setUv(0, 1).setColor(255, 255, 255, 255);
-        builder.addVertex(x1, y1, 0.0f).setUv(1, 1).setColor(255, 255, 255, 255);
-        builder.addVertex(x1, y0, 0.0f).setUv(1, 0).setColor(255, 255, 255, 255);
+        builder.addVertex(x0, y0, 0.0f).setUv(0, 1).setColor(255, 255, 255, 255);
+        builder.addVertex(x1, y0, 0.0f).setUv(1, 1).setColor(255, 255, 255, 255);
+        builder.addVertex(x1, y1, 0.0f).setUv(1, 0).setColor(255, 255, 255, 255);
+        builder.addVertex(x0, y1, 0.0f).setUv(0, 0).setColor(255, 255, 255, 255);
     }
 }
