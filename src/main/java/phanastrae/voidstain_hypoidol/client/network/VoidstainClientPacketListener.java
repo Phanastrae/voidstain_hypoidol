@@ -9,6 +9,7 @@ import phanastrae.voidstain_hypoidol.common.VoidstainHypoidol;
 import phanastrae.voidstain_hypoidol.common.hypoverse.EldritchCanvas;
 import phanastrae.voidstain_hypoidol.common.hypoverse.HypoZone;
 import phanastrae.voidstain_hypoidol.common.hypoverse.Hypoverse;
+import phanastrae.voidstain_hypoidol.common.hypoverse.Portal;
 import phanastrae.voidstain_hypoidol.common.hypoverse.hypoentity.HorrorHypoEntity;
 import phanastrae.voidstain_hypoidol.common.hypoverse.hypoentity.HypoEntity;
 import phanastrae.voidstain_hypoidol.common.network.*;
@@ -42,15 +43,14 @@ public class VoidstainClientPacketListener {
             } else {
                 HypoEntity entity = HypoEntity.fromData(zone, payload.data());
                 if (entity != null) {
-                    zone.addEntity(entity);
-                    hypoverse.entities.put(entity.getUuid(), entity);
+                    hypoverse.addEntity(entity);
                 }
             }
         }));
 
         register(UpdateHypoEntityPositionPayload.TYPE, ((payload, context) -> {
             ClientHypoverse hypoverse = VoidstainHypoidolClient.HYPOVERSE;
-            HypoEntity entity = hypoverse.entities.get(payload.entityUUID());
+            HypoEntity entity = hypoverse.getEntity(payload.entityUUID());
             if (entity != null) {
                 entity.setPos(payload.x(), payload.y());
                 entity.setVelocity(payload.vx(), payload.vy());
@@ -59,20 +59,36 @@ public class VoidstainClientPacketListener {
             }
         }));
 
+        register(TeleportHypoEntityPayload.TYPE, ((payload, context) -> {
+            ClientHypoverse hypoverse = VoidstainHypoidolClient.HYPOVERSE;
+            HypoEntity entity = hypoverse.getEntity(payload.entityUUID());
+            if (entity != null) {
+                HypoZone zone = hypoverse.getZone(payload.zoneUUID());
+                if (zone != null) {
+                    entity.setPos(payload.x(), payload.y());
+                    entity.setOldPos(payload.ox(), payload.oy());
+                    entity.setVelocity(payload.vx(), payload.vy());
+                    entity.setZone(zone);
+                } else {
+                    hypoverse.removeEntity(entity.getUuid());
+                    VoidstainHypoidol.LOGGER.warn("Removed HypoEntity {} that was teleported to missing HypoZone {}, this should have been a RemoveEntityPayload instead.", entity.getUuid(), payload.zoneUUID());
+                }
+            } else {
+                VoidstainHypoidol.LOGGER.warn("Received payload for missing HypoEntity {}", payload.entityUUID());
+            }
+        }));
+
         register(RemoveHypoEntityPayload.TYPE, ((payload, context) -> {
             ClientHypoverse hypoverse = VoidstainHypoidolClient.HYPOVERSE;
-            HypoEntity entity = hypoverse.entities.get(payload.entityUUID());
-            if (entity != null) {
-                entity.getZone().entities.remove(entity);
-                hypoverse.entities.remove(payload.entityUUID());
-            } else {
+            HypoEntity entity = hypoverse.removeEntity(payload.entityUUID());
+            if (entity == null) {
                 VoidstainHypoidol.LOGGER.warn("Tried to remove missing HypoEntity {}", payload.entityUUID());
             }
         }));
 
         register(UpdateHorrorFullnessPayload.TYPE, ((payload, context) -> {
             ClientHypoverse hypoverse = VoidstainHypoidolClient.HYPOVERSE;
-            HypoEntity entity = hypoverse.entities.get(payload.entityUUID());
+            HypoEntity entity = hypoverse.getEntity(payload.entityUUID());
             if (entity != null) {
                 if (entity instanceof HorrorHypoEntity horror) {
                     horror.setFullness(payload.fullness());
@@ -81,6 +97,17 @@ public class VoidstainClientPacketListener {
                 }
             } else {
                 VoidstainHypoidol.LOGGER.warn("Tried to update missing HypoEntity {}", payload.entityUUID());
+            }
+        }));
+
+        register(AddPortalPayload.TYPE, ((payload, context) -> {
+            ClientHypoverse hypoverse = VoidstainHypoidolClient.HYPOVERSE;
+            HypoZone zone = hypoverse.getZone(payload.zoneUUID());
+            if (zone == null) {
+                VoidstainHypoidol.LOGGER.warn("Received payload for missing HypoZone {}", payload.zoneUUID());
+            } else {
+                Portal portal = new Portal(payload.center(), payload.length(), payload.angle(), payload.id(), payload.target());
+                zone.addPortal(portal);
             }
         }));
 

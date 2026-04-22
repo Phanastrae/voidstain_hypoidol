@@ -59,7 +59,11 @@ public class ServerHypoverse extends Hypoverse {
     }
 
     public HypoZone getOrCreateZone(UUID zoneUUID, HypoZone.Dimensions dimensions) {
-        return this.zones.computeIfAbsent(zoneUUID, id -> this.getOrComputeZoneFromSavedData(id, dimensions));
+        return this.zones.computeIfAbsent(zoneUUID, id -> {
+            HypoZone zone = this.getOrComputeZoneFromSavedData(id, dimensions);
+            zone.entities.forEach(e -> this.entities.put(e.getUuid(), e));
+            return zone;
+        });
     }
 
     public EldritchCanvas getOrCreateCanvas(UUID canvasUUID, EldritchCanvas.Dimensions dimensions) {

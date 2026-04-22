@@ -4,6 +4,7 @@ import net.minecraft.nbt.CompoundTag;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
 import phanastrae.voidstain_hypoidol.common.hypoverse.HypoZone;
+import phanastrae.voidstain_hypoidol.common.hypoverse.Hypoverse;
 import phanastrae.voidstain_hypoidol.common.network.UpdateHorrorFullnessPayload;
 
 public class HorrorHypoEntity extends HypoEntity {
@@ -37,8 +38,8 @@ public class HorrorHypoEntity extends HypoEntity {
     }
 
     @Override
-    public void tick(boolean runsNormally, boolean onServer) {
-        super.tick(runsNormally, onServer);
+    public void tick(boolean runsNormally, boolean onServer, Hypoverse hypoverse) {
+        super.tick(runsNormally, onServer, hypoverse);
 
         if (onServer && this.random.nextInt(3) == 0) {
             for (HypoEntity entity : this.getZone().getEntitiesInArea(this.x - this.getWidth() * 0.4f, this.x + this.getWidth() * 0.4f, this.y - this.getHeight() * 0.4f, this.y + this.getHeight() * 0.4f)) {

@@ -36,10 +36,7 @@ import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec2;
 import net.minecraft.world.phys.Vec3;
 import org.jspecify.annotations.Nullable;
-import phanastrae.voidstain_hypoidol.common.hypoverse.EldritchCanvas;
-import phanastrae.voidstain_hypoidol.common.hypoverse.HypoZone;
-import phanastrae.voidstain_hypoidol.common.hypoverse.Hypoverse;
-import phanastrae.voidstain_hypoidol.common.hypoverse.ServerHypoverse;
+import phanastrae.voidstain_hypoidol.common.hypoverse.*;
 import phanastrae.voidstain_hypoidol.common.hypoverse.hypoentity.HorrorHypoEntity;
 import phanastrae.voidstain_hypoidol.common.hypoverse.hypoentity.HypoEntity;
 import phanastrae.voidstain_hypoidol.common.hypoverse.hypoentity.MorselHypoEntity;
@@ -242,49 +239,91 @@ public class EldritchPaintingEntity extends HangingEntity {
         boolean isBlaze = itemStack.is(Items.BLAZE_POWDER);
         boolean isGhast = itemStack.is(Items.GHAST_TEAR);
         boolean isFood = itemStack.is(Items.CHORUS_FRUIT);
-        if (canvasUUID.isPresent() && !itemStack.isEmpty() && (isBlaze || isGhast || isFood)) {
+        boolean isPearl = itemStack.is(Items.ENDER_PEARL);
+        boolean isCanvas = itemStack.is(VoidstainItems.ELDRITCH_PAINTING);
+        if (canvasUUID.isPresent() && !itemStack.isEmpty() && (isBlaze || isGhast || isFood || isPearl || isCanvas)) {
             if (player.level().isClientSide()) {
                 return InteractionResult.SUCCESS_SERVER;
             } else {
-                Hypoverse hypoverse = Hypoverse.fromLevel(this.level());
-                if (hypoverse != null) {
-                    EldritchCanvas canvas = hypoverse.getCanvas(canvasUUID.get());
-                    if (canvas != null) {
-                        HypoZone zone = hypoverse.getZone(canvas.getZoneId());
-                        if (zone != null) {
-                            if (isBlaze) {
-                                int bgId = zone.getBackgroundId();
-                                for (int i = 0; i < 100; i++) {
-                                    int newId = this.random.nextInt(3);
-                                    if (bgId != newId) {
-                                        zone.setBackgroundId(newId);
+                Hypoverse hypoverse = this.getHypoverse();
+                EldritchCanvas canvas = this.getCanvas();
+                if (hypoverse != null && canvas != null) {
+                    HypoZone zone = hypoverse.getZone(canvas.getZoneId());
+                    if (zone != null) {
+                        Vec2 canvasPos = relativePosToCanvasPos(location);
+                        if (isBlaze) {
+                            int bgId = zone.getBackgroundId();
+                            for (int i = 0; i < 100; i++) {
+                                int newId = this.random.nextInt(3);
+                                if (bgId != newId) {
+                                    zone.setBackgroundId(newId);
 
-                                        if (!player.hasInfiniteMaterials()) {
-                                            itemStack.split(1);
+                                    if (!player.hasInfiniteMaterials()) {
+                                        itemStack.split(1);
+                                    }
+                                    return InteractionResult.SUCCESS_SERVER;
+                                }
+                            }
+                        } else if (isGhast) {
+                            HypoEntity hypoEntity = new HorrorHypoEntity(zone, this.random.nextInt(3));
+                            hypoEntity.setPos(canvasPos.x, canvasPos.y);
+                            hypoverse.addEntity(hypoEntity);
+
+                            if (!player.hasInfiniteMaterials()) {
+                                itemStack.split(1);
+                            }
+                            return InteractionResult.SUCCESS_SERVER;
+                        } else if (isFood) {
+                            HypoEntity hypoEntity = new MorselHypoEntity(zone);
+                            hypoEntity.setPos(canvasPos.x, canvasPos.y);
+                            hypoverse.addEntity(hypoEntity);
+
+                            if (!player.hasInfiniteMaterials()) {
+                                itemStack.split(1);
+                            }
+                            return InteractionResult.SUCCESS_SERVER;
+                        } else if (isPearl) {
+                            int id1 = zone.getEmptyPortalId(0);
+                            int id2 = zone.getEmptyPortalId(id1);
+
+                            Portal portal1 = new Portal(canvasPos.add(new Vec2(0.5f, 0.0f)), 1.0f, this.random.nextFloat() * 360, id1, new Portal.PortalId(zone.uuid, id2));
+                            Portal portal2 = new Portal(canvasPos.add(new Vec2(-0.5f, 0.0f)), 1.0f, this.random.nextFloat() * 360, id2, new Portal.PortalId(zone.uuid, id1));
+                            zone.addPortal(portal1);
+                            zone.addPortal(portal2);
+
+                            if (!player.hasInfiniteMaterials()) {
+                                itemStack.split(1);
+                            }
+                            return InteractionResult.SUCCESS_SERVER;
+                        } else if (isCanvas) {
+                            CanvasData otherCanvasData = itemStack.get(VoidstainDataComponents.CANVAS_DATA);
+                            if (otherCanvasData != null) {
+                                EldritchCanvas otherCanvas = hypoverse.getCanvas(otherCanvasData.uuid());
+                                if (otherCanvas != null) {
+                                    HypoZone otherZone = hypoverse.getZone(otherCanvas.getZoneId());
+                                    if (otherZone != null) {
+                                        if (zone != otherZone) {
+                                            int id1 = zone.getEmptyPortalId(0);
+                                            int id2 = otherZone.getEmptyPortalId(id1);
+
+                                            float angle = this.random.nextFloat() * 360;
+                                            Vec2 targetPos = new Vec2(
+                                                    otherZone.getDimensions().width * canvasPos.x / zone.getDimensions().width,
+                                                    otherZone.getDimensions().height * canvasPos.y / zone.getDimensions().height
+                                            );
+
+                                            Portal portal1 = new Portal(canvasPos, 1.0f, angle, id1, new Portal.PortalId(otherZone.uuid, id2));
+                                            Portal portal2 = new Portal(targetPos, 1.0f, angle, id2, new Portal.PortalId(zone.uuid, id1));
+                                            zone.addPortal(portal1);
+                                            otherZone.addPortal(portal2);
+
+                                            if (!player.hasInfiniteMaterials()) {
+                                                itemStack.split(1);
+                                            }
+                                            return InteractionResult.SUCCESS_SERVER;
                                         }
-                                        return InteractionResult.SUCCESS_SERVER;
                                     }
                                 }
-                            } else if (isGhast) {
-                                HypoEntity hypoEntity = new HorrorHypoEntity(zone, this.random.nextInt(3));
-                                Vec2 pos = relativePosToCanvasPos(location);
-                                hypoEntity.setPos(pos.x, pos.y);
-                                zone.addEntity(hypoEntity);
-
-                                if (!player.hasInfiniteMaterials()) {
-                                    itemStack.split(1);
-                                }
-                                return InteractionResult.SUCCESS_SERVER;
-                            } else if (isFood) {
-                                HypoEntity hypoEntity = new MorselHypoEntity(zone);
-                                Vec2 pos = relativePosToCanvasPos(location);
-                                hypoEntity.setPos(pos.x, pos.y);
-                                zone.addEntity(hypoEntity);
-
-                                if (!player.hasInfiniteMaterials()) {
-                                    itemStack.split(1);
-                                }
-                                return InteractionResult.SUCCESS_SERVER;
                             }
                         }
                     }
@@ -292,6 +331,24 @@ public class EldritchPaintingEntity extends HangingEntity {
             }
         }
         return super.interact(player, hand, location);
+    }
+
+    @Nullable
+    public Hypoverse getHypoverse() {
+        return Hypoverse.fromLevel(this.level());
+    }
+
+    @Nullable
+    public EldritchCanvas getCanvas() {
+        Optional<UUID> optionalUUID = this.getCanvasUUID();
+        if (optionalUUID.isEmpty()) {
+            return null;
+        }
+        Hypoverse hypoverse = this.getHypoverse();
+        if (hypoverse == null) {
+            return null;
+        }
+        return hypoverse.getCanvas(optionalUUID.get());
     }
 
     public Vec2 relativePosToCanvasPos(Vec3 entityRelativePos) {
@@ -318,7 +375,8 @@ public class EldritchPaintingEntity extends HangingEntity {
         return originOffset.subtract(canvasXVec.scale(this.getWidth() / 2f)).subtract(canvasYVec.scale(this.getHeight() / 2f));
     }
 
-    public void playCanvasSound(float x, float y, SoundEvent soundEvent, SoundSource source, float volume, float pitch) {
+    public void playCanvasSound(float x, float y, SoundEvent soundEvent, SoundSource source, float volume,
+                                float pitch) {
         Vec3 entityRelativePos = canvasPosToRelativePos(new Vec2(x, y));
         Vec3 worldPos = this.position().add(entityRelativePos);
         this.level().playSound(this, worldPos.x, worldPos.y, worldPos.z, soundEvent, source, volume, pitch);

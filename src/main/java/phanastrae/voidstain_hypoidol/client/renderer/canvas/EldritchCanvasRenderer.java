@@ -20,6 +20,7 @@ import phanastrae.voidstain_hypoidol.common.VoidstainHypoidol;
 import phanastrae.voidstain_hypoidol.common.hypoverse.EldritchCanvas;
 import phanastrae.voidstain_hypoidol.common.hypoverse.HypoZone;
 import phanastrae.voidstain_hypoidol.common.hypoverse.Hypoverse;
+import phanastrae.voidstain_hypoidol.common.hypoverse.Portal;
 import phanastrae.voidstain_hypoidol.common.hypoverse.hypoentity.HorrorHypoEntity;
 import phanastrae.voidstain_hypoidol.common.hypoverse.hypoentity.HypoEntity;
 
@@ -39,6 +40,8 @@ public class EldritchCanvasRenderer {
             VoidstainHypoidol.id("textures/entity/canvas/painting/horror_2.png")
     };
     private static final Identifier MORSEL_IDENTIFIER = VoidstainHypoidol.id("textures/entity/canvas/painting/morsel.png");
+    private static final Identifier PORTAL_IDENTIFIER = VoidstainHypoidol.id("textures/entity/canvas/painting/portal.png");
+    private static final Identifier FRAME_IDENTIFIER = VoidstainHypoidol.id("textures/entity/canvas/painting/frame.png");
 
     public static final AllCanvasRenderState ALL_CANVAS_RENDER_STATE = new AllCanvasRenderState();
     public static final HypoverseRenderState HYPOVERSE_RENDER_STATE = new HypoverseRenderState();
@@ -113,6 +116,14 @@ public class EldritchCanvasRenderer {
 
                 zoneRenderState.entities.add(entityRenderState);
             }
+            for (Portal portal : zone.portals.values()) {
+                PortalRenderState portalRenderState = new PortalRenderState();
+                portalRenderState.start = portal.getStartPos();
+                portalRenderState.end = portal.getEndPos();
+                portalRenderState.normal = portal.getNormal();
+
+                zoneRenderState.portals.add(portalRenderState);
+            }
 
             HYPOVERSE_RENDER_STATE.zones.put(zone.uuid, zoneRenderState);
         });
@@ -180,10 +191,27 @@ public class EldritchCanvasRenderer {
                     });
                 }
             }
+
+            for (PortalRenderState portalRenderState : zoneRenderState.portals) {
+                float startX = portalRenderState.start.x - dimensions.minX;
+                float startY = portalRenderState.start.y - dimensions.minX;
+                float endX = portalRenderState.end.x - dimensions.minX;
+                float endY = portalRenderState.end.y - dimensions.minX;
+
+                float dx = 0.03125f * portalRenderState.normal.x;
+                float dy = 0.03125f * portalRenderState.normal.y;
+
+                drawWithTexture(canvasTexture, PORTAL_IDENTIFIER, (builder) -> {
+                    builder.addVertex(startX - dx, startY - dy, 0.0f).setUv(0, 1).setColor(255, 255, 255, 255);
+                    builder.addVertex(startX + dx, startY + dy, 0.0f).setUv(1, 1).setColor(255, 255, 255, 255);
+                    builder.addVertex(endX + dx, endY + dy, 0.0f).setUv(1, 0).setColor(255, 255, 255, 255);
+                    builder.addVertex(endX - dx, endY - dy, 0.0f).setUv(0, 0).setColor(255, 255, 255, 255);
+                });
+            }
         }
 
         EldritchCanvas.Dimensions dimensions = canvasRenderState.dimensions;
-        drawWithTexture(canvasTexture, VoidstainHypoidol.id("textures/entity/canvas/painting/frame.png"), (builder) -> {
+        drawWithTexture(canvasTexture, FRAME_IDENTIFIER, (builder) -> {
             drawQuad(builder, 0, dimensions.width, 0, dimensions.height);
         });
 

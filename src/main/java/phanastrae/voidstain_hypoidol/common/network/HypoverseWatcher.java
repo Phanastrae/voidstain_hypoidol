@@ -64,6 +64,10 @@ public class HypoverseWatcher {
         }
     }
 
+    public boolean isWatchingZone(UUID zoneUUID) {
+        return this.watchedZones.watchedIds.containsKey(zoneUUID);
+    }
+
     public static HypoverseWatcher fromPlayer(ServerPlayer player) {
         return ((HypoverseWatcherAccess) player.connection).voidstain_hypoidol$getHypoverseWatcher();
     }

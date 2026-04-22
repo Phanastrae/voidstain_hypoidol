@@ -4,7 +4,6 @@ import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking;
 import net.minecraft.core.UUIDUtil;
-import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.network.codec.ByteBufCodecs;
 import net.minecraft.network.codec.StreamCodec;
@@ -19,7 +18,10 @@ import net.minecraft.world.level.saveddata.SavedDataType;
 import phanastrae.voidstain_hypoidol.common.VoidstainHypoidol;
 import phanastrae.voidstain_hypoidol.common.hypoverse.hypoentity.HypoEntity;
 import phanastrae.voidstain_hypoidol.common.hypoverse.hypoentity.HypoEntityType;
-import phanastrae.voidstain_hypoidol.common.network.*;
+import phanastrae.voidstain_hypoidol.common.network.AddPortalPayload;
+import phanastrae.voidstain_hypoidol.common.network.HypoverseWatcher;
+import phanastrae.voidstain_hypoidol.common.network.StartWatchingHypoZonePayload;
+import phanastrae.voidstain_hypoidol.common.network.UpdateHypoZonePayload;
 
 import java.util.*;
 import java.util.function.Supplier;
@@ -29,7 +31,8 @@ public class HypoZone extends SavedData {
                     UUIDUtil.CODEC.fieldOf("zone_uuid").forGetter(HypoZone::getUuid),
                     Codec.INT.fieldOf("background_id").forGetter(HypoZone::getBackgroundId),
                     HypoEntity.CODEC.listOf().optionalFieldOf("entity_data", List.of()).forGetter(HypoZone::getEntityData),
-                    Dimensions.CODEC.fieldOf("dimensions").forGetter(zone -> zone.dimensions)
+                    Dimensions.CODEC.fieldOf("dimensions").forGetter(zone -> zone.dimensions),
+                    Portal.CODEC.listOf().optionalFieldOf("portals", List.of()).forGetter(zone -> zone.portals.values().stream().toList())
             ).apply(i, HypoZone::new)
     );
 
@@ -42,20 +45,21 @@ public class HypoZone extends SavedData {
     private final Set<HypoverseWatcher> watchers = new HashSet<>();
     private final List<HypoverseWatcher> newWatchers = new ArrayList<>();
     private final Set<EldritchCanvas> linkedCanvases = new HashSet<>();
+    private boolean isClientDirty;
+
+    private final RandomSource random = RandomSource.create();
 
     public final UUID uuid;
     private int backgroundId;
-    public final List<HypoEntity> entities;
-
     private final Dimensions dimensions;
-
-    private boolean isClientDirty;
+    public final List<HypoEntity> entities;
+    public final Map<Integer, Portal> portals;
 
     public HypoZone(UUID uuid, int backgroundId, Dimensions dimensions) {
-        this(uuid, backgroundId, List.of(), dimensions);
+        this(uuid, backgroundId, List.of(), dimensions, List.of());
     }
 
-    public HypoZone(UUID uuid, int backgroundId, List<TypedEntityData<HypoEntityType<?>>> entityData, Dimensions dimensions) {
+    public HypoZone(UUID uuid, int backgroundId, List<TypedEntityData<HypoEntityType<?>>> entityData, Dimensions dimensions, List<Portal> portals) {
         this.uuid = uuid;
         this.backgroundId = backgroundId;
         this.dimensions = dimensions;
@@ -67,6 +71,8 @@ public class HypoZone extends SavedData {
                 this.entities.add(entity);
             }
         });
+        this.portals = new HashMap<>();
+        portals.forEach(p -> this.portals.put(p.getId(), p));
     }
 
     public List<TypedEntityData<HypoEntityType<?>>> getEntityData() {
@@ -81,22 +87,10 @@ public class HypoZone extends SavedData {
         }
     }
 
-    public void tick(boolean runsNormally, boolean onServer) {
-        this.entities.forEach(e -> e.tick(runsNormally, onServer));
-
-        this.setDirty();
-
+    public void tick(boolean runsNormally, boolean onServer, Hypoverse hypoverse) {
         if (onServer) {
-            this.entities.forEach(e -> {
-                if (e.isRemoved()) {
-                    this.sendToAllWatchers(() -> new RemoveHypoEntityPayload(e.getUuid()));
-                }
-            });
-            this.entities.removeIf(HypoEntity::isRemoved);
-
-            if (!this.watchers.isEmpty()) {
-                this.entities.forEach(e -> e.sendChanges((payload) -> this.sendToAllWatchers(() -> payload)));
-            }
+            this.setDirty();
+            this.entities.stream().filter(HypoEntity::isRemoved).toList().forEach(e -> hypoverse.removeEntity(e.getUuid()));
 
             if (!this.newWatchers.isEmpty()) {
                 this.updateNewWatchers();
@@ -172,23 +166,24 @@ public class HypoZone extends SavedData {
         this.linkedCanvases.remove(canvas);
     }
 
-    public void addEntity(HypoEntity entity) {
-        this.entities.add(entity);
-        this.sendToAllWatchers(() -> getPayload(entity));
+    public void addPortal(Portal portal) {
+        this.portals.put(portal.getId(), portal);
+        this.sendToAllWatchers(() -> getAddPortalPayload(portal));
         this.setDirty();
     }
 
     public void updateNewWatchers() {
         sendToAll(this.newWatchers, () -> new StartWatchingHypoZonePayload(this.uuid, this.getBackgroundId(), this.dimensions));
         for (HypoEntity entity : this.entities) {
-            sendToAll(this.newWatchers, () -> getPayload(entity));
+            sendToAll(this.newWatchers, entity::getAddEntityPayload);
+        }
+        for (Portal portal : this.portals.values()) {
+            sendToAll(this.newWatchers, () -> getAddPortalPayload(portal));
         }
     }
 
-    private AddHypoEntityPayload getPayload(HypoEntity entity) {
-        CompoundTag tag = new CompoundTag();
-        entity.write(tag);
-        return new AddHypoEntityPayload(this.uuid, TypedEntityData.of(entity.getType(), tag));
+    private AddPortalPayload getAddPortalPayload(Portal portal) {
+        return new AddPortalPayload(this.uuid, portal.getCenter(), portal.getLength(), portal.getAngle(), portal.getId(), portal.getTargetId());
     }
 
     public void sendUpdates() {
@@ -198,6 +193,14 @@ public class HypoZone extends SavedData {
 
     public void sendToAllWatchers(Supplier<CustomPacketPayload> payloadSupplier) {
         sendToAll(this.watchers, payloadSupplier);
+    }
+
+    public void sendToAllWatchersNotAlsoWatching(Supplier<CustomPacketPayload> payloadSupplier, UUID otherZoneUUID) {
+        sendToAll(this.watchers.stream().filter(watcher -> !watcher.isWatchingZone(otherZoneUUID)).toList(), payloadSupplier);
+    }
+
+    public void sendToAllWatchersAlsoWatching(Supplier<CustomPacketPayload> payloadSupplier, UUID otherZoneUUID) {
+        sendToAll(this.watchers.stream().filter(watcher -> watcher.isWatchingZone(otherZoneUUID)).toList(), payloadSupplier);
     }
 
     public static void sendToAll(Collection<HypoverseWatcher> sendTo, Supplier<CustomPacketPayload> payloadSupplier) {
@@ -211,6 +214,17 @@ public class HypoZone extends SavedData {
 
     public void playSound(float x, float y, SoundEvent soundEvent, SoundSource source, float volume, float pitch) {
         this.linkedCanvases.forEach(canvas -> canvas.playSound(x, y, soundEvent, source, volume, pitch));
+    }
+
+    public int getEmptyPortalId(int alsoAvoid) {
+        for (int i = 0; i < 100; i++) {
+            int candidate = this.random.nextInt();
+            if (candidate != alsoAvoid && !this.portals.containsKey(candidate)) {
+                return candidate;
+            }
+        }
+        VoidstainHypoidol.LOGGER.error("Failed to generate an unused portal id for HypoZone {}???", this.uuid);
+        return this.random.nextInt();
     }
 
     public static class Dimensions {

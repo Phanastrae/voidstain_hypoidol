@@ -11,13 +11,18 @@ import net.minecraft.sounds.SoundSource;
 import net.minecraft.util.Mth;
 import net.minecraft.util.RandomSource;
 import net.minecraft.world.item.component.TypedEntityData;
+import net.minecraft.world.phys.Vec2;
 import org.jetbrains.annotations.Nullable;
 import phanastrae.voidstain_hypoidol.common.VoidstainHypoidol;
 import phanastrae.voidstain_hypoidol.common.hypoverse.HypoZone;
+import phanastrae.voidstain_hypoidol.common.hypoverse.Hypoverse;
+import phanastrae.voidstain_hypoidol.common.hypoverse.Portal;
+import phanastrae.voidstain_hypoidol.common.network.AddHypoEntityPayload;
+import phanastrae.voidstain_hypoidol.common.network.RemoveHypoEntityPayload;
+import phanastrae.voidstain_hypoidol.common.network.TeleportHypoEntityPayload;
 import phanastrae.voidstain_hypoidol.common.network.UpdateHypoEntityPositionPayload;
 
 import java.util.UUID;
-import java.util.function.Consumer;
 
 public abstract class HypoEntity {
     public static final Codec<TypedEntityData<HypoEntityType<?>>> CODEC = TypedEntityData.codec(HypoEntityType.CODEC);
@@ -46,6 +51,8 @@ public abstract class HypoEntity {
     private int syncTickCount;
     private final int updateInterval = 10;
     private boolean needsSync;
+    private boolean teleported = false;
+    private HypoZone oldZone = null;
 
     public HypoEntity(HypoEntityType<?> type, HypoZone zone) {
         this.type = type;
@@ -111,7 +118,50 @@ public abstract class HypoEntity {
         return this.zone;
     }
 
-    public void tick(boolean runsNormally, boolean onServer) {
+    public void transformCoordinates(Portal from, Portal to) {
+        Vec2 newFinalPos = Portal.transformWorldVector(new Vec2(this.x, this.y), from, to);
+        this.x = newFinalPos.x;
+        this.y = newFinalPos.y;
+
+        Vec2 oldFinalPos = Portal.transformWorldVector(new Vec2(this.ox, this.oy), from, to);
+        this.ox = oldFinalPos.x;
+        this.oy = oldFinalPos.y;
+
+        Vec2 newVel = Portal.transformRelativeVector(new Vec2(this.vx, this.vy), from, to);
+        this.vx = newVel.x;
+        this.vy = newVel.y;
+
+        this.needsSync = true;
+        this.teleported = true;
+    }
+
+    public void travel(Hypoverse hypoverse, Vec2 startPos, Vec2 endPos) {
+        Portal fromPortal = null;
+        float furthestIntersect = Float.POSITIVE_INFINITY;
+        for (Portal portal : this.zone.portals.values()) {
+            float intersectDistance = portal.worldRayIntersects(startPos, endPos);
+            if (intersectDistance < furthestIntersect) {
+                furthestIntersect = intersectDistance;
+                fromPortal = portal;
+            }
+        }
+
+        if (fromPortal != null) {
+            HypoZone targetZone = fromPortal.getTargetZone(this.zone, hypoverse);
+            if (targetZone != null) {
+                Portal toPortal = targetZone.portals.get(fromPortal.getTargetId().portalId);
+                if (toPortal != null) {
+                    this.transformCoordinates(fromPortal, toPortal);
+                    this.setZone(targetZone);
+                }
+            }
+        }
+
+        this.x += this.vx;
+        this.y += this.vy;
+    }
+
+    public void tick(boolean runsNormally, boolean onServer, Hypoverse hypoverse) {
         if (runsNormally) {
             float hWidth = this.getWidth() / 2;
             float hHeight = this.getHeight() / 2;
@@ -122,8 +172,7 @@ public abstract class HypoEntity {
             this.vx *= 0.99f;
             this.vy *= 0.99f;
 
-            this.x += this.vx;
-            this.y += this.vy;
+            this.travel(hypoverse, new Vec2(this.x, this.y), new Vec2(this.x + this.vx, this.y + this.vy));
 
             float minX = this.zone.getDimensions().minX + hWidth;
             float maxX = this.zone.getDimensions().maxX - hWidth;
@@ -160,19 +209,73 @@ public abstract class HypoEntity {
     public void setPos(float x, float y) {
         this.x = x;
         this.y = y;
+        this.needsSync = true;
+    }
+
+    public void setOldPos(float ox, float oy) {
+        this.ox = ox;
+        this.oy = oy;
+        this.needsSync = true;
     }
 
     public void setVelocity(float x, float y) {
         this.vx = x;
         this.vy = y;
+        this.needsSync = true;
     }
 
-    public void sendChanges(Consumer<CustomPacketPayload> payloadConsumer) {
+    public void setZone(HypoZone zone) {
+        if (this.oldZone == null) {
+            this.oldZone = this.zone;
+        }
+
+        this.zone.entities.remove(this);
+        zone.entities.add(this);
+        this.zone = zone;
+        this.needsSync = true;
+    }
+
+    public void sendChanges() {
         if (this.syncTickCount % this.updateInterval == 0 || this.needsSync) {
-            payloadConsumer.accept(new UpdateHypoEntityPositionPayload(this.getUuid(), this.x, this.y, this.vx, this.vy));
+            if (!this.teleported) {
+                this.zone.sendToAllWatchers(this::getUpdatePositionPayload);
+            } else {
+                if (this.oldZone == null) {
+                    // if zone has not changed, just send a teleport packet
+                    this.zone.sendToAllWatchers(this::getTeleportPayload);
+                } else {
+                    // send add packet to those only watching new
+                    this.zone.sendToAllWatchersNotAlsoWatching(this::getAddEntityPayload, this.oldZone.uuid);
+                    // send teleport to those watching both
+                    this.zone.sendToAllWatchersAlsoWatching(this::getTeleportPayload, this.oldZone.uuid);
+                    // send remove to those only watching old
+                    this.oldZone.sendToAllWatchersNotAlsoWatching(this::getRemoveEntityPayload, this.zone.uuid);
+
+                    this.oldZone = null;
+                }
+            }
             this.needsSync = false;
+            this.teleported = false;
         }
         this.syncTickCount++;
+    }
+
+    public CustomPacketPayload getUpdatePositionPayload() {
+        return new UpdateHypoEntityPositionPayload(this.getUuid(), this.x, this.y, this.vx, this.vy);
+    }
+
+    public CustomPacketPayload getTeleportPayload() {
+        return new TeleportHypoEntityPayload(this.getUuid(), this.zone.uuid, this.x, this.y, this.ox, this.oy, this.vx, this.vy);
+    }
+
+    public AddHypoEntityPayload getAddEntityPayload() {
+        CompoundTag tag = new CompoundTag();
+        this.write(tag);
+        return new AddHypoEntityPayload(this.zone.uuid, TypedEntityData.of(this.getType(), tag));
+    }
+
+    public RemoveHypoEntityPayload getRemoveEntityPayload() {
+        return new RemoveHypoEntityPayload(this.uuid);
     }
 
     public void playSound(SoundEvent soundEvent, SoundSource source, float volume, float pitch) {
