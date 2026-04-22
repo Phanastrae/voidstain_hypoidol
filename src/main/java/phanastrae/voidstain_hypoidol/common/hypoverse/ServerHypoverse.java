@@ -24,10 +24,10 @@ public class ServerHypoverse extends Hypoverse {
 
     public void connectCanvas(UUID uuid, EldritchPaintingEntity painting) {
         if (this.canvasIdWatcher.startWatchingId(uuid)) {
-            EldritchCanvas canvas = this.getOrCreateCanvas(uuid);
+            EldritchCanvas canvas = this.getOrCreateCanvas(uuid, new EldritchCanvas.Dimensions(painting.getWidth(), painting.getHeight()));
             UUID zoneId = canvas.getZoneId();
             if (this.zoneIdWatcher.startWatchingId(zoneId)) {
-                this.getOrCreateZone(zoneId);
+                this.getOrCreateZone(zoneId, new HypoZone.Dimensions(canvas.getDimensions().width, canvas.getDimensions().height));
             }
 
             if (this.zones.containsKey(zoneId)) {
@@ -58,19 +58,19 @@ public class ServerHypoverse extends Hypoverse {
         }
     }
 
-    public HypoZone getOrCreateZone(UUID id) {
-        return this.zones.computeIfAbsent(id, this::getOrComputeZoneFromSavedData);
+    public HypoZone getOrCreateZone(UUID zoneUUID, HypoZone.Dimensions dimensions) {
+        return this.zones.computeIfAbsent(zoneUUID, id -> this.getOrComputeZoneFromSavedData(id, dimensions));
     }
 
-    public EldritchCanvas getOrCreateCanvas(UUID uuid) {
-        return this.canvases.computeIfAbsent(uuid, this::getOrComputeCanvasFromSavedData);
+    public EldritchCanvas getOrCreateCanvas(UUID canvasUUID, EldritchCanvas.Dimensions dimensions) {
+        return this.canvases.computeIfAbsent(canvasUUID, id -> this.getOrComputeCanvasFromSavedData(id, dimensions));
     }
 
-    public HypoZone getOrComputeZoneFromSavedData(UUID canvasUUID) {
-        return this.server.getDataStorage().computeIfAbsent(HypoZone.type(this, canvasUUID));
+    public HypoZone getOrComputeZoneFromSavedData(UUID zoneUUID, HypoZone.Dimensions dimensions) {
+        return this.server.getDataStorage().computeIfAbsent(HypoZone.type(this, zoneUUID, dimensions));
     }
 
-    public EldritchCanvas getOrComputeCanvasFromSavedData(UUID canvasUUID) {
-        return this.server.getDataStorage().computeIfAbsent(EldritchCanvas.type(this, canvasUUID));
+    public EldritchCanvas getOrComputeCanvasFromSavedData(UUID canvasUUID, EldritchCanvas.Dimensions dimensions) {
+        return this.server.getDataStorage().computeIfAbsent(EldritchCanvas.type(this, canvasUUID, dimensions));
     }
 }

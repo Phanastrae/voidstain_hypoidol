@@ -20,7 +20,7 @@ import net.minecraft.resources.Identifier;
 import net.minecraft.util.Mth;
 import net.minecraft.world.level.Level;
 import phanastrae.voidstain_hypoidol.client.renderer.canvas.CanvasTexture;
-import phanastrae.voidstain_hypoidol.client.renderer.canvas.EldritchCanvasHandler;
+import phanastrae.voidstain_hypoidol.client.renderer.canvas.CanvasTextureHandler;
 import phanastrae.voidstain_hypoidol.client.renderer.canvas.EldritchCanvasRenderer;
 import phanastrae.voidstain_hypoidol.common.entity.EldritchPaintingEntity;
 
@@ -38,8 +38,8 @@ public class EldritchPaintingRenderer extends EntityRenderer<EldritchPaintingEnt
         if (state.canvasUUID == null) {
             return;
         }
-        CanvasTexture canvas = EldritchCanvasHandler.getCanvas(state.canvasUUID);
-        if (!canvas.isFilled()) {
+        CanvasTexture canvas = CanvasTextureHandler.getCanvas(state.canvasUUID);
+        if (canvas == null || !canvas.isFilled()) {
             return;
         }
 
@@ -52,7 +52,7 @@ public class EldritchPaintingRenderer extends EntityRenderer<EldritchPaintingEnt
                 RenderTypes.entitySolidZOffsetForward(backSprite.atlasLocation()),
                 RenderTypes.entitySolidZOffsetForward(canvas.getTextureIdentifier()),
                 state.lightCoordsPerBlock,
-                EldritchPaintingEntity.getWidth(), EldritchPaintingEntity.getHeight(),
+                state.width, state.height,
                 backSprite
         );
 
@@ -73,8 +73,10 @@ public class EldritchPaintingRenderer extends EntityRenderer<EldritchPaintingEnt
         Direction direction = entity.getDirection();
         state.direction = direction;
 
-        int width = EldritchPaintingEntity.getWidth();
-        int height = EldritchPaintingEntity.getHeight();
+        int width = entity.getWidth();
+        int height = entity.getHeight();
+        state.width = width;
+        state.height = height;
         int dims = width * height;
         if (state.lightCoordsPerBlock.length != dims) {
             state.lightCoordsPerBlock = new int[dims];

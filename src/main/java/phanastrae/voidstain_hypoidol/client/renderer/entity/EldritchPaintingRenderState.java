@@ -11,4 +11,6 @@ public class EldritchPaintingRenderState extends EntityRenderState {
     public int[] lightCoordsPerBlock = new int[0];
     @Nullable
     public UUID canvasUUID;
+    public int width;
+    public int height;
 }

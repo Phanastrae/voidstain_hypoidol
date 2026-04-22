@@ -4,7 +4,7 @@ import net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking;
 import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
 import phanastrae.voidstain_hypoidol.client.VoidstainHypoidolClient;
 import phanastrae.voidstain_hypoidol.client.hypoverse.ClientHypoverse;
-import phanastrae.voidstain_hypoidol.client.renderer.canvas.EldritchCanvasHandler;
+import phanastrae.voidstain_hypoidol.client.renderer.canvas.CanvasTextureHandler;
 import phanastrae.voidstain_hypoidol.common.VoidstainHypoidol;
 import phanastrae.voidstain_hypoidol.common.hypoverse.EldritchCanvas;
 import phanastrae.voidstain_hypoidol.common.hypoverse.HypoZone;
@@ -17,7 +17,7 @@ public class VoidstainClientPacketListener {
 
     public static void init() {
         register(StartWatchingHypoZonePayload.TYPE, ((payload, context) -> {
-            VoidstainHypoidolClient.HYPOVERSE.putZone(payload.uuid(), new HypoZone(payload.uuid(), payload.backgroundId()));
+            VoidstainHypoidolClient.HYPOVERSE.putZone(payload.uuid(), new HypoZone(payload.uuid(), payload.backgroundId(), payload.dimensions()));
         }));
 
         register(UpdateHypoZonePayload.TYPE, ((payload, context) -> {
@@ -85,12 +85,12 @@ public class VoidstainClientPacketListener {
         }));
 
         register(StartWatchingCanvasPayload.TYPE, ((payload, context) -> {
-            VoidstainHypoidolClient.HYPOVERSE.putCanvas(payload.uuid(), new EldritchCanvas(payload.uuid(), payload.zoneUUID()));
+            VoidstainHypoidolClient.HYPOVERSE.putCanvas(payload.uuid(), new EldritchCanvas(payload.uuid(), payload.zoneUUID(), payload.dimensions()));
         }));
 
         register(StopWatchingCanvasPayload.TYPE, ((payload, context) -> {
             VoidstainHypoidolClient.HYPOVERSE.removeCanvas(payload.uuid());
-            EldritchCanvasHandler.removeCanvas(payload.uuid());
+            CanvasTextureHandler.removeCanvas(payload.uuid());
         }));
     }
 

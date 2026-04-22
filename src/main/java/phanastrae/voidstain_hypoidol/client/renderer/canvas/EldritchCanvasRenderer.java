@@ -18,6 +18,7 @@ import org.joml.Matrix4fStack;
 import phanastrae.voidstain_hypoidol.client.VoidstainHypoidolClient;
 import phanastrae.voidstain_hypoidol.common.VoidstainHypoidol;
 import phanastrae.voidstain_hypoidol.common.hypoverse.EldritchCanvas;
+import phanastrae.voidstain_hypoidol.common.hypoverse.HypoZone;
 import phanastrae.voidstain_hypoidol.common.hypoverse.Hypoverse;
 import phanastrae.voidstain_hypoidol.common.hypoverse.hypoentity.HorrorHypoEntity;
 import phanastrae.voidstain_hypoidol.common.hypoverse.hypoentity.HypoEntity;
@@ -44,8 +45,21 @@ public class EldritchCanvasRenderer {
 
     private static final ProjectionMatrixBuffer CANVAS_PROJECTION_MATRIX_BUFFER = new ProjectionMatrixBuffer("voidstain_canvas");
 
-    public static final BiFunction<UUID, Identifier, RenderType> CANVAS_RENDER_TYPE = Util.memoize((canvasUuid, textureId) -> {
-        OutputTarget target = new OutputTarget("canvas_target", () -> EldritchCanvasHandler.getCanvas(canvasUuid).getTarget());
+    public static RenderType getCanvasTextureRenderType(CanvasTexture texture, Identifier textureId) {
+        return CANVAS_RENDER_TYPE.apply(texture.getCanvasId(), textureId);
+    }
+
+    private static final BiFunction<UUID, Identifier, RenderType> CANVAS_RENDER_TYPE = Util.memoize((canvasUuid, textureId) -> {
+        // this should only be used if the corresponding CanvasTexture exists in the CanvasHandler
+        OutputTarget target = new OutputTarget("canvas_target", () -> {
+            CanvasTexture canvas = CanvasTextureHandler.getCanvas(canvasUuid);
+            if (canvas != null) {
+                return canvas.getTarget();
+            } else {
+                VoidstainHypoidol.LOGGER.warn("Tried to get a non-existent canvas target, this should not happen!");
+                return null;
+            }
+        });
         RenderSetup state = RenderSetup.builder(RenderPipelines.GUI_TEXTURED)
                 .withTexture("Sampler0", textureId)
                 .setOutputTarget(target)
@@ -68,17 +82,19 @@ public class EldritchCanvasRenderer {
                 CanvasRenderState canvasRenderState = new CanvasRenderState();
                 canvasRenderState.canvasId = uuid;
                 canvasRenderState.zoneId = canvas.getZoneId();
+                canvasRenderState.dimensions = canvas.getDimensions();
 
                 ALL_CANVAS_RENDER_STATE.canvases.add(canvasRenderState);
 
-                CanvasTexture canvasTexture = EldritchCanvasHandler.getCanvas(uuid);
+                CanvasTexture canvasTexture = CanvasTextureHandler.getOrCreateCanvas(uuid, canvas.getDimensions().width, canvas.getDimensions().height);
                 canvasTexture.clearChecksSinceLastUse = 0;
             }
         }
 
         hypoverse.forEachZone(zone -> {
-            HypoZoneRenderState levelRenderState = new HypoZoneRenderState();
-            levelRenderState.backgroundId = zone.getBackgroundId();
+            HypoZoneRenderState zoneRenderState = new HypoZoneRenderState();
+            zoneRenderState.backgroundId = zone.getBackgroundId();
+            zoneRenderState.dimensions = zone.getDimensions();
 
             for (HypoEntity entity : zone.entities) {
                 HypoEntityRenderState entityRenderState;
@@ -95,17 +111,17 @@ public class EldritchCanvasRenderer {
                 entityRenderState.x = Mth.lerp(partialTick, entity.ox, entity.x);
                 entityRenderState.y = Mth.lerp(partialTick, entity.oy, entity.y);
 
-                levelRenderState.entities.add(entityRenderState);
+                zoneRenderState.entities.add(entityRenderState);
             }
 
-            HYPOVERSE_RENDER_STATE.zones.put(zone.uuid, levelRenderState);
+            HYPOVERSE_RENDER_STATE.zones.put(zone.uuid, zoneRenderState);
         });
     }
 
     public static void render() {
-        EldritchCanvasHandler.tryClearOldCanvases();
+        CanvasTextureHandler.tryClearOldCanvases();
 
-        EldritchCanvasHandler.setActiveCanvaseCount(ALL_CANVAS_RENDER_STATE.canvases.size());
+        CanvasTextureHandler.setActiveCanvaseCount(ALL_CANVAS_RENDER_STATE.canvases.size());
         if (!ALL_CANVAS_RENDER_STATE.canvases.isEmpty()) {
             renderCanvases();
         }
@@ -121,12 +137,15 @@ public class EldritchCanvasRenderer {
 
         RenderSystem.backupProjectionMatrix();
         Projection projection = new Projection();
-        projection.setupOrtho(-1000.0f, 1000.0f, 1.0f, 1.0f, false);
-        RenderSystem.setProjectionMatrix(CANVAS_PROJECTION_MATRIX_BUFFER.getBuffer(projection), ProjectionType.ORTHOGRAPHIC);
 
         for (CanvasRenderState renderState : ALL_CANVAS_RENDER_STATE.canvases) {
-            CanvasTexture canvasTexture = EldritchCanvasHandler.getCanvas(renderState.canvasId);
-            renderCanvas(canvasTexture, renderState);
+            projection.setupOrtho(-1000.0f, 1000.0f, renderState.dimensions.width, renderState.dimensions.height, false);
+            RenderSystem.setProjectionMatrix(CANVAS_PROJECTION_MATRIX_BUFFER.getBuffer(projection), ProjectionType.ORTHOGRAPHIC);
+
+            CanvasTexture canvasTexture = CanvasTextureHandler.getCanvas(renderState.canvasId);
+            if (canvasTexture != null) {
+                renderCanvas(canvasTexture, renderState);
+            }
         }
 
         RenderSystem.restoreProjectionMatrix();
@@ -138,39 +157,41 @@ public class EldritchCanvasRenderer {
 
         if (HYPOVERSE_RENDER_STATE.zones.containsKey(canvasRenderState.zoneId)) {
             HypoZoneRenderState zoneRenderState = HYPOVERSE_RENDER_STATE.zones.get(canvasRenderState.zoneId);
+            HypoZone.Dimensions dimensions = zoneRenderState.dimensions;
 
             drawWithTexture(canvasTexture, BACKGROUND_IDENTIFIERS[zoneRenderState.backgroundId], (builder) -> {
-                drawQuad(builder, 0, 1, 0, 1);
+                drawQuad(builder, dimensions.minX, dimensions.maxX, dimensions.minY, dimensions.maxY);
             });
 
             for (HypoEntityRenderState entityRenderState : zoneRenderState.entities) {
-                float dx = entityRenderState.x / 3;
-                float dy = entityRenderState.y / 3;
+                float x = entityRenderState.x - dimensions.minX;
+                float y = entityRenderState.y - dimensions.minY;
                 if (entityRenderState instanceof HorrorRenderState horrorRenderState) {
-                    float sx = 1 / 6f * horrorRenderState.sizeModifier;
-                    float sy = 1 / 6f * horrorRenderState.sizeModifier;
+                    float halfWidth = horrorRenderState.sizeModifier / 2f;
+                    float halfHeight = horrorRenderState.sizeModifier / 2f;
                     drawWithTexture(canvasTexture, HORROR_IDENTIFIERS[horrorRenderState.horrorId], (builder) -> {
-                        drawQuad(builder, dx - sx, dx + sx, dy - sy, dy + sy);
+                        drawQuad(builder, x - halfWidth, x + halfWidth, y - halfHeight, y + halfHeight);
                     });
                 } else {
-                    float sx = 1 / 12f;
-                    float sy = 1 / 12f;
+                    float halfWidth = 1 / 4f;
+                    float halfHeight = 1 / 4f;
                     drawWithTexture(canvasTexture, MORSEL_IDENTIFIER, (builder) -> {
-                        drawQuad(builder, dx - sx, dx + sx, dy - sy, dy + sy);
+                        drawQuad(builder, x - halfWidth, x + halfWidth, y - halfHeight, y + halfHeight);
                     });
                 }
             }
         }
 
+        EldritchCanvas.Dimensions dimensions = canvasRenderState.dimensions;
         drawWithTexture(canvasTexture, VoidstainHypoidol.id("textures/entity/canvas/painting/frame.png"), (builder) -> {
-            drawQuad(builder, 0, 1, 0, 1);
+            drawQuad(builder, 0, dimensions.width, 0, dimensions.height);
         });
 
         canvasTexture.markFilled();
     }
 
     private static void drawWithTexture(CanvasTexture canvas, Identifier textureId, Consumer<BufferBuilder> runnable) {
-        RenderType type = CANVAS_RENDER_TYPE.apply(canvas.getCanvasId(), textureId);
+        RenderType type = getCanvasTextureRenderType(canvas, textureId);
         BufferBuilder builder = Tesselator.getInstance().begin(VertexFormat.Mode.QUADS, DefaultVertexFormat.POSITION_TEX_COLOR);
         runnable.accept(builder);
         MeshData mesh = builder.build();

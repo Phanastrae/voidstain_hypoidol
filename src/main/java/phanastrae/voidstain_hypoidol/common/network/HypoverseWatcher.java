@@ -32,7 +32,7 @@ public class HypoverseWatcher {
             EldritchCanvas canvas = hypoverse.getCanvas(uuid);
 
             if (canvas != null) {
-                ServerPlayNetworking.send(player, new StartWatchingCanvasPayload(canvas.getUuid(), canvas.getZoneId()));
+                ServerPlayNetworking.send(player, new StartWatchingCanvasPayload(canvas.getUuid(), canvas.getZoneId(), canvas.getDimensions()));
 
                 UUID zoneUUID = canvas.getZoneId();
                 if (this.watchedZones.startWatchingId(zoneUUID)) {

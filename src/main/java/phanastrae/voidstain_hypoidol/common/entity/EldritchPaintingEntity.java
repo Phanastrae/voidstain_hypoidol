@@ -11,6 +11,7 @@ import net.minecraft.network.protocol.Packet;
 import net.minecraft.network.protocol.game.ClientGamePacketListener;
 import net.minecraft.network.protocol.game.ClientboundAddEntityPacket;
 import net.minecraft.network.syncher.EntityDataAccessor;
+import net.minecraft.network.syncher.EntityDataSerializers;
 import net.minecraft.network.syncher.SynchedEntityData;
 import net.minecraft.server.level.ServerEntity;
 import net.minecraft.server.level.ServerLevel;
@@ -54,9 +55,13 @@ import java.util.UUID;
 
 public class EldritchPaintingEntity extends HangingEntity {
     private static final EntityDataAccessor<Optional<UUID>> DATA_CANVAS_UUID = SynchedEntityData.defineId(EldritchPaintingEntity.class, VoidstainEntityDataSerializers.OPTIONAL_UUID);
+    private static final EntityDataAccessor<Integer> DATA_WIDTH = SynchedEntityData.defineId(EldritchPaintingEntity.class, EntityDataSerializers.INT);
+    private static final EntityDataAccessor<Integer> DATA_HEIGHT = SynchedEntityData.defineId(EldritchPaintingEntity.class, EntityDataSerializers.INT);
 
     public static final String KEY_FACING = "facing";
     public static final String KEY_CANVAS_UUID = "canvas_uuid";
+    public static final String KEY_WIDTH = "width";
+    public static final String KEY_HEIGHT = "height";
 
     public static final float DEPTH = 0.0625f;
     public static final float HALF_DEPTH = DEPTH / 2;
@@ -93,12 +98,24 @@ public class EldritchPaintingEntity extends HangingEntity {
     protected void defineSynchedData(SynchedEntityData.Builder entityData) {
         super.defineSynchedData(entityData);
         entityData.define(DATA_CANVAS_UUID, Optional.empty());
+        entityData.define(DATA_WIDTH, 1);
+        entityData.define(DATA_HEIGHT, 1);
+    }
+
+    @Override
+    public void onSyncedDataUpdated(EntityDataAccessor<?> accessor) {
+        super.onSyncedDataUpdated(accessor);
+        if (DATA_WIDTH.equals(accessor) || DATA_HEIGHT.equals(accessor)) {
+            this.recalculateBoundingBox();
+        }
     }
 
     @Override
     protected void addAdditionalSaveData(ValueOutput output) {
         output.store(KEY_FACING, HORIZONTAL_CODEC, this.getDirection());
         this.getCanvasUUID().ifPresent(uuid -> output.store(KEY_CANVAS_UUID, UUIDUtil.CODEC, uuid));
+        output.putInt(KEY_WIDTH, this.getWidth());
+        output.putInt(KEY_HEIGHT, this.getHeight());
         super.addAdditionalSaveData(output);
     }
 
@@ -106,6 +123,8 @@ public class EldritchPaintingEntity extends HangingEntity {
     protected void readAdditionalSaveData(ValueInput input) {
         Direction direction = input.read(KEY_FACING, HORIZONTAL_CODEC).orElse(Direction.SOUTH);
         input.read(KEY_CANVAS_UUID, UUIDUtil.CODEC).ifPresent(this::setCanvasUUID);
+        input.getInt(KEY_WIDTH).ifPresent(this::setWidth);
+        input.getInt(KEY_HEIGHT).ifPresent(this::setHeight);
         super.readAdditionalSaveData(input);
         this.setDirection(direction);
     }
@@ -114,7 +133,7 @@ public class EldritchPaintingEntity extends HangingEntity {
     public <T> @Nullable T get(DataComponentType<? extends T> type) {
         if (type == VoidstainDataComponents.CANVAS_DATA) {
             Optional<UUID> canvasUUID = this.getCanvasUUID();
-            return canvasUUID.<T>map(value -> castComponentValue(type, value)).orElse(null);
+            return canvasUUID.<T>map(value -> castComponentValue(type, new CanvasData(value, this.getWidth(), this.getHeight()))).orElse(null);
         }
         return super.get(type);
     }
@@ -128,7 +147,10 @@ public class EldritchPaintingEntity extends HangingEntity {
     @Override
     protected <T> boolean applyImplicitComponent(DataComponentType<T> type, T value) {
         if (type == VoidstainDataComponents.CANVAS_DATA) {
-            this.setCanvasUUID(castComponentValue(VoidstainDataComponents.CANVAS_DATA, value).uuid());
+            CanvasData data = castComponentValue(VoidstainDataComponents.CANVAS_DATA, value);
+            this.setCanvasUUID(data.uuid());
+            this.setWidth(data.width());
+            this.setHeight(data.height());
             return true;
         }
         return super.applyImplicitComponent(type, value);
@@ -190,8 +212,8 @@ public class EldritchPaintingEntity extends HangingEntity {
     protected AABB calculateBoundingBox(BlockPos pos, Direction direction) {
         Vec3 attachedToWall = Vec3.atCenterOf(pos).relative(direction, -SHIFT_TO_BLOCK_WALL);
 
-        int width = getWidth();
-        int height = getHeight();
+        int width = this.getWidth();
+        int height = this.getHeight();
 
         double horizontalOffset = this.offsetForPaintingSize(width);
         double verticalOffset = this.offsetForPaintingSize(height);
@@ -277,10 +299,8 @@ public class EldritchPaintingEntity extends HangingEntity {
         Direction canvasXPlusDirection = forwardsDirection.getCounterClockWise();
         Vec3 canvasXVec = canvasXPlusDirection.getUnitVec3();
         Vec3 canvasYVec = Direction.UP.getUnitVec3();
-        float width = getWidth();
-        float height = getWidth();
 
-        Vec3 originOffset = entityRelativePos.add(canvasXVec.scale(width / 2f)).add(canvasYVec.scale(height / 2f));
+        Vec3 originOffset = entityRelativePos.add(canvasXVec.scale(this.getWidth() / 2f)).add(canvasYVec.scale(this.getHeight() / 2f));
 
         float canvasX = (float) originOffset.dot(canvasXVec);
         float canvasY = (float) originOffset.dot(canvasYVec);
@@ -293,11 +313,9 @@ public class EldritchPaintingEntity extends HangingEntity {
         Direction canvasXPlusDirection = forwardsDirection.getCounterClockWise();
         Vec3 canvasXVec = canvasXPlusDirection.getUnitVec3();
         Vec3 canvasYVec = Direction.UP.getUnitVec3();
-        float width = getWidth();
-        float height = getWidth();
 
         Vec3 originOffset = canvasXVec.scale(canvasPos.x).add(canvasYVec.scale(canvasPos.y));
-        return originOffset.subtract(canvasXVec.scale(width / 2f)).subtract(canvasYVec.scale(height / 2f));
+        return originOffset.subtract(canvasXVec.scale(this.getWidth() / 2f)).subtract(canvasYVec.scale(this.getHeight() / 2f));
     }
 
     public void playCanvasSound(float x, float y, SoundEvent soundEvent, SoundSource source, float volume, float pitch) {
@@ -325,7 +343,7 @@ public class EldritchPaintingEntity extends HangingEntity {
     public ItemStack getAsItem() {
         ItemStack stack = VoidstainItems.ELDRITCH_PAINTING.getDefaultInstance();
         Optional<UUID> canvasUUID = this.getCanvasUUID();
-        canvasUUID.ifPresent(value -> stack.set(VoidstainDataComponents.CANVAS_DATA, new CanvasData(value)));
+        canvasUUID.ifPresent(value -> stack.set(VoidstainDataComponents.CANVAS_DATA, new CanvasData(value, this.getWidth(), this.getHeight())));
         return stack;
     }
 
@@ -360,12 +378,20 @@ public class EldritchPaintingEntity extends HangingEntity {
         return this.getAsItem();
     }
 
-    public static int getWidth() {
-        return 3;
+    public void setWidth(int width) {
+        this.entityData.set(DATA_WIDTH, width);
     }
 
-    public static int getHeight() {
-        return 3;
+    public void setHeight(int height) {
+        this.entityData.set(DATA_HEIGHT, height);
+    }
+
+    public int getWidth() {
+        return this.entityData.get(DATA_WIDTH);
+    }
+
+    public int getHeight() {
+        return this.entityData.get(DATA_HEIGHT);
     }
 
     private void setCanvasUUID(UUID canvasUUID) {

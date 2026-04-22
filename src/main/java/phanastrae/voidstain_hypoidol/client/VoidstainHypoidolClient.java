@@ -9,7 +9,7 @@ import net.minecraft.client.Minecraft;
 import phanastrae.voidstain_hypoidol.client.gui.VoidstainDebugScreenEntries;
 import phanastrae.voidstain_hypoidol.client.hypoverse.ClientHypoverse;
 import phanastrae.voidstain_hypoidol.client.network.VoidstainClientPacketListener;
-import phanastrae.voidstain_hypoidol.client.renderer.canvas.EldritchCanvasHandler;
+import phanastrae.voidstain_hypoidol.client.renderer.canvas.CanvasTextureHandler;
 import phanastrae.voidstain_hypoidol.client.renderer.canvas.EldritchCanvasRenderer;
 import phanastrae.voidstain_hypoidol.client.renderer.entity.VoidstainEntityRenderers;
 
@@ -27,7 +27,7 @@ public class VoidstainHypoidolClient implements ClientModInitializer {
         ClientLifecycleEvents.CLIENT_STOPPING.register(VoidstainHypoidolClient::close);
 
         // called on F3 + A, dimension change, and world join
-        InvalidateRenderStateCallback.EVENT.register(EldritchCanvasHandler::clearCanvases);
+        InvalidateRenderStateCallback.EVENT.register(CanvasTextureHandler::clearCanvases);
 
         LevelRenderEvents.END_EXTRACTION.register((context -> EldritchCanvasRenderer.extract(context.deltaTracker())));
 
@@ -42,12 +42,12 @@ public class VoidstainHypoidolClient implements ClientModInitializer {
 
     public static void resetData() {
         // called on world leave
-        EldritchCanvasHandler.clearCanvases();
+        CanvasTextureHandler.clearCanvases();
         HYPOVERSE = new ClientHypoverse();
     }
 
     private static void close(Minecraft minecraft) {
-        EldritchCanvasHandler.close();
+        CanvasTextureHandler.close();
         EldritchCanvasRenderer.close();
     }
 }

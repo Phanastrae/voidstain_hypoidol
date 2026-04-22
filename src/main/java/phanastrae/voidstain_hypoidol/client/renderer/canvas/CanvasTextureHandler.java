@@ -1,8 +1,10 @@
 package phanastrae.voidstain_hypoidol.client.renderer.canvas;
 
+import org.jetbrains.annotations.Nullable;
+
 import java.util.*;
 
-public class EldritchCanvasHandler {
+public class CanvasTextureHandler {
     private static final Map<UUID, CanvasTexture> CANVAS_MAP = new HashMap<>();
     private static int ACTIVE_CANVASE_COUNT;
     private static int FRAMES_SINCE_LAST_CLEAR = 0;
@@ -11,8 +13,13 @@ public class EldritchCanvasHandler {
         clearCanvases();
     }
 
+    @Nullable
     public static CanvasTexture getCanvas(UUID uuid) {
-        return CANVAS_MAP.computeIfAbsent(uuid, CanvasTexture::new);
+        return CANVAS_MAP.get(uuid);
+    }
+
+    public static CanvasTexture getOrCreateCanvas(UUID uuid, int width, int height) {
+        return CANVAS_MAP.computeIfAbsent(uuid, id -> new CanvasTexture(id, width, height));
     }
 
     public static void clearCanvases() {

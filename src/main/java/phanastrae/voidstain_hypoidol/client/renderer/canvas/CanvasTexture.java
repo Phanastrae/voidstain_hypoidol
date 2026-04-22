@@ -18,12 +18,12 @@ public class CanvasTexture {
 
     public int clearChecksSinceLastUse = 0;
 
-    public CanvasTexture(UUID uuid) {
+    public CanvasTexture(UUID uuid, int width, int height) {
         this.canvasId = uuid;
         this.textureIdentifier = VoidstainHypoidol.id(uuid.toString()).withPrefix("canvas/");
 
         int pixelsPerBlock = 64;
-        this.target = new TextureTarget("Canvas " + uuid, 3 * pixelsPerBlock, 3 * pixelsPerBlock, false);
+        this.target = new TextureTarget("Canvas " + uuid, width * pixelsPerBlock, height * pixelsPerBlock, false);
         this.targetTexture = new RenderTargetTexture(this.target);
 
         Minecraft.getInstance().getTextureManager().register(this.textureIdentifier, this.targetTexture);

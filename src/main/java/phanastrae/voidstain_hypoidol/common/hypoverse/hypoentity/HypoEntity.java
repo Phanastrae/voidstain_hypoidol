@@ -125,26 +125,26 @@ public abstract class HypoEntity {
             this.x += this.vx;
             this.y += this.vy;
 
-            if (this.x < hWidth && this.vx < 0) {
-                this.x = hWidth;
+            float minX = this.zone.getDimensions().minX + hWidth;
+            float maxX = this.zone.getDimensions().maxX - hWidth;
+            if (this.x < minX && this.vx < 0) {
+                this.x = minX;
+                this.vx = -this.vx;
+                this.needsSync = true;
+            } else if (this.x > maxX && this.vx > 0) {
+                this.x = maxX;
                 this.vx = -this.vx;
                 this.needsSync = true;
             }
 
-            if (this.x > 3 - hWidth && this.vx > 0) {
-                this.x = 3 - hWidth;
-                this.vx = -this.vx;
-                this.needsSync = true;
-            }
-
-            if (this.y < hHeight && this.vy < 0) {
-                this.y = hHeight;
+            float minY = this.zone.getDimensions().minY + hHeight;
+            float maxY = this.zone.getDimensions().maxY - hHeight;
+            if (this.y < minY && this.vy < 0) {
+                this.y = minY;
                 this.vy = -this.vy;
                 this.needsSync = true;
-            }
-
-            if (this.y > 3 - hHeight && this.vy > 0) {
-                this.y = 3 - hHeight;
+            } else if (this.y > maxY && this.vy > 0) {
+                this.y = maxY;
                 this.vy = -this.vy;
                 this.needsSync = true;
             }

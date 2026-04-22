@@ -6,7 +6,6 @@ import net.minecraft.core.Direction;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.world.entity.EntityType;
-import net.minecraft.world.entity.decoration.HangingEntity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.HangingEntityItem;
 import net.minecraft.world.item.Item;
@@ -18,6 +17,8 @@ import net.minecraft.world.level.Level;
 import net.minecraft.world.level.gameevent.GameEvent;
 import phanastrae.voidstain_hypoidol.common.entity.EldritchPaintingEntity;
 import phanastrae.voidstain_hypoidol.common.entity.VoidstainEntityTypes;
+import phanastrae.voidstain_hypoidol.common.hypoverse.EldritchCanvas;
+import phanastrae.voidstain_hypoidol.common.hypoverse.Hypoverse;
 
 import java.util.Optional;
 import java.util.function.Consumer;
@@ -29,7 +30,6 @@ public class EldritchPaintingItem extends HangingEntityItem {
 
     @Override
     public InteractionResult useOn(UseOnContext context) {
-        HangingEntity entity;
         BlockPos pos = context.getClickedPos();
         Direction clickedFace = context.getClickedFace();
         BlockPos blockPos = pos.relative(clickedFace);
@@ -45,9 +45,26 @@ public class EldritchPaintingItem extends HangingEntityItem {
         if (painting.isEmpty()) {
             return InteractionResult.CONSUME;
         }
-        entity = painting.get();
+        EldritchPaintingEntity entity = painting.get();
 
+        // set width/height to random values
+        entity.setWidth(level.getRandom().nextIntBetweenInclusive(1, 8));
+        entity.setHeight(level.getRandom().nextIntBetweenInclusive(1, 8));
+        // apply component data (might override width/height)
         EntityType.createDefaultStackConfig(level, itemInHand, player).accept(entity);
+        // if canvas already exists, make sure the painting uses its width/height regardless of the data component
+        if (!level.isClientSide()) {
+            entity.getCanvasUUID().ifPresent(canvasUUID -> {
+                Hypoverse hypoverse = Hypoverse.fromLevel(level);
+                if (hypoverse != null) {
+                    EldritchCanvas canvas = hypoverse.getCanvas(canvasUUID);
+                    if (canvas != null) {
+                        entity.setWidth(canvas.getDimensions().width);
+                        entity.setHeight(canvas.getDimensions().height);
+                    }
+                }
+            });
+        }
         if (entity.survives()) {
             if (!level.isClientSide()) {
                 entity.playPlacementSound();
@@ -66,7 +83,7 @@ public class EldritchPaintingItem extends HangingEntityItem {
         if (display.shows(VoidstainDataComponents.CANVAS_DATA)) {
             CanvasData canvasData = itemStack.get(VoidstainDataComponents.CANVAS_DATA);
             if (canvasData != null) {
-                builder.accept(Component.translatable("painting.dimensions", 3, 3));
+                builder.accept(Component.translatable("painting.dimensions", canvasData.width(), canvasData.height()));
                 builder.accept(Component.translatable("item.voidstain_hypoidol.eldritch_painting.canvas_uuid", canvasData.uuid()).withStyle(ChatFormatting.LIGHT_PURPLE));
             }
         }
