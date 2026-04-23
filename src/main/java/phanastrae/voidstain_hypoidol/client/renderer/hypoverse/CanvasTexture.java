@@ -22,7 +22,7 @@ public class CanvasTexture {
         this.canvasId = uuid;
         this.textureIdentifier = VoidstainHypoidol.id(uuid.toString()).withPrefix("canvas/");
 
-        int pixelsPerBlock = 16;
+        int pixelsPerBlock = 64;
         this.target = new TextureTarget("Canvas " + uuid, width * pixelsPerBlock, height * pixelsPerBlock, false);
         this.targetTexture = new RenderTargetTexture(this.target);
 
