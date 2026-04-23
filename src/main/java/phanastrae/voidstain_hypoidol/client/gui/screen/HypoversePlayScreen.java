@@ -1,5 +1,6 @@
 package phanastrae.voidstain_hypoidol.client.gui.screen;
 
+import net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking;
 import net.minecraft.client.GameNarrator;
 import net.minecraft.client.Options;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
@@ -9,9 +10,9 @@ import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.client.input.KeyEvent;
 import phanastrae.voidstain_hypoidol.client.VoidstainHypoidolClient;
 import phanastrae.voidstain_hypoidol.client.hypoverse.hypoentity.player.LocalPlayerHypoEntity;
+import phanastrae.voidstain_hypoidol.common.network.DebugKillHypoPlayerPayload;
 
 public class HypoversePlayScreen extends Screen {
-    // TODO make chat always show even when in this screen
 
     public HypoversePlayScreen() {
         super(GameNarrator.NO_TITLE);
@@ -54,6 +55,11 @@ public class HypoversePlayScreen extends Screen {
                 player.leftHeld = true;
                 return true;
             }
+        }
+
+        if (options.keyDrop.matches(event)) {
+            ClientPlayNetworking.send(DebugKillHypoPlayerPayload.INSTANCE);
+            return true;
         }
 
         return false;

@@ -38,6 +38,9 @@ public class ClientHypoverse extends Hypoverse {
     public HypoEntity removeEntity(UUID uuid) {
         if (this.hypoPlayer != null && hypoPlayer.getUuid().equals(uuid)) {
             this.hypoPlayer = null;
+            if (Minecraft.getInstance().screen instanceof HypoversePlayScreen) {
+                Minecraft.getInstance().setScreen(null);
+            }
         }
         return super.removeEntity(uuid);
     }

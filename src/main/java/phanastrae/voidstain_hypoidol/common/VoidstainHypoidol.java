@@ -12,6 +12,7 @@ import phanastrae.voidstain_hypoidol.common.hypoverse.hypoentity.HypoEntityTypes
 import phanastrae.voidstain_hypoidol.common.item.VoidstainDataComponents;
 import phanastrae.voidstain_hypoidol.common.item.VoidstainItems;
 import phanastrae.voidstain_hypoidol.common.network.VoidstainPayloads;
+import phanastrae.voidstain_hypoidol.common.network.VoidstainServerPacketListener;
 
 public class VoidstainHypoidol implements ModInitializer {
     public static final String MOD_ID = "voidstain_hypoidol";
@@ -34,6 +35,7 @@ public class VoidstainHypoidol implements ModInitializer {
 
         VoidstainEntityDataSerializers.init();
         VoidstainPayloads.init();
+        VoidstainServerPacketListener.init();
 
         ServerTickEvents.START_SERVER_TICK.register(server -> {
             Hypoverse.fromServer(server).tick(server.tickRateManager().runsNormally());

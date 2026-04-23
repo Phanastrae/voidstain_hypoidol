@@ -23,9 +23,16 @@ public class VoidstainPayloads {
 
         registerClientboundPlay(StartWatchingCanvasPayload.TYPE, StartWatchingCanvasPayload.STREAM_CODEC);
         registerClientboundPlay(StopWatchingCanvasPayload.TYPE, StopWatchingCanvasPayload.STREAM_CODEC);
+
+
+        registerServerboundPlay(DebugKillHypoPlayerPayload.TYPE, DebugKillHypoPlayerPayload.STREAM_CODEC);
     }
 
     private static <T extends CustomPacketPayload> void registerClientboundPlay(CustomPacketPayload.Type<T> type, StreamCodec<? super RegistryFriendlyByteBuf, T> codec) {
         PayloadTypeRegistry.clientboundPlay().register(type, codec);
+    }
+
+    private static <T extends CustomPacketPayload> void registerServerboundPlay(CustomPacketPayload.Type<T> type, StreamCodec<? super RegistryFriendlyByteBuf, T> codec) {
+        PayloadTypeRegistry.serverboundPlay().register(type, codec);
     }
 }

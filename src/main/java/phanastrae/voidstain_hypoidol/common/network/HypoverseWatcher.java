@@ -85,6 +85,17 @@ public class HypoverseWatcher {
         this.hypoPlayer = null;
     }
 
+    public boolean hasHypoPlayer() {
+        return this.hypoPlayer != null;
+    }
+
+    public void killHypoPlayer() {
+        Hypoverse hypoverse = Hypoverse.fromLevel(this.getPlayer().level());
+        if (this.hypoPlayer != null && hypoverse != null) {
+            hypoverse.removeEntity(this.hypoPlayer.getUuid());
+        }
+    }
+
     public boolean isWatchingZone(UUID zoneUUID) {
         return this.watchedZones.watchedIds.containsKey(zoneUUID);
     }
