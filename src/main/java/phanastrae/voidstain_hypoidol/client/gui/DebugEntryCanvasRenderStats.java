@@ -5,7 +5,7 @@ import net.minecraft.client.gui.components.debug.DebugScreenEntry;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.chunk.LevelChunk;
 import org.jspecify.annotations.Nullable;
-import phanastrae.voidstain_hypoidol.client.renderer.canvas.CanvasTextureHandler;
+import phanastrae.voidstain_hypoidol.client.renderer.hypoverse.CanvasTextureHandler;
 
 public class DebugEntryCanvasRenderStats implements DebugScreenEntry {
     @Override

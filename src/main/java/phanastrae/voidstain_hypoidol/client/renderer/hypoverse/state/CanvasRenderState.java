@@ -1,4 +1,4 @@
-package phanastrae.voidstain_hypoidol.client.renderer.canvas;
+package phanastrae.voidstain_hypoidol.client.renderer.hypoverse.state;
 
 import phanastrae.voidstain_hypoidol.common.hypoverse.EldritchCanvas;
 

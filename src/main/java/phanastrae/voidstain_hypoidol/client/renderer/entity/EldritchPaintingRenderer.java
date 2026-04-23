@@ -19,9 +19,9 @@ import net.minecraft.data.AtlasIds;
 import net.minecraft.resources.Identifier;
 import net.minecraft.util.Mth;
 import net.minecraft.world.level.Level;
-import phanastrae.voidstain_hypoidol.client.renderer.canvas.CanvasTexture;
-import phanastrae.voidstain_hypoidol.client.renderer.canvas.CanvasTextureHandler;
-import phanastrae.voidstain_hypoidol.client.renderer.canvas.EldritchCanvasRenderer;
+import phanastrae.voidstain_hypoidol.client.renderer.hypoverse.CanvasTexture;
+import phanastrae.voidstain_hypoidol.client.renderer.hypoverse.CanvasTextureHandler;
+import phanastrae.voidstain_hypoidol.client.renderer.hypoverse.HypoverseRenderer;
 import phanastrae.voidstain_hypoidol.common.entity.EldritchPaintingEntity;
 
 public class EldritchPaintingRenderer extends EntityRenderer<EldritchPaintingEntity, EldritchPaintingRenderState> {
@@ -119,7 +119,7 @@ public class EldritchPaintingRenderer extends EntityRenderer<EldritchPaintingEnt
         entity.getCanvasUUID().ifPresentOrElse(uuid -> {
             state.canvasUUID = uuid;
 
-            EldritchCanvasRenderer.ALL_CANVAS_RENDER_STATE.activeCanvasIds.add(uuid);
+            HypoverseRenderer.CANVAS_RENDERER.markActiveCanvasId(uuid);
         }, () -> {
             state.canvasUUID = null;
         });

@@ -7,14 +7,13 @@ import phanastrae.voidstain_hypoidol.common.hypoverse.EldritchCanvas;
 import phanastrae.voidstain_hypoidol.common.hypoverse.HypoZone;
 import phanastrae.voidstain_hypoidol.common.hypoverse.Hypoverse;
 import phanastrae.voidstain_hypoidol.common.hypoverse.hypoentity.HypoEntity;
-import phanastrae.voidstain_hypoidol.common.hypoverse.hypoentity.player.PlayerHypoEntity;
 
 import java.util.UUID;
 
 public class ClientHypoverse extends Hypoverse {
 
     @Nullable
-    public PlayerHypoEntity hypoPlayer;
+    public LocalPlayerHypoEntity hypoPlayer;
 
     @Override
     public void tick(boolean runsNormally) {

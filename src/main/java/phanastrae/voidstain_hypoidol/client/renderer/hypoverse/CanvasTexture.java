@@ -1,4 +1,4 @@
-package phanastrae.voidstain_hypoidol.client.renderer.canvas;
+package phanastrae.voidstain_hypoidol.client.renderer.hypoverse;
 
 import com.mojang.blaze3d.pipeline.TextureTarget;
 import net.minecraft.client.Minecraft;

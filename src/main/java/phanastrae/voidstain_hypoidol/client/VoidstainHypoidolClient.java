@@ -9,8 +9,8 @@ import net.minecraft.client.Minecraft;
 import phanastrae.voidstain_hypoidol.client.gui.VoidstainDebugScreenEntries;
 import phanastrae.voidstain_hypoidol.client.hypoverse.ClientHypoverse;
 import phanastrae.voidstain_hypoidol.client.network.VoidstainClientPacketListener;
-import phanastrae.voidstain_hypoidol.client.renderer.canvas.CanvasTextureHandler;
-import phanastrae.voidstain_hypoidol.client.renderer.canvas.EldritchCanvasRenderer;
+import phanastrae.voidstain_hypoidol.client.renderer.hypoverse.CanvasTextureHandler;
+import phanastrae.voidstain_hypoidol.client.renderer.hypoverse.HypoverseRenderer;
 import phanastrae.voidstain_hypoidol.client.renderer.entity.VoidstainEntityRenderers;
 
 public class VoidstainHypoidolClient implements ClientModInitializer {
@@ -29,9 +29,9 @@ public class VoidstainHypoidolClient implements ClientModInitializer {
         // called on F3 + A, dimension change, and world join
         InvalidateRenderStateCallback.EVENT.register(CanvasTextureHandler::clearCanvases);
 
-        LevelRenderEvents.END_EXTRACTION.register((context -> EldritchCanvasRenderer.extract(context.deltaTracker())));
+        LevelRenderEvents.END_EXTRACTION.register((context -> HypoverseRenderer.CANVAS_RENDERER.extract(context.deltaTracker())));
 
-        LevelRenderEvents.AFTER_OPAQUE_TERRAIN.register((context) -> EldritchCanvasRenderer.render());
+        LevelRenderEvents.AFTER_OPAQUE_TERRAIN.register((context) -> HypoverseRenderer.CANVAS_RENDERER.render());
 
         ClientTickEvents.START_LEVEL_TICK.register((level -> {
             if (level == Minecraft.getInstance().level) { // if (somehow) multiple levels are being ticked, only tick with the main one
@@ -48,6 +48,6 @@ public class VoidstainHypoidolClient implements ClientModInitializer {
 
     private static void close(Minecraft minecraft) {
         CanvasTextureHandler.close();
-        EldritchCanvasRenderer.close();
+        HypoverseRenderer.close();
     }
 }

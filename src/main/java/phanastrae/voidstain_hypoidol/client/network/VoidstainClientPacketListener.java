@@ -9,7 +9,7 @@ import phanastrae.voidstain_hypoidol.client.hypoverse.ClientHypoverse;
 import phanastrae.voidstain_hypoidol.client.hypoverse.hypoentity.player.ClientPlayerHypoEntity;
 import phanastrae.voidstain_hypoidol.client.hypoverse.hypoentity.player.LocalPlayerHypoEntity;
 import phanastrae.voidstain_hypoidol.client.hypoverse.hypoentity.player.RemotePlayerHypoEntity;
-import phanastrae.voidstain_hypoidol.client.renderer.canvas.CanvasTextureHandler;
+import phanastrae.voidstain_hypoidol.client.renderer.hypoverse.CanvasTextureHandler;
 import phanastrae.voidstain_hypoidol.common.VoidstainHypoidol;
 import phanastrae.voidstain_hypoidol.common.hypoverse.EldritchCanvas;
 import phanastrae.voidstain_hypoidol.common.hypoverse.HypoZone;
