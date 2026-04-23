@@ -1,6 +1,8 @@
 package phanastrae.voidstain_hypoidol.client.hypoverse;
 
+import net.minecraft.client.Minecraft;
 import org.jetbrains.annotations.Nullable;
+import phanastrae.voidstain_hypoidol.client.gui.screen.HypoversePlayScreen;
 import phanastrae.voidstain_hypoidol.client.hypoverse.hypoentity.player.LocalPlayerHypoEntity;
 import phanastrae.voidstain_hypoidol.common.VoidstainHypoidol;
 import phanastrae.voidstain_hypoidol.common.hypoverse.EldritchCanvas;
@@ -27,6 +29,7 @@ public class ClientHypoverse extends Hypoverse {
                 VoidstainHypoidol.LOGGER.warn("Received data for a controlled HypoPlayer, but one already exists?");
             }
             this.hypoPlayer = player;
+            Minecraft.getInstance().setScreen(new HypoversePlayScreen());
         }
         super.addEntity(entity);
     }

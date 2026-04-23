@@ -1,4 +1,4 @@
-package phanastrae.voidstain_hypoidol.client.gui;
+package phanastrae.voidstain_hypoidol.client.gui.debug;
 
 import net.minecraft.client.gui.components.debug.DebugScreenDisplayer;
 import net.minecraft.client.gui.components.debug.DebugScreenEntry;
@@ -7,8 +7,6 @@ import net.minecraft.world.level.chunk.LevelChunk;
 import org.jspecify.annotations.Nullable;
 import phanastrae.voidstain_hypoidol.client.VoidstainHypoidolClient;
 import phanastrae.voidstain_hypoidol.client.hypoverse.ClientHypoverse;
-import phanastrae.voidstain_hypoidol.common.hypoverse.HypoZone;
-import phanastrae.voidstain_hypoidol.common.hypoverse.Hypoverse;
 
 public class DebugEntryHypoverseStats implements DebugScreenEntry {
     @Override

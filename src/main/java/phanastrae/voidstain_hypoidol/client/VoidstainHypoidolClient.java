@@ -6,7 +6,7 @@ import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
 import net.fabricmc.fabric.api.client.rendering.v1.InvalidateRenderStateCallback;
 import net.fabricmc.fabric.api.client.rendering.v1.level.LevelRenderEvents;
 import net.minecraft.client.Minecraft;
-import phanastrae.voidstain_hypoidol.client.gui.VoidstainDebugScreenEntries;
+import phanastrae.voidstain_hypoidol.client.gui.debug.VoidstainDebugScreenEntries;
 import phanastrae.voidstain_hypoidol.client.hypoverse.ClientHypoverse;
 import phanastrae.voidstain_hypoidol.client.network.VoidstainClientPacketListener;
 import phanastrae.voidstain_hypoidol.client.renderer.hypoverse.CanvasTextureHandler;

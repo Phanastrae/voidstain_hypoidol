@@ -1,4 +1,4 @@
-package phanastrae.voidstain_hypoidol.client.gui;
+package phanastrae.voidstain_hypoidol.client.gui.debug;
 
 import net.minecraft.client.gui.components.debug.DebugScreenEntries;
 import net.minecraft.client.gui.components.debug.DebugScreenEntry;

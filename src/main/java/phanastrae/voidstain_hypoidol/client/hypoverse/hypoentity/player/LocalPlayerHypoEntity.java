@@ -1,7 +1,5 @@
 package phanastrae.voidstain_hypoidol.client.hypoverse.hypoentity.player;
 
-import net.minecraft.client.Minecraft;
-import net.minecraft.client.Options;
 import phanastrae.voidstain_hypoidol.common.hypoverse.HypoZone;
 import phanastrae.voidstain_hypoidol.common.hypoverse.Hypoverse;
 
@@ -9,23 +7,27 @@ import java.util.UUID;
 
 public class LocalPlayerHypoEntity extends ClientPlayerHypoEntity {
 
+    public boolean upHeld = false;
+    public boolean downHeld = false;
+    public boolean leftHeld = false;
+    public boolean rightHeld = false;
+
     public LocalPlayerHypoEntity(HypoZone zone, UUID playerUUID) {
         super(zone, playerUUID);
     }
 
     @Override
     public void tick(boolean runsNormally, boolean onServer, Hypoverse hypoverse) {
-        Options options = Minecraft.getInstance().options;
-        if (options.keyUp.isDown()) {
+        if (this.upHeld) {
             this.vy += 0.01f;
         }
-        if (options.keyDown.isDown()) {
+        if (this.downHeld) {
             this.vy -= 0.01f;
         }
-        if (options.keyLeft.isDown()) {
+        if (this.leftHeld) {
             this.vx -= 0.01f;
         }
-        if (options.keyRight.isDown()) {
+        if (this.rightHeld) {
             this.vx += 0.01f;
         }
 
