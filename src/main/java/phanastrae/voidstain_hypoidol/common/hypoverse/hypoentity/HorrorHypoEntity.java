@@ -7,7 +7,7 @@ import phanastrae.voidstain_hypoidol.common.hypoverse.HypoZone;
 import phanastrae.voidstain_hypoidol.common.hypoverse.Hypoverse;
 import phanastrae.voidstain_hypoidol.common.network.UpdateHorrorFullnessPayload;
 
-public class HorrorHypoEntity extends HypoEntity {
+public class HorrorHypoEntity extends BouncingHypoEntity {
     public static final String KEY_HORROR_ID = "horror_id";
     public static final String KEY_FULLNESS = "fullness";
 

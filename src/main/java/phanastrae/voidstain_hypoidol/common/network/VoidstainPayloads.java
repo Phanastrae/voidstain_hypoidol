@@ -13,6 +13,7 @@ public class VoidstainPayloads {
         registerClientboundPlay(StopWatchingHypoZonePayload.TYPE, StopWatchingHypoZonePayload.STREAM_CODEC);
 
         registerClientboundPlay(AddHypoEntityPayload.TYPE, AddHypoEntityPayload.STREAM_CODEC);
+        registerClientboundPlay(AddHypoPlayerPayload.TYPE, AddHypoPlayerPayload.STREAM_CODEC);
         registerClientboundPlay(UpdateHypoEntityPositionPayload.TYPE, UpdateHypoEntityPositionPayload.STREAM_CODEC);
         registerClientboundPlay(TeleportHypoEntityPayload.TYPE, TeleportHypoEntityPayload.STREAM_CODEC);
         registerClientboundPlay(RemoveHypoEntityPayload.TYPE, RemoveHypoEntityPayload.STREAM_CODEC);

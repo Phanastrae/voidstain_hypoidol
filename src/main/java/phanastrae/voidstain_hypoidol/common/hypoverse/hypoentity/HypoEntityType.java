@@ -14,13 +14,23 @@ public class HypoEntityType<T extends HypoEntity> {
     public static final StreamCodec<RegistryFriendlyByteBuf, HypoEntityType<?>> STREAM_CODEC = ByteBufCodecs.registry(VoidstainRegistries.HYPOENTITY_TYPE_KEY);
 
     private final HypoEntityFactory<T> factory;
+    private final boolean noSave;
 
     public HypoEntityType(HypoEntityFactory<T> factory) {
+        this(factory, false);
+    }
+
+    public HypoEntityType(HypoEntityFactory<T> factory, boolean noSave) {
         this.factory = factory;
+        this.noSave = noSave;
     }
 
     public @Nullable T create(HypoZone zone) {
         return this.factory.create(this, zone);
+    }
+
+    public boolean canSave() {
+        return !this.noSave;
     }
 
     @FunctionalInterface

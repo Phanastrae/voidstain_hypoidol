@@ -241,7 +241,8 @@ public class EldritchPaintingEntity extends HangingEntity {
         boolean isFood = itemStack.is(Items.CHORUS_FRUIT);
         boolean isPearl = itemStack.is(Items.ENDER_PEARL);
         boolean isCanvas = itemStack.is(VoidstainItems.ELDRITCH_PAINTING);
-        if (canvasUUID.isPresent() && !itemStack.isEmpty() && (isBlaze || isGhast || isFood || isPearl || isCanvas)) {
+        boolean isCart = itemStack.is(Items.MINECART);
+        if (canvasUUID.isPresent() && !itemStack.isEmpty() && (isBlaze || isGhast || isFood || isPearl || isCanvas || isCart)) {
             if (player.level().isClientSide()) {
                 return InteractionResult.SUCCESS_SERVER;
             } else {
@@ -325,6 +326,14 @@ public class EldritchPaintingEntity extends HangingEntity {
                                     }
                                 }
                             }
+                        } else if (isCart && player instanceof ServerPlayer serverPlayer) {
+                            HypoverseWatcher watcher = HypoverseWatcher.fromPlayer(serverPlayer);
+                            watcher.createHypoPlayer(hypoverse, zone, canvasPos.x, canvasPos.y);
+
+                            if (!player.hasInfiniteMaterials()) {
+                                itemStack.split(1);
+                            }
+                            return InteractionResult.SUCCESS_SERVER;
                         }
                     }
                 }

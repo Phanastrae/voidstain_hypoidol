@@ -3,10 +3,13 @@ package phanastrae.voidstain_hypoidol.common.network;
 import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.server.network.ServerGamePacketListenerImpl;
+import org.jetbrains.annotations.Nullable;
 import phanastrae.voidstain_hypoidol.common.duck.HypoverseWatcherAccess;
 import phanastrae.voidstain_hypoidol.common.hypoverse.EldritchCanvas;
 import phanastrae.voidstain_hypoidol.common.hypoverse.HypoZone;
 import phanastrae.voidstain_hypoidol.common.hypoverse.Hypoverse;
+import phanastrae.voidstain_hypoidol.common.hypoverse.hypoentity.player.PlayerHypoEntity;
+import phanastrae.voidstain_hypoidol.common.hypoverse.hypoentity.player.ServerPlayerHypoEntity;
 
 import java.util.UUID;
 
@@ -17,6 +20,9 @@ public class HypoverseWatcher {
     // map of level ids to number of canvases player can see that shows them
     private final IdWatcher watchedZones = new IdWatcher();
     private final ServerGamePacketListenerImpl connection;
+
+    @Nullable
+    private PlayerHypoEntity hypoPlayer;
 
     public HypoverseWatcher(ServerGamePacketListenerImpl connection) {
         this.connection = connection;
@@ -62,6 +68,21 @@ public class HypoverseWatcher {
                 }
             }
         }
+    }
+
+    public void createHypoPlayer(Hypoverse hypoverse, HypoZone zone, float x, float y) {
+        if (this.hypoPlayer != null) {
+            hypoverse.removeEntity(this.hypoPlayer.getUuid());
+        }
+
+        ServerPlayerHypoEntity playerHypoEntity = new ServerPlayerHypoEntity(zone, this, this.connection.player.getUUID());
+        playerHypoEntity.setPos(x, y);
+        hypoverse.addEntity(playerHypoEntity);
+        this.hypoPlayer = playerHypoEntity;
+    }
+
+    public void onHypoPlayerRemoval() {
+        this.hypoPlayer = null;
     }
 
     public boolean isWatchingZone(UUID zoneUUID) {

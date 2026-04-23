@@ -1,9 +1,14 @@
 package phanastrae.voidstain_hypoidol.client.network;
 
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking;
+import net.minecraft.core.UUIDUtil;
+import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
 import phanastrae.voidstain_hypoidol.client.VoidstainHypoidolClient;
 import phanastrae.voidstain_hypoidol.client.hypoverse.ClientHypoverse;
+import phanastrae.voidstain_hypoidol.client.hypoverse.hypoentity.player.ClientPlayerHypoEntity;
+import phanastrae.voidstain_hypoidol.client.hypoverse.hypoentity.player.LocalPlayerHypoEntity;
+import phanastrae.voidstain_hypoidol.client.hypoverse.hypoentity.player.RemotePlayerHypoEntity;
 import phanastrae.voidstain_hypoidol.client.renderer.canvas.CanvasTextureHandler;
 import phanastrae.voidstain_hypoidol.common.VoidstainHypoidol;
 import phanastrae.voidstain_hypoidol.common.hypoverse.EldritchCanvas;
@@ -12,7 +17,11 @@ import phanastrae.voidstain_hypoidol.common.hypoverse.Hypoverse;
 import phanastrae.voidstain_hypoidol.common.hypoverse.Portal;
 import phanastrae.voidstain_hypoidol.common.hypoverse.hypoentity.HorrorHypoEntity;
 import phanastrae.voidstain_hypoidol.common.hypoverse.hypoentity.HypoEntity;
+import phanastrae.voidstain_hypoidol.common.hypoverse.hypoentity.HypoEntityTypes;
+import phanastrae.voidstain_hypoidol.common.hypoverse.hypoentity.player.PlayerHypoEntity;
 import phanastrae.voidstain_hypoidol.common.network.*;
+
+import java.util.UUID;
 
 public class VoidstainClientPacketListener {
 
@@ -41,9 +50,35 @@ public class VoidstainClientPacketListener {
             if (zone == null) {
                 VoidstainHypoidol.LOGGER.warn("Received payload for missing HypoZone {}", payload.zoneUUID());
             } else {
-                HypoEntity entity = HypoEntity.fromData(zone, payload.data());
-                if (entity != null) {
-                    hypoverse.addEntity(entity);
+                if (payload.data().type().equals(HypoEntityTypes.PLAYER)) {
+                    VoidstainHypoidol.LOGGER.warn("Tried to add a HypoPlayer with a regular AddHypoEntityPayload?");
+                } else {
+                    HypoEntity entity = HypoEntity.fromData(zone, payload.data());
+                    if (entity != null) {
+                        hypoverse.addEntity(entity);
+                    }
+                }
+            }
+        }));
+
+        register(AddHypoPlayerPayload.TYPE, ((payload, context) -> {
+            ClientHypoverse hypoverse = VoidstainHypoidolClient.HYPOVERSE;
+            HypoZone zone = hypoverse.getZone(payload.zoneUUID());
+            if (zone == null) {
+                VoidstainHypoidol.LOGGER.warn("Received payload for missing HypoZone {}", payload.zoneUUID());
+            } else {
+                if (payload.data().type().equals(HypoEntityTypes.PLAYER)) {
+                    CompoundTag tag = payload.data().copyTagWithoutId();
+                    UUID playerUUID = tag.read(PlayerHypoEntity.KEY_PLAYER_UUID, UUIDUtil.CODEC).orElse(null);
+                    if (playerUUID != null) {
+                        ClientPlayerHypoEntity entity = payload.isLocal() ? new LocalPlayerHypoEntity(zone, playerUUID) : new RemotePlayerHypoEntity(zone, playerUUID);
+                        entity.read(tag);
+                        hypoverse.addEntity(entity);
+                    } else {
+                        VoidstainHypoidol.LOGGER.warn("Tried to add HypoPlayer with no player UUID?");
+                    }
+                } else {
+                    VoidstainHypoidol.LOGGER.warn("Tried to add a non-player HypoEntity with an AddHypoPlayerPayload?");
                 }
             }
         }));
@@ -52,8 +87,10 @@ public class VoidstainClientPacketListener {
             ClientHypoverse hypoverse = VoidstainHypoidolClient.HYPOVERSE;
             HypoEntity entity = hypoverse.getEntity(payload.entityUUID());
             if (entity != null) {
-                entity.setPos(payload.x(), payload.y());
-                entity.setVelocity(payload.vx(), payload.vy());
+                if (!entity.isPlayerControlled()) {
+                    entity.setPos(payload.x(), payload.y());
+                    entity.setVelocity(payload.vx(), payload.vy());
+                }
             } else {
                 VoidstainHypoidol.LOGGER.warn("Received payload for missing HypoEntity {}", payload.entityUUID());
             }

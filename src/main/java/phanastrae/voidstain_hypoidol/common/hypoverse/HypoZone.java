@@ -24,6 +24,8 @@ import phanastrae.voidstain_hypoidol.common.network.StartWatchingHypoZonePayload
 import phanastrae.voidstain_hypoidol.common.network.UpdateHypoZonePayload;
 
 import java.util.*;
+import java.util.function.Function;
+import java.util.function.Predicate;
 import java.util.function.Supplier;
 
 public class HypoZone extends SavedData {
@@ -81,7 +83,9 @@ public class HypoZone extends SavedData {
         } else {
             List<TypedEntityData<HypoEntityType<?>>> data = new ArrayList<>();
             for (HypoEntity entity : this.entities) {
-                data.add(entity.getData());
+                if (entity.getType().canSave()) {
+                    data.add(entity.getData());
+                }
             }
             return data;
         }
@@ -173,12 +177,12 @@ public class HypoZone extends SavedData {
     }
 
     public void updateNewWatchers() {
-        sendToAll(this.newWatchers, () -> new StartWatchingHypoZonePayload(this.uuid, this.getBackgroundId(), this.dimensions));
+        sendToAll(this.newWatchers, () -> new StartWatchingHypoZonePayload(this.uuid, this.getBackgroundId(), this.dimensions), w -> true);
         for (HypoEntity entity : this.entities) {
-            sendToAll(this.newWatchers, entity::getAddEntityPayload);
+            sendToAll(this.newWatchers, entity::getAddEntityPayload, w -> true);
         }
         for (Portal portal : this.portals.values()) {
-            sendToAll(this.newWatchers, () -> getAddPortalPayload(portal));
+            sendToAll(this.newWatchers, () -> getAddPortalPayload(portal), w -> true);
         }
     }
 
@@ -191,23 +195,51 @@ public class HypoZone extends SavedData {
         this.markNotClientDirty();
     }
 
-    public void sendToAllWatchers(Supplier<CustomPacketPayload> payloadSupplier) {
-        sendToAll(this.watchers, payloadSupplier);
-    }
-
     public void sendToAllWatchersNotAlsoWatching(Supplier<CustomPacketPayload> payloadSupplier, UUID otherZoneUUID) {
-        sendToAll(this.watchers.stream().filter(watcher -> !watcher.isWatchingZone(otherZoneUUID)).toList(), payloadSupplier);
+        sendToAll(this.watchers, payloadSupplier, w -> !w.isWatchingZone(otherZoneUUID));
     }
 
     public void sendToAllWatchersAlsoWatching(Supplier<CustomPacketPayload> payloadSupplier, UUID otherZoneUUID) {
-        sendToAll(this.watchers.stream().filter(watcher -> watcher.isWatchingZone(otherZoneUUID)).toList(), payloadSupplier);
+        sendToAll(this.watchers, payloadSupplier, w -> w.isWatchingZone(otherZoneUUID));
     }
 
-    public static void sendToAll(Collection<HypoverseWatcher> sendTo, Supplier<CustomPacketPayload> payloadSupplier) {
+    public void sendToAllWatchers(Supplier<CustomPacketPayload> payloadSupplier) {
+        sendToAll(this.watchers, payloadSupplier, w -> true);
+    }
+
+    public static void sendToAll(Collection<HypoverseWatcher> sendTo, Supplier<CustomPacketPayload> payloadSupplier, Predicate<HypoverseWatcher> predicate) {
         if (!sendTo.isEmpty()) {
             CustomPacketPayload payload = payloadSupplier.get();
             sendTo.forEach(watcher -> {
-                ServerPlayNetworking.send(watcher.getPlayer(), payload);
+                if (predicate.test(watcher)) {
+                    ServerPlayNetworking.send(watcher.getPlayer(), payload);
+                }
+            });
+        }
+    }
+
+    public void sendToAllWatchersNotAlsoWatching(Function<HypoverseWatcher, CustomPacketPayload> function, UUID otherZoneUUID) {
+        sendToAll(this.watchers, function, w -> !w.isWatchingZone(otherZoneUUID));
+    }
+
+    public void sendToAllWatchersAlsoWatching(Function<HypoverseWatcher, CustomPacketPayload> function, UUID otherZoneUUID) {
+        sendToAll(this.watchers, function, w -> w.isWatchingZone(otherZoneUUID));
+    }
+
+    public void sendToAllWatchers(Function<HypoverseWatcher, CustomPacketPayload> function) {
+        sendToAllWatchers(function, w -> true);
+    }
+
+    public void sendToAllWatchers(Function<HypoverseWatcher, CustomPacketPayload> function, Predicate<HypoverseWatcher> predicate) {
+        sendToAll(this.watchers, function, predicate);
+    }
+
+    public static void sendToAll(Collection<HypoverseWatcher> sendTo, Function<HypoverseWatcher, CustomPacketPayload> function, Predicate<HypoverseWatcher> predicate) {
+        if (!sendTo.isEmpty()) {
+            sendTo.forEach(watcher -> {
+                if (predicate.test(watcher)) {
+                    ServerPlayNetworking.send(watcher.getPlayer(), function.apply(watcher));
+                }
             });
         }
     }

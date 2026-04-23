@@ -17,10 +17,7 @@ import phanastrae.voidstain_hypoidol.common.VoidstainHypoidol;
 import phanastrae.voidstain_hypoidol.common.hypoverse.HypoZone;
 import phanastrae.voidstain_hypoidol.common.hypoverse.Hypoverse;
 import phanastrae.voidstain_hypoidol.common.hypoverse.Portal;
-import phanastrae.voidstain_hypoidol.common.network.AddHypoEntityPayload;
-import phanastrae.voidstain_hypoidol.common.network.RemoveHypoEntityPayload;
-import phanastrae.voidstain_hypoidol.common.network.TeleportHypoEntityPayload;
-import phanastrae.voidstain_hypoidol.common.network.UpdateHypoEntityPositionPayload;
+import phanastrae.voidstain_hypoidol.common.network.*;
 
 import java.util.UUID;
 
@@ -37,7 +34,7 @@ public abstract class HypoEntity {
     protected final RandomSource random = RandomSource.create();
 
     private final HypoEntityType<?> type;
-    private HypoZone zone;
+    protected HypoZone zone;
     protected UUID uuid = Mth.createInsecureUUID(this.random);
 
     public float ox;
@@ -50,7 +47,7 @@ public abstract class HypoEntity {
 
     private int syncTickCount;
     private final int updateInterval = 10;
-    private boolean needsSync;
+    protected boolean needsSync;
     private boolean teleported = false;
     private HypoZone oldZone = null;
 
@@ -116,6 +113,10 @@ public abstract class HypoEntity {
 
     public HypoZone getZone() {
         return this.zone;
+    }
+
+    public boolean isPlayerControlled() {
+        return false;
     }
 
     public void transformCoordinates(Portal from, Portal to) {
@@ -197,12 +198,6 @@ public abstract class HypoEntity {
                 this.vy = -this.vy;
                 this.needsSync = true;
             }
-
-            if (onServer && this.random.nextInt(40) == 0) {
-                this.vx += (this.random.nextFloat() - 0.5f) * 0.1f;
-                this.vy += (this.random.nextFloat() - 0.5f) * 0.1f;
-                this.needsSync = true;
-            }
         }
     }
 
@@ -268,7 +263,7 @@ public abstract class HypoEntity {
         return new TeleportHypoEntityPayload(this.getUuid(), this.zone.uuid, this.x, this.y, this.ox, this.oy, this.vx, this.vy);
     }
 
-    public AddHypoEntityPayload getAddEntityPayload() {
+    public CustomPacketPayload getAddEntityPayload(HypoverseWatcher watcher) {
         CompoundTag tag = new CompoundTag();
         this.write(tag);
         return new AddHypoEntityPayload(this.zone.uuid, TypedEntityData.of(this.getType(), tag));
@@ -296,5 +291,8 @@ public abstract class HypoEntity {
 
     public boolean isRemoved() {
         return this.isRemoved;
+    }
+
+    public void onRemoval() {
     }
 }

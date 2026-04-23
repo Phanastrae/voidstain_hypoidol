@@ -23,6 +23,8 @@ import phanastrae.voidstain_hypoidol.common.hypoverse.Hypoverse;
 import phanastrae.voidstain_hypoidol.common.hypoverse.Portal;
 import phanastrae.voidstain_hypoidol.common.hypoverse.hypoentity.HorrorHypoEntity;
 import phanastrae.voidstain_hypoidol.common.hypoverse.hypoentity.HypoEntity;
+import phanastrae.voidstain_hypoidol.common.hypoverse.hypoentity.MorselHypoEntity;
+import phanastrae.voidstain_hypoidol.common.hypoverse.hypoentity.player.PlayerHypoEntity;
 
 import java.util.UUID;
 import java.util.function.BiFunction;
@@ -40,6 +42,7 @@ public class EldritchCanvasRenderer {
             VoidstainHypoidol.id("textures/entity/canvas/painting/horror_2.png")
     };
     private static final Identifier MORSEL_IDENTIFIER = VoidstainHypoidol.id("textures/entity/canvas/painting/morsel.png");
+    private static final Identifier PLAYER_IDENTIFIER = VoidstainHypoidol.id("textures/entity/canvas/painting/player.png");
     private static final Identifier PORTAL_IDENTIFIER = VoidstainHypoidol.id("textures/entity/canvas/painting/portal.png");
     private static final Identifier FRAME_IDENTIFIER = VoidstainHypoidol.id("textures/entity/canvas/painting/frame.png");
 
@@ -100,21 +103,25 @@ public class EldritchCanvasRenderer {
             zoneRenderState.dimensions = zone.getDimensions();
 
             for (HypoEntity entity : zone.entities) {
-                HypoEntityRenderState entityRenderState;
-                if (entity instanceof HorrorHypoEntity horrorHypoEntity) {
+                HypoEntityRenderState entityRenderState = null;
+                if (entity instanceof HorrorHypoEntity horror) {
                     HorrorRenderState state = new HorrorRenderState();
-                    state.horrorId = horrorHypoEntity.getHorrorId();
-                    state.sizeModifier = horrorHypoEntity.getSizeModifier();
+                    state.horrorId = horror.getHorrorId();
+                    state.sizeModifier = horror.getSizeModifier();
 
                     entityRenderState = state;
-                } else {
-                    entityRenderState = new HypoEntityRenderState();
+                } else if (entity instanceof MorselHypoEntity morsel) {
+                    entityRenderState = new MorselRenderState();
+                } else if (entity instanceof PlayerHypoEntity player) {
+                    entityRenderState = new PlayerRenderState();
                 }
 
-                entityRenderState.x = Mth.lerp(partialTick, entity.ox, entity.x);
-                entityRenderState.y = Mth.lerp(partialTick, entity.oy, entity.y);
+                if (entityRenderState != null) {
+                    entityRenderState.x = Mth.lerp(partialTick, entity.ox, entity.x);
+                    entityRenderState.y = Mth.lerp(partialTick, entity.oy, entity.y);
 
-                zoneRenderState.entities.add(entityRenderState);
+                    zoneRenderState.entities.add(entityRenderState);
+                }
             }
             for (Portal portal : zone.portals.values()) {
                 PortalRenderState portalRenderState = new PortalRenderState();
@@ -183,10 +190,16 @@ public class EldritchCanvasRenderer {
                     drawWithTexture(canvasTexture, HORROR_IDENTIFIERS[horrorRenderState.horrorId], (builder) -> {
                         drawQuad(builder, x - halfWidth, x + halfWidth, y - halfHeight, y + halfHeight);
                     });
-                } else {
-                    float halfWidth = 1 / 4f;
-                    float halfHeight = 1 / 4f;
+                } else if(entityRenderState instanceof MorselRenderState) {
+                    float halfWidth = 0.25f;
+                    float halfHeight = 0.25f;
                     drawWithTexture(canvasTexture, MORSEL_IDENTIFIER, (builder) -> {
+                        drawQuad(builder, x - halfWidth, x + halfWidth, y - halfHeight, y + halfHeight);
+                    });
+                } else if(entityRenderState instanceof PlayerRenderState) {
+                    float halfWidth = 0.2f;
+                    float halfHeight = 0.2f;
+                    drawWithTexture(canvasTexture, PLAYER_IDENTIFIER, (builder) -> {
                         drawQuad(builder, x - halfWidth, x + halfWidth, y - halfHeight, y + halfHeight);
                     });
                 }

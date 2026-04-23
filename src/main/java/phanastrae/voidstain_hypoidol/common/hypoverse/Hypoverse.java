@@ -15,58 +15,49 @@ import java.util.function.Consumer;
 public abstract class Hypoverse {
 
     protected final RandomSource random = RandomSource.create();
-    protected final Map<UUID, EldritchCanvas> canvases = new HashMap<>();
-    protected final Map<UUID, HypoZone> zones = new HashMap<>();
-    protected final Map<UUID, HypoEntity> entities = new HashMap<>();
+    protected final Map<UUID, EldritchCanvas> activeCanvases = new HashMap<>();
+    protected final Map<UUID, HypoZone> activeZones = new HashMap<>();
+    protected final Map<UUID, HypoEntity> activeEntities = new HashMap<>();
 
     public abstract void tick(boolean runsNormally);
 
     protected void tick(boolean runsNormally, boolean onServer) {
-        this.zones.values().forEach(zone -> zone.tick(runsNormally, onServer, this));
-        this.entities.values().forEach(entity -> entity.tick(runsNormally, onServer, this));
-
-        if (onServer) {
-            this.zones.forEach((uuid, zone) -> {
-                if (zone.isClientDirty()) {
-                    zone.sendUpdates();
-                }
-            });
-
-            this.entities.values().forEach(HypoEntity::sendChanges);
-        }
+        this.activeZones.values().forEach(zone -> zone.tick(runsNormally, onServer, this));
+        this.activeEntities.values().forEach(entity -> entity.tick(runsNormally, onServer, this));
     }
 
     @Nullable
     public HypoZone getZone(UUID uuid) {
-        return this.zones.getOrDefault(uuid, null);
+        return this.activeZones.getOrDefault(uuid, null);
     }
 
     @Nullable
     public HypoZone removeZone(UUID uuid) {
-        HypoZone zone = this.zones.remove(uuid);
+        HypoZone zone = this.activeZones.remove(uuid);
         if (zone != null) {
-            zone.entities.forEach(e -> this.entities.remove(e.getUuid(), e));
+            zone.entities.forEach(e -> this.activeEntities.remove(e.getUuid(), e));
+            zone.entities.removeIf(e -> !e.getType().canSave());
         }
         return zone;
     }
 
     @Nullable
     public EldritchCanvas getCanvas(UUID uuid) {
-        return this.canvases.getOrDefault(uuid, null);
+        return this.activeCanvases.getOrDefault(uuid, null);
     }
 
     @Nullable
     public EldritchCanvas removeCanvas(UUID uuid) {
-        return this.canvases.remove(uuid);
+        return this.activeCanvases.remove(uuid);
     }
 
     @Nullable
     public HypoEntity getEntity(UUID uuid) {
-        return this.entities.get(uuid);
+        return this.activeEntities.get(uuid);
     }
 
     public void addEntity(HypoEntity entity) {
-        this.entities.put(entity.getUuid(), entity);
+        this.activeEntities.put(entity.getUuid(), entity);
 
         HypoZone zone = entity.getZone();
         zone.entities.add(entity);
@@ -75,9 +66,10 @@ public abstract class Hypoverse {
     }
 
     public HypoEntity removeEntity(UUID uuid) {
-        HypoEntity entity = this.entities.remove(uuid);
+        HypoEntity entity = this.activeEntities.remove(uuid);
 
         if (entity != null) {
+            entity.onRemoval();
             HypoZone zone = entity.getZone();
             zone.entities.remove(entity);
             zone.sendToAllWatchers(entity::getRemoveEntityPayload);
@@ -88,7 +80,7 @@ public abstract class Hypoverse {
     }
 
     public void forEachZone(Consumer<HypoZone> consumer) {
-        this.zones.values().forEach(consumer);
+        this.activeZones.values().forEach(consumer);
     }
 
     @Nullable

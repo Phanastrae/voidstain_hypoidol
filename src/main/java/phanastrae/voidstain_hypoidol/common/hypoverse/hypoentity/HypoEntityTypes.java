@@ -4,11 +4,13 @@ import net.minecraft.core.Registry;
 import net.minecraft.resources.Identifier;
 import phanastrae.voidstain_hypoidol.common.VoidstainHypoidol;
 import phanastrae.voidstain_hypoidol.common.VoidstainRegistries;
+import phanastrae.voidstain_hypoidol.common.hypoverse.hypoentity.player.PlayerHypoEntity;
 
 public class HypoEntityTypes {
 
     public static final HypoEntityType<HorrorHypoEntity> HORROR = register("horror", new HypoEntityType<>(HorrorHypoEntity::new));
     public static final HypoEntityType<MorselHypoEntity> MORSEL = register("morsel", new HypoEntityType<>(MorselHypoEntity::new));
+    public static final HypoEntityType<PlayerHypoEntity> PLAYER = register("player", new HypoEntityType<>((type, zone) -> null, true));
 
     public static void init() {
     }
