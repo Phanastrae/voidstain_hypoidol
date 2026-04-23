@@ -90,7 +90,33 @@ public class HypoverseCanvasRenderer {
 
         EldritchCanvas.Dimensions dimensions = canvasRenderState.dimensions;
         HypoverseRenderer.drawWithTexture(canvasTexture, HypoverseRenderer.FRAME_IDENTIFIER, (builder) -> {
-            HypoverseRenderer.drawQuad(builder, 0, dimensions.width, 0, dimensions.height);
+            boolean singleWidth = dimensions.width == 1;
+            boolean singleHeight = dimensions.height == 1;
+            int xSlices = singleWidth ? 2 : dimensions.width;
+            float xSliceSize = singleWidth ? 0.5f : 1;
+            int ySlices = singleHeight ? 2 : dimensions.height;
+            float ySliceSize = singleHeight ? 0.5f : 1;
+
+            for (int i = 0; i < xSlices; i++) {
+                float gridX = i == 0 ? 0 : (i + 1 < xSlices ? 1 : 2);
+                if(singleWidth && gridX == 2) {
+                    gridX += 0.5f;
+                }
+                for (int j = 0; j < ySlices; j++) {
+                    float gridY = j == 0 ? 0 : (j + 1 < ySlices ? 1 : 2);
+                    if(singleHeight && gridY == 2) {
+                        gridY += 0.5f;
+                    }
+
+                    if (gridX != 1 || gridY != 1) {
+                        HypoverseRenderer.drawQuad(builder,
+                                i * xSliceSize, (i + 1) * xSliceSize,
+                                j * ySliceSize, (j + 1) * ySliceSize,
+                                gridX / 3f, (gridX + xSliceSize) / 3f, (gridY + ySliceSize) / 3f, gridY / 3f
+                        );
+                    }
+                }
+            }
         });
 
         canvasTexture.markFilled();

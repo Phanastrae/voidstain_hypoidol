@@ -201,9 +201,13 @@ public class HypoverseRenderer {
     }
 
     public static void drawQuad(BufferBuilder builder, float x0, float x1, float y0, float y1) {
-        builder.addVertex(x0, y0, 0.0f).setUv(0, 1).setColor(255, 255, 255, 255);
-        builder.addVertex(x1, y0, 0.0f).setUv(1, 1).setColor(255, 255, 255, 255);
-        builder.addVertex(x1, y1, 0.0f).setUv(1, 0).setColor(255, 255, 255, 255);
-        builder.addVertex(x0, y1, 0.0f).setUv(0, 0).setColor(255, 255, 255, 255);
+        drawQuad(builder, x0, x1, y0, y1, 0, 1, 0, 1);
+    }
+
+    public static void drawQuad(BufferBuilder builder, float x0, float x1, float y0, float y1, float u0, float u1, float v0, float v1) {
+        builder.addVertex(x0, y0, 0.0f).setUv(u0, v1).setColor(255, 255, 255, 255);
+        builder.addVertex(x1, y0, 0.0f).setUv(u1, v1).setColor(255, 255, 255, 255);
+        builder.addVertex(x1, y1, 0.0f).setUv(u1, v0).setColor(255, 255, 255, 255);
+        builder.addVertex(x0, y1, 0.0f).setUv(u0, v0).setColor(255, 255, 255, 255);
     }
 }
