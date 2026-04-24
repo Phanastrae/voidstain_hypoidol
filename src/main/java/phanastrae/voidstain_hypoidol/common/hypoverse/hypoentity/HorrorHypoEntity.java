@@ -5,6 +5,7 @@ import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
 import phanastrae.voidstain_hypoidol.common.hypoverse.HypoZone;
 import phanastrae.voidstain_hypoidol.common.hypoverse.Hypoverse;
+import phanastrae.voidstain_hypoidol.common.hypoverse.hypoentity.player.PlayerHypoEntity;
 import phanastrae.voidstain_hypoidol.common.network.s2c.UpdateHorrorFullnessPayload;
 
 public class HorrorHypoEntity extends BouncingHypoEntity {
@@ -43,8 +44,8 @@ public class HorrorHypoEntity extends BouncingHypoEntity {
 
         if (onServer && this.random.nextInt(3) == 0) {
             for (HypoEntity entity : this.getZone().getEntitiesInArea(this.x - this.getWidth() * 0.4f, this.x + this.getWidth() * 0.4f, this.y - this.getHeight() * 0.4f, this.y + this.getHeight() * 0.4f)) {
-                if (entity instanceof MorselHypoEntity morsel) {
-                    this.eat(morsel);
+                if (entity instanceof MorselHypoEntity || (entity instanceof PlayerHypoEntity && this.fullness >= 2000)) {
+                    this.eat(entity);
                 }
             }
         }
@@ -54,7 +55,7 @@ public class HorrorHypoEntity extends BouncingHypoEntity {
         }
     }
 
-    public void eat(MorselHypoEntity morsel) {
+    public void eat(HypoEntity morsel) {
         morsel.setRemoved();
         this.setFullness(this.fullness + 100);
         this.playSound(SoundEvents.GENERIC_EAT.value(), SoundSource.NEUTRAL, 0.08f, 1.2f + this.random.nextFloat() * 0.3f);
