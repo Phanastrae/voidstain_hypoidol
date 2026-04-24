@@ -23,6 +23,7 @@ import phanastrae.voidstain_hypoidol.common.hypoverse.HypoZone;
 import phanastrae.voidstain_hypoidol.common.hypoverse.Portal;
 import phanastrae.voidstain_hypoidol.common.hypoverse.hypoentity.HorrorHypoEntity;
 import phanastrae.voidstain_hypoidol.common.hypoverse.hypoentity.HypoEntity;
+import phanastrae.voidstain_hypoidol.common.hypoverse.hypoentity.ItemHypoEntity;
 import phanastrae.voidstain_hypoidol.common.hypoverse.hypoentity.MorselHypoEntity;
 import phanastrae.voidstain_hypoidol.common.hypoverse.hypoentity.player.PlayerHypoEntity;
 
@@ -41,6 +42,7 @@ public class HypoverseRenderer {
             VoidstainHypoidol.id("textures/entity/canvas/painting/horror_1.png"),
             VoidstainHypoidol.id("textures/entity/canvas/painting/horror_2.png")
     };
+    public static final Identifier ITEM_IDENTIFIER = VoidstainHypoidol.id("textures/entity/canvas/painting/item.png");
     public static final Identifier MORSEL_IDENTIFIER = VoidstainHypoidol.id("textures/entity/canvas/painting/morsel.png");
     public static final Identifier PLAYER_IDENTIFIER = VoidstainHypoidol.id("textures/entity/canvas/painting/player.png");
     public static final Identifier PORTAL_IDENTIFIER = VoidstainHypoidol.id("textures/entity/canvas/painting/portal.png");
@@ -107,6 +109,10 @@ public class HypoverseRenderer {
                     entityRenderState = state;
                 } else if (entity instanceof MorselHypoEntity morsel) {
                     entityRenderState = new MorselRenderState();
+                } else if (entity instanceof ItemHypoEntity item) {
+                    ItemRenderState itemRenderState = new ItemRenderState();
+                    itemRenderState.life = item.getLife();
+                    entityRenderState = itemRenderState;
                 } else if (entity instanceof PlayerHypoEntity player) {
                     entityRenderState = new PlayerRenderState();
                 }
@@ -171,6 +177,15 @@ public class HypoverseRenderer {
                     float halfWidth = 0.25f;
                     float halfHeight = 0.25f;
                     drawWithTexture(texture, MORSEL_IDENTIFIER, (builder) -> {
+                        drawQuad(builder, x - halfWidth, x + halfWidth, y - halfHeight, y + halfHeight);
+                    }, true);
+                }
+                case ItemRenderState itemRenderState -> {
+                    float sizeModifier = Math.clamp(itemRenderState.life, 0, 200) / 200f;
+                    sizeModifier = 1 - (1-sizeModifier) * (1-sizeModifier);
+                    float halfWidth = 0.07f * sizeModifier;
+                    float halfHeight = 0.07f * sizeModifier;
+                    drawWithTexture(texture, ITEM_IDENTIFIER, (builder) -> {
                         drawQuad(builder, x - halfWidth, x + halfWidth, y - halfHeight, y + halfHeight);
                     }, true);
                 }

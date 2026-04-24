@@ -7,9 +7,7 @@ import org.jetbrains.annotations.Nullable;
 import phanastrae.voidstain_hypoidol.common.duck.HypoverseAccess;
 import phanastrae.voidstain_hypoidol.common.hypoverse.hypoentity.HypoEntity;
 
-import java.util.HashMap;
-import java.util.Map;
-import java.util.UUID;
+import java.util.*;
 import java.util.function.Consumer;
 
 public abstract class Hypoverse {
@@ -18,12 +16,19 @@ public abstract class Hypoverse {
     protected final Map<UUID, EldritchCanvas> activeCanvases = new HashMap<>();
     protected final Map<UUID, HypoZone> activeZones = new HashMap<>();
     protected final Map<UUID, HypoEntity> activeEntities = new HashMap<>();
+    private final List<HypoEntity> queuedEntities = new ArrayList<>();
 
     public abstract void tick(boolean runsNormally);
 
     protected void tick(boolean runsNormally, boolean onServer) {
         this.activeZones.values().forEach(zone -> zone.tick(runsNormally, onServer, this));
-        this.activeEntities.values().forEach(entity -> entity.tick(runsNormally, onServer, this));
+        this.activeEntities.values().forEach(entity -> {
+            if (!entity.isRemoved()) {
+                entity.tick(runsNormally, onServer, this);
+            }
+        });
+        this.queuedEntities.forEach(this::addEntity);
+        this.queuedEntities.clear();
     }
 
     @Nullable
@@ -54,6 +59,10 @@ public abstract class Hypoverse {
     @Nullable
     public HypoEntity getEntity(UUID uuid) {
         return this.activeEntities.get(uuid);
+    }
+
+    public void queueEntityAddition(HypoEntity hypoEntity) {
+        this.queuedEntities.add(hypoEntity);
     }
 
     public void addEntity(HypoEntity entity) {

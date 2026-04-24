@@ -3,6 +3,7 @@ package phanastrae.voidstain_hypoidol.common.hypoverse.hypoentity;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
+import net.minecraft.world.item.Items;
 import phanastrae.voidstain_hypoidol.common.hypoverse.HypoZone;
 import phanastrae.voidstain_hypoidol.common.hypoverse.Hypoverse;
 import phanastrae.voidstain_hypoidol.common.hypoverse.hypoentity.player.PlayerHypoEntity;
@@ -51,6 +52,15 @@ public class HorrorHypoEntity extends BouncingHypoEntity {
         }
 
         if (onServer && this.random.nextInt(20) == 0) {
+            if (this.fullness >= 1000 && random.nextInt(3) == 0) {
+                ItemHypoEntity item = new ItemHypoEntity(this.zone);
+                item.setPos(this.x, this.y);
+                item.setOldPos(this.x, this.y);
+                item.setLife(30 * 20);
+                item.setVelocity(this.vx * -0.25f, this.vy * -0.25f);
+                item.setItem(Items.GOLD_NUGGET.getDefaultInstance());
+                hypoverse.queueEntityAddition(item);
+            }
             this.setFullness(this.fullness * 0.99f);
         }
     }

@@ -14,6 +14,10 @@ public class ServerPlayerHypoEntity extends PlayerHypoEntity {
         this.watcher = watcher;
     }
 
+    public HypoverseWatcher getWatcher() {
+        return this.watcher;
+    }
+
     @Override
     public void onRemoval() {
         super.onRemoval();
