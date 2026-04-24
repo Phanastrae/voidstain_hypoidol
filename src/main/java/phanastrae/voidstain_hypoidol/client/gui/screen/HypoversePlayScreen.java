@@ -10,7 +10,7 @@ import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.client.input.KeyEvent;
 import phanastrae.voidstain_hypoidol.client.VoidstainHypoidolClient;
 import phanastrae.voidstain_hypoidol.client.hypoverse.hypoentity.player.LocalPlayerHypoEntity;
-import phanastrae.voidstain_hypoidol.common.network.DebugKillHypoPlayerPayload;
+import phanastrae.voidstain_hypoidol.common.network.c2s.DebugKillHypoPlayerPayload;
 
 public class HypoversePlayScreen extends Screen {
 

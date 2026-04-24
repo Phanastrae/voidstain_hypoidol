@@ -10,6 +10,9 @@ import phanastrae.voidstain_hypoidol.common.hypoverse.HypoZone;
 import phanastrae.voidstain_hypoidol.common.hypoverse.Hypoverse;
 import phanastrae.voidstain_hypoidol.common.hypoverse.hypoentity.player.PlayerHypoEntity;
 import phanastrae.voidstain_hypoidol.common.hypoverse.hypoentity.player.ServerPlayerHypoEntity;
+import phanastrae.voidstain_hypoidol.common.network.s2c.StartWatchingCanvasPayload;
+import phanastrae.voidstain_hypoidol.common.network.s2c.StopWatchingCanvasPayload;
+import phanastrae.voidstain_hypoidol.common.network.s2c.StopWatchingHypoZonePayload;
 
 import java.util.UUID;
 

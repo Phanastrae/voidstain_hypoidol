@@ -18,6 +18,10 @@ import phanastrae.voidstain_hypoidol.common.hypoverse.HypoZone;
 import phanastrae.voidstain_hypoidol.common.hypoverse.Hypoverse;
 import phanastrae.voidstain_hypoidol.common.hypoverse.Portal;
 import phanastrae.voidstain_hypoidol.common.network.*;
+import phanastrae.voidstain_hypoidol.common.network.s2c.AddHypoEntityPayload;
+import phanastrae.voidstain_hypoidol.common.network.s2c.RemoveHypoEntityPayload;
+import phanastrae.voidstain_hypoidol.common.network.s2c.TeleportHypoEntityPayload;
+import phanastrae.voidstain_hypoidol.common.network.s2c.UpdateHypoEntityPositionPayload;
 
 import java.util.UUID;
 

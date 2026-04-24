@@ -7,7 +7,7 @@ import net.minecraft.world.item.component.TypedEntityData;
 import phanastrae.voidstain_hypoidol.common.hypoverse.HypoZone;
 import phanastrae.voidstain_hypoidol.common.hypoverse.hypoentity.HypoEntity;
 import phanastrae.voidstain_hypoidol.common.hypoverse.hypoentity.HypoEntityTypes;
-import phanastrae.voidstain_hypoidol.common.network.AddHypoPlayerPayload;
+import phanastrae.voidstain_hypoidol.common.network.s2c.AddHypoPlayerPayload;
 import phanastrae.voidstain_hypoidol.common.network.HypoverseWatcher;
 
 import java.util.UUID;

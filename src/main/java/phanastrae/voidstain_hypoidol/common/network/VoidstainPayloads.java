@@ -4,6 +4,8 @@ import net.fabricmc.fabric.api.networking.v1.PayloadTypeRegistry;
 import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.network.codec.StreamCodec;
 import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
+import phanastrae.voidstain_hypoidol.common.network.c2s.DebugKillHypoPlayerPayload;
+import phanastrae.voidstain_hypoidol.common.network.s2c.*;
 
 public class VoidstainPayloads {
 

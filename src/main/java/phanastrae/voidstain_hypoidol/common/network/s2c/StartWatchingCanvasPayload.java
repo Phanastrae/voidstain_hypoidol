@@ -1,4 +1,4 @@
-package phanastrae.voidstain_hypoidol.common.network;
+package phanastrae.voidstain_hypoidol.common.network.s2c;
 
 import net.minecraft.core.UUIDUtil;
 import net.minecraft.network.FriendlyByteBuf;

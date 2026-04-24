@@ -1,4 +1,4 @@
-package phanastrae.voidstain_hypoidol.common.network;
+package phanastrae.voidstain_hypoidol.common.network.c2s;
 
 import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.network.codec.StreamCodec;

@@ -18,10 +18,10 @@ import net.minecraft.world.level.saveddata.SavedDataType;
 import phanastrae.voidstain_hypoidol.common.VoidstainHypoidol;
 import phanastrae.voidstain_hypoidol.common.hypoverse.hypoentity.HypoEntity;
 import phanastrae.voidstain_hypoidol.common.hypoverse.hypoentity.HypoEntityType;
-import phanastrae.voidstain_hypoidol.common.network.AddPortalPayload;
+import phanastrae.voidstain_hypoidol.common.network.s2c.AddPortalPayload;
 import phanastrae.voidstain_hypoidol.common.network.HypoverseWatcher;
-import phanastrae.voidstain_hypoidol.common.network.StartWatchingHypoZonePayload;
-import phanastrae.voidstain_hypoidol.common.network.UpdateHypoZonePayload;
+import phanastrae.voidstain_hypoidol.common.network.s2c.StartWatchingHypoZonePayload;
+import phanastrae.voidstain_hypoidol.common.network.s2c.UpdateHypoZonePayload;
 
 import java.util.*;
 import java.util.function.Function;
