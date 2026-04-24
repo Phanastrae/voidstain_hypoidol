@@ -67,12 +67,12 @@ public class HorrorHypoEntity extends BouncingHypoEntity {
 
     @Override
     public float getWidth() {
-        return 0.8f * this.getSizeModifier();
+        return 1.6f * this.getSizeModifier();
     }
 
     @Override
     public float getHeight() {
-        return 0.8f * this.getSizeModifier();
+        return 1.6f * this.getSizeModifier();
     }
 
     public int getHorrorId() {

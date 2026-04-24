@@ -1,5 +1,8 @@
 package phanastrae.voidstain_hypoidol.client.renderer.hypoverse;
 
+import com.mojang.blaze3d.pipeline.TextureTarget;
+import com.mojang.blaze3d.systems.RenderSystem;
+import com.mojang.blaze3d.textures.FilterMode;
 import com.mojang.blaze3d.vertex.*;
 import net.minecraft.client.DeltaTracker;
 import net.minecraft.client.renderer.ProjectionMatrixBuffer;
@@ -48,27 +51,38 @@ public class HypoverseRenderer {
     public static HypoverseCanvasRenderer CANVAS_RENDERER = new HypoverseCanvasRenderer();
     public static HypoverseFullscreenRenderer FULLSCREEN_RENDERER = new HypoverseFullscreenRenderer();
 
-    public static RenderType getCanvasTextureRenderType(@Nullable CanvasTexture texture, Identifier textureId) {
-        return CANVAS_RENDER_TYPE.apply(texture == null ? null : texture.getCanvasId(), textureId);
+    public static RenderType getNearestRenderType(@Nullable CanvasTexture texture, Identifier textureId) {
+        return NEAREST_RENDER_TYPE.apply(texture == null ? null : texture.getCanvasId(), textureId);
     }
 
-    private static final BiFunction<UUID, Identifier, RenderType> CANVAS_RENDER_TYPE = Util.memoize((canvasUuid, textureId) -> {
-        // this should only be used if the corresponding CanvasTexture exists in the CanvasHandler, or if the input is deliberately null
-        OutputTarget target = new OutputTarget("canvas_target", () -> {
-            CanvasTexture canvas = CanvasTextureHandler.getCanvas(canvasUuid);
-            if (canvas != null) {
-                return canvas.getTarget();
-            } else {
-                return null;
-            }
-        });
-        RenderSetup state = RenderSetup.builder(RenderPipelines.GUI_TEXTURED)
-                .withTexture("Sampler0", textureId)
-                .setOutputTarget(target)
-                .createRenderSetup();
+    public static RenderType getLinearRenderType(@Nullable CanvasTexture texture, Identifier textureId) {
+        return LINEAR_RENDER_TYPE.apply(texture == null ? null : texture.getCanvasId(), textureId);
+    }
 
-        return RenderType.create("eldritch_canvas", state);
-    });
+    private static final BiFunction<UUID, Identifier, RenderType> NEAREST_RENDER_TYPE = Util.memoize(createFunc(FilterMode.NEAREST));
+    private static final BiFunction<UUID, Identifier, RenderType> LINEAR_RENDER_TYPE = Util.memoize(createFunc(FilterMode.LINEAR));
+
+    private static BiFunction<UUID, Identifier, RenderType> createFunc(FilterMode filterMode) {
+        return (canvasUuid, textureId) -> {
+            // this should only be used if the corresponding CanvasTexture exists in the CanvasHandler, or if the input is deliberately null
+            OutputTarget target = new OutputTarget("canvas_target", () -> getTarget(canvasUuid));
+            RenderSetup state = RenderSetup.builder(RenderPipelines.GUI_TEXTURED)
+                    .withTexture("Sampler0", textureId, () -> RenderSystem.getSamplerCache().getClampToEdge(filterMode))
+                    .setOutputTarget(target)
+                    .createRenderSetup();
+
+            return RenderType.create("eldritch_canvas", state);
+        };
+    }
+
+    public static TextureTarget getTarget(UUID canvasUUID) {
+        CanvasTexture canvas = CanvasTextureHandler.getCanvas(canvasUUID);
+        if (canvas != null) {
+            return canvas.getTarget();
+        } else {
+            return null;
+        }
+    }
 
     public static void close() {
         CANVAS_PROJECTION_MATRIX_BUFFER.close();
@@ -140,32 +154,32 @@ public class HypoverseRenderer {
 
         drawWithTexture(texture, BACKGROUND_IDENTIFIERS[zoneRenderState.backgroundId], (builder) -> {
             drawQuad(builder, dimensions.minX, dimensions.maxX, dimensions.minY, dimensions.maxY);
-        });
+        }, true);
 
         for (HypoEntityRenderState entityRenderState : zoneRenderState.entities) {
             float x = entityRenderState.x - dimensions.minX;
             float y = entityRenderState.y - dimensions.minY;
             switch (entityRenderState) {
                 case HorrorRenderState horrorRenderState -> {
-                    float halfWidth = horrorRenderState.sizeModifier / 2f;
-                    float halfHeight = horrorRenderState.sizeModifier / 2f;
+                    float halfWidth = horrorRenderState.sizeModifier * 0.8f;
+                    float halfHeight = horrorRenderState.sizeModifier * 0.8f;
                     drawWithTexture(texture, HORROR_IDENTIFIERS[horrorRenderState.horrorId], (builder) -> {
                         drawQuad(builder, x - halfWidth, x + halfWidth, y - halfHeight, y + halfHeight);
-                    });
+                    }, true);
                 }
                 case MorselRenderState morselRenderState -> {
                     float halfWidth = 0.25f;
                     float halfHeight = 0.25f;
                     drawWithTexture(texture, MORSEL_IDENTIFIER, (builder) -> {
                         drawQuad(builder, x - halfWidth, x + halfWidth, y - halfHeight, y + halfHeight);
-                    });
+                    }, true);
                 }
                 case PlayerRenderState playerRenderState -> {
                     float halfWidth = 0.2f;
                     float halfHeight = 0.2f;
                     drawWithTexture(texture, PLAYER_IDENTIFIER, (builder) -> {
                         drawQuad(builder, x - halfWidth, x + halfWidth, y - halfHeight, y + halfHeight);
-                    });
+                    }, true);
                 }
                 default -> {
                 }
@@ -191,7 +205,11 @@ public class HypoverseRenderer {
     }
 
     public static void drawWithTexture(@Nullable CanvasTexture texture, Identifier textureId, Consumer<BufferBuilder> runnable) {
-        RenderType type = getCanvasTextureRenderType(texture, textureId);
+        drawWithTexture(texture, textureId, runnable, false);
+    }
+
+    public static void drawWithTexture(@Nullable CanvasTexture texture, Identifier textureId, Consumer<BufferBuilder> runnable, boolean linear) {
+        RenderType type = linear ? getLinearRenderType(texture, textureId) : getNearestRenderType(texture, textureId);
         BufferBuilder builder = Tesselator.getInstance().begin(VertexFormat.Mode.QUADS, DefaultVertexFormat.POSITION_TEX_COLOR);
         runnable.accept(builder);
         MeshData mesh = builder.build();
