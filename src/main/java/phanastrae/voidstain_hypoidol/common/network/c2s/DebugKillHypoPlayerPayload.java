@@ -8,7 +8,7 @@ import phanastrae.voidstain_hypoidol.common.VoidstainHypoidol;
 public class DebugKillHypoPlayerPayload implements CustomPacketPayload {
     public static final DebugKillHypoPlayerPayload INSTANCE = new DebugKillHypoPlayerPayload();
 
-    public static final Type<DebugKillHypoPlayerPayload> TYPE = new Type<>(VoidstainHypoidol.id("debug_kill_hypo_player"));
+    public static final Type<DebugKillHypoPlayerPayload> TYPE = new Type<>(VoidstainHypoidol.id("debug_kill_hypoplayer"));
     public static final StreamCodec<RegistryFriendlyByteBuf, DebugKillHypoPlayerPayload> STREAM_CODEC = StreamCodec.unit(INSTANCE);
 
     private DebugKillHypoPlayerPayload() {

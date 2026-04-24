@@ -5,6 +5,8 @@ import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.network.codec.StreamCodec;
 import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
 import phanastrae.voidstain_hypoidol.common.network.c2s.DebugKillHypoPlayerPayload;
+import phanastrae.voidstain_hypoidol.common.network.c2s.MoveHypoPlayerPayload;
+import phanastrae.voidstain_hypoidol.common.network.c2s.TeleportHypoPlayerPayload;
 import phanastrae.voidstain_hypoidol.common.network.s2c.*;
 
 public class VoidstainPayloads {
@@ -27,6 +29,8 @@ public class VoidstainPayloads {
         registerClientboundPlay(StopWatchingCanvasPayload.TYPE, StopWatchingCanvasPayload.STREAM_CODEC);
 
 
+        registerServerboundPlay(MoveHypoPlayerPayload.TYPE, MoveHypoPlayerPayload.STREAM_CODEC);
+        registerServerboundPlay(TeleportHypoPlayerPayload.TYPE, TeleportHypoPlayerPayload.STREAM_CODEC);
         registerServerboundPlay(DebugKillHypoPlayerPayload.TYPE, DebugKillHypoPlayerPayload.STREAM_CODEC);
     }
 

@@ -52,8 +52,8 @@ public abstract class HypoEntity {
     private int syncTickCount;
     private final int updateInterval = 10;
     protected boolean needsSync;
-    private boolean teleported = false;
-    private HypoZone oldZone = null;
+    protected boolean teleported = false;
+    protected HypoZone oldZone = null;
 
     public HypoEntity(HypoEntityType<?> type, HypoZone zone) {
         this.type = type;

@@ -20,6 +20,10 @@ public class ClientHypoverse extends Hypoverse {
     @Override
     public void tick(boolean runsNormally) {
         this.tick(runsNormally, false);
+
+        if (this.hypoPlayer != null) {
+            this.hypoPlayer.sendChanges();
+        }
     }
 
     @Override

@@ -1,7 +1,11 @@
 package phanastrae.voidstain_hypoidol.client.hypoverse.hypoentity.player;
 
+import net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking;
+import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
 import phanastrae.voidstain_hypoidol.common.hypoverse.HypoZone;
 import phanastrae.voidstain_hypoidol.common.hypoverse.Hypoverse;
+import phanastrae.voidstain_hypoidol.common.network.c2s.MoveHypoPlayerPayload;
+import phanastrae.voidstain_hypoidol.common.network.c2s.TeleportHypoPlayerPayload;
 
 import java.util.UUID;
 
@@ -37,5 +41,19 @@ public class LocalPlayerHypoEntity extends ClientPlayerHypoEntity {
     @Override
     public boolean isPlayerControlled() {
         return true;
+    }
+
+    @Override
+    public void sendChanges() {
+        if (!this.teleported) {
+            sendPacket(new MoveHypoPlayerPayload(this.x, this.y, this.vx, this.vy));
+        } else {
+            sendPacket(new TeleportHypoPlayerPayload(this.zone.uuid, this.x, this.y, this.vx, this.vy));
+        }
+        this.teleported = false;
+    }
+
+    private static void sendPacket(CustomPacketPayload payload) {
+        ClientPlayNetworking.send(payload);
     }
 }

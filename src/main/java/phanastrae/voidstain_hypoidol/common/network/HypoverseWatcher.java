@@ -25,7 +25,7 @@ public class HypoverseWatcher {
     private final ServerGamePacketListenerImpl connection;
 
     @Nullable
-    private PlayerHypoEntity hypoPlayer;
+    private ServerPlayerHypoEntity hypoPlayer;
 
     public HypoverseWatcher(ServerGamePacketListenerImpl connection) {
         this.connection = connection;
@@ -90,6 +90,11 @@ public class HypoverseWatcher {
 
     public boolean hasHypoPlayer() {
         return this.hypoPlayer != null;
+    }
+
+    @Nullable
+    public ServerPlayerHypoEntity getHypoPlayer() {
+        return this.hypoPlayer;
     }
 
     public void killHypoPlayer() {
