@@ -2,6 +2,7 @@ package phanastrae.voidstain_hypoidol.client.renderer.hypoverse;
 
 import com.mojang.blaze3d.ProjectionType;
 import com.mojang.blaze3d.systems.RenderSystem;
+import com.mojang.blaze3d.textures.GpuTextureView;
 import net.minecraft.client.DeltaTracker;
 import net.minecraft.client.renderer.Projection;
 import net.minecraft.util.ARGB;
@@ -75,7 +76,16 @@ public class HypoverseCanvasRenderer {
 
             CanvasTexture canvasTexture = CanvasTextureHandler.getCanvas(renderState.canvasId);
             if (canvasTexture != null) {
+                GpuTextureView colorOverride = RenderSystem.outputColorTextureOverride;
+                GpuTextureView depthOverride = RenderSystem.outputDepthTextureOverride;
+
+                RenderSystem.outputColorTextureOverride = canvasTexture.getColorTexture().getTextureView();
+                RenderSystem.outputDepthTextureOverride = canvasTexture.getDepthTexture().getTextureView();
+
                 renderCanvas(canvasTexture, renderState, hypoverseRenderState);
+
+                RenderSystem.outputColorTextureOverride = colorOverride;
+                RenderSystem.outputDepthTextureOverride = depthOverride;
             }
         }
 
@@ -84,12 +94,20 @@ public class HypoverseCanvasRenderer {
     }
 
     public static void renderCanvas(CanvasTexture canvasTexture, CanvasRenderState canvasRenderState, HypoverseRenderState hypoverseRenderState) {
-        RenderSystem.getDevice().createCommandEncoder().clearColorTexture(canvasTexture.getTargetTexture().getTexture(), ARGB.color(255, 0, 0, 0));
+        RenderSystem.getDevice().createCommandEncoder().clearColorAndDepthTextures(
+                canvasTexture.getColorTexture().getTexture(), ARGB.color(255, 0, 0, 0),
+                canvasTexture.getDepthTexture().getTexture(), 1.0
+        );
 
-        HypoverseRenderer.tryRenderZone(canvasTexture, canvasRenderState.zoneId, hypoverseRenderState);
+        HypoverseRenderer.tryRenderZone(canvasRenderState.zoneId, hypoverseRenderState);
+        drawFrame(canvasRenderState);
 
+        canvasTexture.markFilled();
+    }
+
+    public static void drawFrame(CanvasRenderState canvasRenderState) {
         EldritchCanvas.Dimensions dimensions = canvasRenderState.dimensions;
-        HypoverseRenderer.drawWithTexture(canvasTexture, HypoverseRenderer.FRAME_IDENTIFIER, (builder) -> {
+        HypoverseRenderer.drawWithTexture(HypoverseRenderer.FRAME_IDENTIFIER, (builder) -> {
             boolean singleWidth = dimensions.width == 1;
             boolean singleHeight = dimensions.height == 1;
             int xSlices = singleWidth ? 2 : dimensions.width;
@@ -99,12 +117,12 @@ public class HypoverseCanvasRenderer {
 
             for (int i = 0; i < xSlices; i++) {
                 float gridX = i == 0 ? 0 : (i + 1 < xSlices ? 1 : 2);
-                if(singleWidth && gridX == 2) {
+                if (singleWidth && gridX == 2) {
                     gridX += 0.5f;
                 }
                 for (int j = 0; j < ySlices; j++) {
                     float gridY = j == 0 ? 0 : (j + 1 < ySlices ? 1 : 2);
-                    if(singleHeight && gridY == 2) {
+                    if (singleHeight && gridY == 2) {
                         gridY += 0.5f;
                     }
 
@@ -118,7 +136,5 @@ public class HypoverseCanvasRenderer {
                 }
             }
         });
-
-        canvasTexture.markFilled();
     }
 }

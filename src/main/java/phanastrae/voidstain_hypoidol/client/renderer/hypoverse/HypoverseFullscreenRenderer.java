@@ -57,7 +57,7 @@ public class HypoverseFullscreenRenderer {
 
         projection.setupOrtho(-1000.0f, 1000.0f, 1, 1, false);
         RenderSystem.setProjectionMatrix(HypoverseRenderer.CANVAS_PROJECTION_MATRIX_BUFFER.getBuffer(projection), ProjectionType.ORTHOGRAPHIC);
-        HypoverseRenderer.tryRenderZone(null, renderState.mainZoneUUID, renderState);
+        HypoverseRenderer.tryRenderZone(renderState.mainZoneUUID, renderState);
 
         modelViewStack.popMatrix();
         RenderSystem.restoreProjectionMatrix();

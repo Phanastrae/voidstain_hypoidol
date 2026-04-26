@@ -13,7 +13,8 @@ public class CanvasTexture {
     private final UUID canvasId;
     private final Identifier textureIdentifier;
     private final TextureTarget target;
-    private final RenderTargetTexture targetTexture;
+    private final RenderTargetTexture colorTexture;
+    private final RenderTargetTexture depthTexture;
     private boolean filled = false;
 
     public int clearChecksSinceLastUse = 0;
@@ -23,23 +24,28 @@ public class CanvasTexture {
         this.textureIdentifier = VoidstainHypoidol.id(uuid.toString()).withPrefix("canvas/");
 
         int pixelsPerBlock = 32;
-        this.target = new TextureTarget("Canvas " + uuid, width * pixelsPerBlock, height * pixelsPerBlock, false);
-        this.targetTexture = new RenderTargetTexture(this.target);
+        this.target = new TextureTarget("Canvas " + uuid, width * pixelsPerBlock, height * pixelsPerBlock, true);
+        this.colorTexture = new RenderTargetTexture(this.target, true);
+        this.depthTexture = new RenderTargetTexture(this.target, false);
 
-        Minecraft.getInstance().getTextureManager().register(this.textureIdentifier, this.targetTexture);
+        Minecraft.getInstance().getTextureManager().register(this.textureIdentifier, this.colorTexture);
     }
 
     public void close() {
         this.target.destroyBuffers();
-        this.targetTexture.close();
+        this.colorTexture.close();
     }
 
     public UUID getCanvasId() {
         return this.canvasId;
     }
 
-    public RenderTargetTexture getTargetTexture() {
-        return this.targetTexture;
+    public RenderTargetTexture getColorTexture() {
+        return this.colorTexture;
+    }
+
+    public RenderTargetTexture getDepthTexture() {
+        return this.depthTexture;
     }
 
     public Identifier getTextureIdentifier() {
