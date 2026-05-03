@@ -4,10 +4,12 @@ import com.mojang.serialization.Codec;
 import com.mojang.serialization.DataResult;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
+import net.minecraft.core.GlobalPos;
 import net.minecraft.core.UUIDUtil;
 import net.minecraft.core.component.DataComponentGetter;
 import net.minecraft.core.component.DataComponentType;
 import net.minecraft.core.component.DataComponents;
+import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.network.protocol.Packet;
 import net.minecraft.network.protocol.game.ClientGamePacketListener;
 import net.minecraft.network.protocol.game.ClientboundAddEntityPacket;
@@ -21,6 +23,7 @@ import net.minecraft.sounds.SoundEvent;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.tags.DamageTypeTags;
+import net.minecraft.tags.ItemTags;
 import net.minecraft.util.Mth;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
@@ -40,9 +43,8 @@ import net.minecraft.world.phys.Vec2;
 import net.minecraft.world.phys.Vec3;
 import org.jspecify.annotations.Nullable;
 import phanastrae.voidstain_hypoidol.common.hypoverse.*;
-import phanastrae.voidstain_hypoidol.common.hypoverse.hypoentity.HorrorHypoEntity;
-import phanastrae.voidstain_hypoidol.common.hypoverse.hypoentity.HypoEntity;
-import phanastrae.voidstain_hypoidol.common.hypoverse.hypoentity.MorselHypoEntity;
+import phanastrae.voidstain_hypoidol.common.hypoverse.hypoentity.*;
+import phanastrae.voidstain_hypoidol.common.hypoverse.hypoentity.player.PlayerHypoEntity;
 import phanastrae.voidstain_hypoidol.common.item.CanvasData;
 import phanastrae.voidstain_hypoidol.common.item.VoidstainDataComponents;
 import phanastrae.voidstain_hypoidol.common.item.VoidstainItems;
@@ -161,6 +163,55 @@ public class EldritchPaintingEntity extends HangingEntity {
         if (this.connectToHypoverse()) {
             this.getCanvasUUID().ifPresent(canvasUUID -> this.watchingPlayers.forEach(player -> HypoverseWatcher.fromPlayer(player).startWatchingCanvas(canvasUUID, player)));
         }
+
+        if (this.level() instanceof ServerLevel serverLevel && this.random.nextInt(3) == 0) {
+            EldritchCanvas canvas = this.getCanvas();
+            if (canvas != null) {
+                ServerHypoverse hypoverse = ServerHypoverse.fromServer(serverLevel.getServer());
+                HypoZone zone = hypoverse.getZone(canvas.getZoneId());
+                if (zone != null) {
+                    if (zone.entities.stream().anyMatch(e -> e.getType().equals(HypoEntityTypes.HYPERGATE))) {
+                        AABB box = this.getBoundingBox();
+                        serverLevel.sendParticles(
+                                ParticleTypes.REVERSE_PORTAL,
+                                this.getX(), this.getY(), this.getZ(),
+                                20,
+                                (box.maxX - box.minX) / 4, (box.maxY - box.minY) / 4, (box.maxZ - box.minZ) / 4,
+                                0.03f
+                        );
+
+                        if (this.random.nextInt(25) == 0) {
+                            this.playSound(SoundEvents.PORTAL_AMBIENT);
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    @Override
+    public void playerTouch(Player player) {
+        if (player instanceof ServerPlayer serverPlayer && this.level() instanceof ServerLevel serverLevel) {
+            HypoverseWatcher watcher = HypoverseWatcher.fromPlayer(serverPlayer);
+            EldritchCanvas canvas = this.getCanvas();
+            if (canvas != null && !watcher.hasHypoPlayer() && !player.isOnPortalCooldown()) {
+                ServerHypoverse hypoverse = ServerHypoverse.fromServer(serverLevel.getServer());
+                HypoZone zone = hypoverse.getZone(canvas.getZoneId());
+                if (zone != null) {
+                    List<HypoEntity> gates = zone.entities.stream().filter(e -> e.getType().equals(HypoEntityTypes.HYPERGATE)).toList();
+                    if (!gates.isEmpty()) {
+                        HypoEntity gate = gates.get(this.random.nextInt(gates.size()));
+                        if (gate instanceof HyperGateHypoEntity hyperGate) {
+                            PlayerHypoEntity hypoPlayer = watcher.createHypoPlayer(hypoverse, zone, hyperGate.x, hyperGate.y, p -> {
+                                float angle = this.random.nextFloat() * (float) Math.TAU;
+                                p.setVelocity(Mth.cos(angle) * 0.2f, Mth.sin(angle) * 0.2f);
+                            });
+                            hypoPlayer.setTeleportCooldown(60);
+                        }
+                    }
+                }
+            }
+        }
     }
 
     @Override
@@ -247,7 +298,8 @@ public class EldritchPaintingEntity extends HangingEntity {
         boolean isPearl = itemStack.is(Items.ENDER_PEARL);
         boolean isCanvas = itemStack.is(VoidstainItems.ELDRITCH_PAINTING);
         boolean isCart = itemStack.is(Items.MINECART);
-        if (canvasUUID.isPresent() && !itemStack.isEmpty() && (isBlaze || isGhast || isFood || isPearl || isCanvas || isCart) && (player.getAbilities().mayBuild || isFood || isCart)) {
+        boolean isDoor = itemStack.is(ItemTags.DOORS);
+        if (canvasUUID.isPresent() && !itemStack.isEmpty() && (isBlaze || isGhast || isFood || isPearl || isCanvas || isCart || isDoor) && (player.getAbilities().mayBuild || isFood)) {
             if (player.level().isClientSide()) {
                 return InteractionResult.SUCCESS_SERVER;
             } else {
@@ -273,7 +325,7 @@ public class EldritchPaintingEntity extends HangingEntity {
                         } else if (isGhast) {
                             HypoEntity hypoEntity = new HorrorHypoEntity(zone, this.random.nextInt(3));
                             hypoEntity.setPos(canvasPos.x, canvasPos.y);
-                            hypoEntity.setAngle(this.random.nextFloat() * (float)Math.TAU);
+                            hypoEntity.setAngle(this.random.nextFloat() * (float) Math.TAU);
                             hypoEntity.setAngleVelocity((this.random.nextFloat() - 0.5f) * 0.05f);
                             hypoverse.addEntity(hypoEntity);
 
@@ -285,7 +337,7 @@ public class EldritchPaintingEntity extends HangingEntity {
                             MorselHypoEntity hypoEntity = new MorselHypoEntity(zone);
                             hypoEntity.setLife(20 * 20);
                             hypoEntity.setPos(canvasPos.x, canvasPos.y);
-                            hypoEntity.setAngle(this.random.nextFloat() * (float)Math.TAU);
+                            hypoEntity.setAngle(this.random.nextFloat() * (float) Math.TAU);
                             hypoEntity.setAngleVelocity((this.random.nextFloat() - 0.5f) * 0.05f);
                             hypoverse.addEntity(hypoEntity);
 
@@ -338,7 +390,18 @@ public class EldritchPaintingEntity extends HangingEntity {
                             }
                         } else if (isCart && player instanceof ServerPlayer serverPlayer) {
                             HypoverseWatcher watcher = HypoverseWatcher.fromPlayer(serverPlayer);
-                            watcher.createHypoPlayer(hypoverse, zone, canvasPos.x, canvasPos.y);
+                            watcher.createHypoPlayer(hypoverse, zone, canvasPos.x, canvasPos.y, _ -> {
+                            });
+
+                            if (!player.hasInfiniteMaterials()) {
+                                itemStack.split(1);
+                            }
+                            return InteractionResult.SUCCESS_SERVER;
+                        } else if (isDoor) {
+                            HyperGateHypoEntity hypoEntity = new HyperGateHypoEntity(zone, new GlobalPos(this.level().dimension(), this.pos));
+                            hypoEntity.setPos(canvasPos.x, canvasPos.y);
+                            hypoEntity.setAngle(this.random.nextFloat() * (float) Math.TAU);
+                            hypoverse.addEntity(hypoEntity);
 
                             if (!player.hasInfiniteMaterials()) {
                                 itemStack.split(1);

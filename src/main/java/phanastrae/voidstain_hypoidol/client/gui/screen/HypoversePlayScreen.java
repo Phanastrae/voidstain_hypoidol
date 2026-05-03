@@ -2,12 +2,14 @@ package phanastrae.voidstain_hypoidol.client.gui.screen;
 
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking;
 import net.minecraft.client.GameNarrator;
+import net.minecraft.client.Minecraft;
 import net.minecraft.client.Options;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.components.ChatComponent;
 import net.minecraft.client.gui.screens.PauseScreen;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.client.input.KeyEvent;
+import net.minecraft.client.player.LocalPlayer;
 import phanastrae.voidstain_hypoidol.client.VoidstainHypoidolClient;
 import phanastrae.voidstain_hypoidol.client.hypoverse.hypoentity.player.LocalPlayerHypoEntity;
 import phanastrae.voidstain_hypoidol.common.network.c2s.DebugKillHypoPlayerPayload;
@@ -57,7 +59,8 @@ public class HypoversePlayScreen extends Screen {
             }
         }
 
-        if (options.keyDrop.matches(event)) {
+        LocalPlayer realPlayer = Minecraft.getInstance().player;
+        if (realPlayer == null || !realPlayer.isAlive() || (options.keyDrop.matches(event) && realPlayer.getAbilities().instabuild)) {
             ClientPlayNetworking.send(DebugKillHypoPlayerPayload.INSTANCE);
             return true;
         }

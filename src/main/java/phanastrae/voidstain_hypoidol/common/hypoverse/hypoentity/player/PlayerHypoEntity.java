@@ -8,8 +8,8 @@ import phanastrae.voidstain_hypoidol.common.hypoverse.HypoZone;
 import phanastrae.voidstain_hypoidol.common.hypoverse.Hypoverse;
 import phanastrae.voidstain_hypoidol.common.hypoverse.hypoentity.HypoEntity;
 import phanastrae.voidstain_hypoidol.common.hypoverse.hypoentity.HypoEntityTypes;
-import phanastrae.voidstain_hypoidol.common.network.s2c.AddHypoPlayerPayload;
 import phanastrae.voidstain_hypoidol.common.network.HypoverseWatcher;
+import phanastrae.voidstain_hypoidol.common.network.s2c.AddHypoPlayerPayload;
 
 import java.util.UUID;
 
@@ -17,6 +17,7 @@ public abstract class PlayerHypoEntity extends HypoEntity {
     public static final String KEY_PLAYER_UUID = "player_uuid";
 
     protected final UUID playerUUID;
+    protected int teleportCooldown;
 
     public PlayerHypoEntity(HypoZone zone, UUID playerUUID) {
         super(HypoEntityTypes.PLAYER, zone);
@@ -25,6 +26,7 @@ public abstract class PlayerHypoEntity extends HypoEntity {
 
     @Override
     public void tick(boolean runsNormally, boolean onServer, Hypoverse hypoverse) {
+        this.teleportCooldown--;
         this.vx *= 0.91f;
         this.vy *= 0.91f;
         this.vAngle *= 0.8f;
@@ -57,5 +59,13 @@ public abstract class PlayerHypoEntity extends HypoEntity {
         CompoundTag tag = new CompoundTag();
         this.write(tag);
         return new AddHypoPlayerPayload(this.zone.uuid, TypedEntityData.of(this.getType(), tag), watcher.getPlayer().getUUID().equals(this.playerUUID));
+    }
+
+    public void setTeleportCooldown(int cooldown) {
+        this.teleportCooldown = cooldown;
+    }
+
+    public int getTeleportCooldown() {
+        return this.teleportCooldown;
     }
 }

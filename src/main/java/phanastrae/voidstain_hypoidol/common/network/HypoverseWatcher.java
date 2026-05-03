@@ -15,6 +15,7 @@ import phanastrae.voidstain_hypoidol.common.network.s2c.StopWatchingCanvasPayloa
 import phanastrae.voidstain_hypoidol.common.network.s2c.StopWatchingHypoZonePayload;
 
 import java.util.UUID;
+import java.util.function.Consumer;
 
 public class HypoverseWatcher {
 
@@ -73,15 +74,17 @@ public class HypoverseWatcher {
         }
     }
 
-    public void createHypoPlayer(Hypoverse hypoverse, HypoZone zone, float x, float y) {
+    public PlayerHypoEntity createHypoPlayer(Hypoverse hypoverse, HypoZone zone, float x, float y, Consumer<ServerPlayerHypoEntity> modifyPlayer) {
         if (this.hypoPlayer != null) {
             this.hypoPlayer.setRemoved();
         }
 
         ServerPlayerHypoEntity playerHypoEntity = new ServerPlayerHypoEntity(zone, this, this.connection.player.getUUID());
         playerHypoEntity.setPos(x, y);
+        modifyPlayer.accept(playerHypoEntity);
         hypoverse.addEntity(playerHypoEntity);
         this.hypoPlayer = playerHypoEntity;
+        return this.hypoPlayer;
     }
 
     public void onHypoPlayerRemoval() {
@@ -98,6 +101,7 @@ public class HypoverseWatcher {
     }
 
     public void killHypoPlayer() {
+        this.getPlayer().setPortalCooldown(80);
         Hypoverse hypoverse = Hypoverse.fromLevel(this.getPlayer().level());
         if (this.hypoPlayer != null && hypoverse != null) {
             this.hypoPlayer.setRemoved();

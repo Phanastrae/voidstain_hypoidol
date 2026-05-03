@@ -30,10 +30,7 @@ import phanastrae.voidstain_hypoidol.client.renderer.hypoverse.state.*;
 import phanastrae.voidstain_hypoidol.common.VoidstainHypoidol;
 import phanastrae.voidstain_hypoidol.common.hypoverse.HypoZone;
 import phanastrae.voidstain_hypoidol.common.hypoverse.Portal;
-import phanastrae.voidstain_hypoidol.common.hypoverse.hypoentity.HorrorHypoEntity;
-import phanastrae.voidstain_hypoidol.common.hypoverse.hypoentity.HypoEntity;
-import phanastrae.voidstain_hypoidol.common.hypoverse.hypoentity.ItemHypoEntity;
-import phanastrae.voidstain_hypoidol.common.hypoverse.hypoentity.MorselHypoEntity;
+import phanastrae.voidstain_hypoidol.common.hypoverse.hypoentity.*;
 import phanastrae.voidstain_hypoidol.common.hypoverse.hypoentity.player.PlayerHypoEntity;
 import phanastrae.voidstain_hypoidol.common.item.VoidstainItems;
 
@@ -60,6 +57,7 @@ public class HypoverseRenderer {
     public static final Identifier FEAR_ITEM_IDENTIFIER = VoidstainHypoidol.id("textures/entity/canvas/painting/fear.png");
     public static final Identifier MORSEL_IDENTIFIER = VoidstainHypoidol.id("textures/entity/canvas/painting/morsel.png");
     public static final Identifier PLAYER_IDENTIFIER = VoidstainHypoidol.id("textures/entity/canvas/painting/player.png");
+    public static final Identifier HYPERGATE_IDENTIFIER = VoidstainHypoidol.id("textures/entity/canvas/painting/hypergate.png");
     public static final Identifier PORTAL_IDENTIFIER = VoidstainHypoidol.id("textures/entity/canvas/painting/portal.png");
     public static final Identifier FRAME_IDENTIFIER = VoidstainHypoidol.id("textures/entity/canvas/painting/frame.png");
 
@@ -135,6 +133,8 @@ public class HypoverseRenderer {
                     entityRenderState = itemRenderState;
                 } else if (entity instanceof PlayerHypoEntity player) {
                     entityRenderState = new PlayerRenderState();
+                } else if (entity instanceof HyperGateHypoEntity hyperGate) {
+                    entityRenderState = new HyperGateRenderState();
                 }
 
                 if (entityRenderState != null) {
@@ -277,6 +277,13 @@ public class HypoverseRenderer {
                     float halfWidth = 0.1f;
                     float halfHeight = 0.1f;
                     drawWithTexture(PLAYER_IDENTIFIER, (builder) -> {
+                        drawQuad(pose, builder, -halfWidth, halfWidth, -halfHeight, halfHeight);
+                    }, true);
+                }
+                case HyperGateRenderState hyperGateRenderState -> {
+                    float halfWidth = 0.4f;
+                    float halfHeight = 0.4f;
+                    drawWithTexture(HYPERGATE_IDENTIFIER, (builder) -> {
                         drawQuad(pose, builder, -halfWidth, halfWidth, -halfHeight, halfHeight);
                     }, true);
                 }
