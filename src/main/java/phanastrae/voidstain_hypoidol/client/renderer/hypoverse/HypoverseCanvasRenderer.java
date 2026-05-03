@@ -3,6 +3,7 @@ package phanastrae.voidstain_hypoidol.client.renderer.hypoverse;
 import com.mojang.blaze3d.ProjectionType;
 import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.blaze3d.textures.GpuTextureView;
+import com.mojang.blaze3d.vertex.PoseStack;
 import net.minecraft.client.DeltaTracker;
 import net.minecraft.client.renderer.Projection;
 import net.minecraft.util.ARGB;
@@ -71,7 +72,7 @@ public class HypoverseCanvasRenderer {
         modelViewStack.identity();
 
         for (CanvasRenderState renderState : allCanvasRenderState.canvases) {
-            projection.setupOrtho(-1000.0f, 1000.0f, renderState.dimensions.width, renderState.dimensions.height, false);
+            projection.setupOrtho(-1.0f, 1.0f, renderState.dimensions.width, renderState.dimensions.height, false);
             RenderSystem.setProjectionMatrix(HypoverseRenderer.CANVAS_PROJECTION_MATRIX_BUFFER.getBuffer(projection), ProjectionType.ORTHOGRAPHIC);
 
             CanvasTexture canvasTexture = CanvasTextureHandler.getCanvas(renderState.canvasId);
@@ -94,6 +95,7 @@ public class HypoverseCanvasRenderer {
     }
 
     public static void renderCanvas(CanvasTexture canvasTexture, CanvasRenderState canvasRenderState, HypoverseRenderState hypoverseRenderState) {
+        // TODO this probably isn't working correctly if zone is not centered at (0,0)
         RenderSystem.getDevice().createCommandEncoder().clearColorAndDepthTextures(
                 canvasTexture.getColorTexture().getTexture(), ARGB.color(255, 0, 0, 0),
                 canvasTexture.getDepthTexture().getTexture(), 1.0
@@ -127,7 +129,7 @@ public class HypoverseCanvasRenderer {
                     }
 
                     if (gridX != 1 || gridY != 1) {
-                        HypoverseRenderer.drawQuad(builder,
+                        HypoverseRenderer.drawQuad(new PoseStack.Pose(), builder,
                                 i * xSliceSize, (i + 1) * xSliceSize,
                                 j * ySliceSize, (j + 1) * ySliceSize,
                                 gridX / 3f, (gridX + xSliceSize) / 3f, (gridY + ySliceSize) / 3f, gridY / 3f

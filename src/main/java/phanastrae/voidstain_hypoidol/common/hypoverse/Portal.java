@@ -60,8 +60,8 @@ public class Portal {
         float cos = Mth.cos(angleRads);
         float sin = Mth.sin(angleRads);
 
-        this.tangent = new Vec2(cos, sin); // starts aimed upwards, rotates clockwise
-        this.normal = new Vec2(sin, -cos); // starts aimed to the left, rotates clockwise
+        this.tangent = new Vec2(cos, sin); // starts aimed to the right, rotates counter-clockwise
+        this.normal = new Vec2(sin, -cos); // starts aimed downwards, rotates counter-clockwise
         this.startPos = this.center.add(this.tangent.scale(-0.5f));
         this.endPos = this.center.add(this.tangent.scale(0.5f));
     }
@@ -111,15 +111,15 @@ public class Portal {
         return this.endPos;
     }
 
-    public Vec2 worldPosToRelativePos(Vec2 relativePos) {
-        return this.worldPosToRelativePos(relativePos.x, relativePos.y);
+    public Vec2 zonePosToRelativePos(Vec2 relativePos) {
+        return this.zonePosToRelativePos(relativePos.x, relativePos.y);
     }
 
-    public Vec2 worldPosToRelativePos(float worldX, float worldY) {
-        return new Vec2(worldX - this.center.x, worldY - this.center.y);
+    public Vec2 zonePosToRelativePos(float zoneX, float zoneY) {
+        return new Vec2(zoneX - this.center.x, zoneY - this.center.y);
     }
 
-    public Vec2 relativePosToWorldPos(Vec2 relativePos) {
+    public Vec2 relativePosToZonePos(Vec2 relativePos) {
         return new Vec2(relativePos.x + this.center.x, relativePos.y + this.center.y);
     }
 
@@ -127,27 +127,25 @@ public class Portal {
         return to.tangent.scale(relativeVector.dot(from.tangent)).add(to.normal.scale(relativeVector.dot(from.normal)));
     }
 
-    public static Vec2 transformWorldVector(Vec2 worldVector, Portal from, Portal to) {
-        Vec2 relativeVector = from.worldPosToRelativePos(worldVector);
+    public static Vec2 transformZoneVector(Vec2 zoneVector, Portal from, Portal to) {
+        Vec2 relativeVector = from.zonePosToRelativePos(zoneVector);
         Vec2 newRelativeVector = Portal.transformRelativeVector(relativeVector, from, to);
-        return to.relativePosToWorldPos(newRelativeVector);
+        return to.relativePosToZonePos(newRelativeVector);
     }
 
     // returns intersect distance, or Float.POSITIVE_INFINITY if it misses
-    public float worldRayIntersects(Vec2 start, Vec2 end) {
-        return this.relativeRayIntersects(this.worldPosToRelativePos(start), this.worldPosToRelativePos(end));
+    public float zoneRayIntersects(Vec2 start, Vec2 end) {
+        return this.relativeRayIntersects(this.zonePosToRelativePos(start), this.zonePosToRelativePos(end));
     }
 
     // returns intersect distance, or Float.POSITIVE_INFINITY if it misses
     public float relativeRayIntersects(Vec2 start, Vec2 end) {
         float startDotNormal = start.dot(this.normal);
-        float endDotNormal = end.dot(this.normal);
-        if (Math.signum(startDotNormal) == Math.signum(endDotNormal)) {
+        if (getPositionSidedness(startDotNormal) == getPositionSidedness(end)) {
             // ray does not cross portal line
             return Float.POSITIVE_INFINITY;
         }
-
-        // crossed over portal line
+        // ray does cross over portal line
         Vec2 dif = end.add(start.negated());
         float difDotNormal = dif.dot(this.normal);
 
@@ -164,6 +162,15 @@ public class Portal {
         } else {
             return Float.POSITIVE_INFINITY;
         }
+    }
+
+    public int getPositionSidedness(Vec2 pos) {
+        return getPositionSidedness(pos.dot(this.normal));
+    }
+
+    public static int getPositionSidedness(float dot) {
+        // intentionally return 1 for dot = 0, so that the entire plane is divided into only 2 pieces
+        return dot >= 0 ? 1 : -1;
     }
 
     public static class PortalId {

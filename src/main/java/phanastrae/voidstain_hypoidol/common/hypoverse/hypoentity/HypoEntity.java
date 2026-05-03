@@ -124,11 +124,11 @@ public abstract class HypoEntity {
     }
 
     public void transformCoordinates(Portal from, Portal to) {
-        Vec2 newFinalPos = Portal.transformWorldVector(new Vec2(this.x, this.y), from, to);
+        Vec2 newFinalPos = Portal.transformZoneVector(new Vec2(this.x, this.y), from, to);
         this.x = newFinalPos.x;
         this.y = newFinalPos.y;
 
-        Vec2 oldFinalPos = Portal.transformWorldVector(new Vec2(this.ox, this.oy), from, to);
+        Vec2 oldFinalPos = Portal.transformZoneVector(new Vec2(this.ox, this.oy), from, to);
         this.ox = oldFinalPos.x;
         this.oy = oldFinalPos.y;
 
@@ -144,7 +144,7 @@ public abstract class HypoEntity {
         Portal fromPortal = null;
         float furthestIntersect = Float.POSITIVE_INFINITY;
         for (Portal portal : this.zone.portals.values()) {
-            float intersectDistance = portal.worldRayIntersects(startPos, endPos);
+            float intersectDistance = portal.zoneRayIntersects(startPos, endPos);
             if (intersectDistance < furthestIntersect) {
                 furthestIntersect = intersectDistance;
                 fromPortal = portal;

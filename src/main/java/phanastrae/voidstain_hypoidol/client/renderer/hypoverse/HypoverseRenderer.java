@@ -1,5 +1,9 @@
 package phanastrae.voidstain_hypoidol.client.renderer.hypoverse;
 
+import com.mojang.blaze3d.pipeline.ColorTargetState;
+import com.mojang.blaze3d.pipeline.DepthStencilState;
+import com.mojang.blaze3d.pipeline.RenderPipeline;
+import com.mojang.blaze3d.platform.CompareOp;
 import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.blaze3d.textures.FilterMode;
 import com.mojang.blaze3d.vertex.*;
@@ -11,9 +15,12 @@ import net.minecraft.client.renderer.rendertype.RenderType;
 import net.minecraft.resources.Identifier;
 import net.minecraft.util.Mth;
 import net.minecraft.util.Util;
+import net.minecraft.world.phys.Vec2;
+import org.joml.Quaternionf;
 import phanastrae.voidstain_hypoidol.client.VoidstainHypoidolClient;
 import phanastrae.voidstain_hypoidol.client.hypoverse.ClientHypoverse;
 import phanastrae.voidstain_hypoidol.client.hypoverse.hypoentity.player.LocalPlayerHypoEntity;
+import phanastrae.voidstain_hypoidol.client.renderer.hypoverse.occlusion.CameraView;
 import phanastrae.voidstain_hypoidol.client.renderer.hypoverse.state.*;
 import phanastrae.voidstain_hypoidol.common.VoidstainHypoidol;
 import phanastrae.voidstain_hypoidol.common.hypoverse.HypoZone;
@@ -24,6 +31,7 @@ import phanastrae.voidstain_hypoidol.common.hypoverse.hypoentity.ItemHypoEntity;
 import phanastrae.voidstain_hypoidol.common.hypoverse.hypoentity.MorselHypoEntity;
 import phanastrae.voidstain_hypoidol.common.hypoverse.hypoentity.player.PlayerHypoEntity;
 
+import java.util.Optional;
 import java.util.UUID;
 import java.util.function.Consumer;
 import java.util.function.Function;
@@ -53,15 +61,36 @@ public class HypoverseRenderer {
     private static final Function<Identifier, RenderType> NEAREST_RENDER_TYPE = Util.memoize(createFunc(FilterMode.NEAREST));
     private static final Function<Identifier, RenderType> LINEAR_RENDER_TYPE = Util.memoize(createFunc(FilterMode.LINEAR));
 
+    public static final RenderPipeline DRAW_CANVAS_PIPELINE = RenderPipelines.register(RenderPipeline.builder(RenderPipelines.GUI_TEXTURED_SNIPPET)
+            .withDepthStencilState(DepthStencilState.DEFAULT)
+            .withLocation(VoidstainHypoidol.id("pipeline/draw_canvas"))
+            .build()
+    );
+
     private static Function<Identifier, RenderType> createFunc(FilterMode filterMode) {
         return (textureId) -> {
-            RenderSetup state = RenderSetup.builder(RenderPipelines.GUI_TEXTURED)
+            RenderSetup state = RenderSetup.builder(DRAW_CANVAS_PIPELINE)
                     .withTexture("Sampler0", textureId, () -> RenderSystem.getSamplerCache().getClampToEdge(filterMode))
                     .createRenderSetup();
 
             return RenderType.create("eldritch_canvas", state);
         };
     }
+
+    public static final RenderPipeline WRITE_DEPTH_PIPELINE = RenderPipelines.register(RenderPipeline.builder(RenderPipelines.MATRICES_PROJECTION_SNIPPET)
+            .withVertexShader("core/position")
+            .withFragmentShader("core/position")
+            .withColorTargetState(new ColorTargetState(Optional.empty(), 0))
+            .withDepthStencilState(new DepthStencilState(CompareOp.ALWAYS_PASS, true))
+            .withVertexFormat(DefaultVertexFormat.POSITION, VertexFormat.Mode.TRIANGLES)
+            .withCull(false)
+            .withLocation(VoidstainHypoidol.id("pipeline/write_depth"))
+            .build()
+    );
+
+    public static final RenderType WRITE_DEPTH_TYPE = RenderType.create("write_depth",
+            RenderSetup.builder(WRITE_DEPTH_PIPELINE).createRenderSetup()
+    );
 
     public static void close() {
         CANVAS_PROJECTION_MATRIX_BUFFER.close();
@@ -105,7 +134,10 @@ public class HypoverseRenderer {
                 PortalRenderState portalRenderState = new PortalRenderState();
                 portalRenderState.start = portal.getStartPos();
                 portalRenderState.end = portal.getEndPos();
+                portalRenderState.center = portal.getCenter();
                 portalRenderState.normal = portal.getNormal();
+                portalRenderState.length = portal.getLength();
+                portalRenderState.angle = portal.getAngle();
 
                 zoneRenderState.portals.add(portalRenderState);
             }
@@ -115,46 +147,54 @@ public class HypoverseRenderer {
 
         LocalPlayerHypoEntity player = hypoverse.hypoPlayer;
         if (player == null) {
-            renderState.mainZoneUUID = null;
-            renderState.playerX = 0;
-            renderState.playerY = 0;
+            renderState.cameraView = null;
         } else {
-            renderState.mainZoneUUID = hypoverse.hypoPlayer.getZone().uuid;
-            renderState.playerX = Mth.lerp(partialTick, player.ox, player.x);
-            renderState.playerY = Mth.lerp(partialTick, player.oy, player.y);
+            renderState.cameraView = CameraView.create(
+                    new Vec2(Mth.lerp(partialTick, player.ox, player.x), Mth.lerp(partialTick, player.oy, player.y)),
+                    new Vec2(player.x, player.y),
+                    player.getZone(),
+                    hypoverse,
+                    2
+            );
         }
     }
 
     public static void tryRenderZone(UUID zoneUUID, HypoverseRenderState hypoverseRenderState) {
+        tryRenderZone(new PoseStack(), zoneUUID, hypoverseRenderState);
+    }
+
+    public static void tryRenderZone(PoseStack poseStack, UUID zoneUUID, HypoverseRenderState hypoverseRenderState) {
         if (hypoverseRenderState.zones.containsKey(zoneUUID)) {
             HypoZoneRenderState zoneRenderState = hypoverseRenderState.zones.get(zoneUUID);
-            renderZone(zoneRenderState);
+            renderZone(poseStack, zoneRenderState);
         }
     }
 
-    public static void renderZone(HypoZoneRenderState zoneRenderState) {
+    public static void renderZone(PoseStack poseStack, HypoZoneRenderState zoneRenderState) {
+        PoseStack.Pose pose = poseStack.last();
+
         HypoZone.Dimensions dimensions = zoneRenderState.dimensions;
 
         drawWithTexture(BACKGROUND_IDENTIFIERS[zoneRenderState.backgroundId], (builder) -> {
-            drawQuad(builder, dimensions.minX, dimensions.maxX, dimensions.minY, dimensions.maxY);
+            drawQuad(pose, builder, dimensions.minX, dimensions.maxX, dimensions.minY, dimensions.maxY);
         }, true);
 
         for (HypoEntityRenderState entityRenderState : zoneRenderState.entities) {
-            float x = entityRenderState.x - dimensions.minX;
-            float y = entityRenderState.y - dimensions.minY;
+            float x = entityRenderState.x;
+            float y = entityRenderState.y;
             switch (entityRenderState) {
                 case HorrorRenderState horrorRenderState -> {
                     float halfWidth = horrorRenderState.sizeModifier * 0.8f;
                     float halfHeight = horrorRenderState.sizeModifier * 0.8f;
                     drawWithTexture(HORROR_IDENTIFIERS[horrorRenderState.horrorId], (builder) -> {
-                        drawQuad(builder, x - halfWidth, x + halfWidth, y - halfHeight, y + halfHeight);
+                        drawQuad(pose, builder, x - halfWidth, x + halfWidth, y - halfHeight, y + halfHeight);
                     }, true);
                 }
                 case MorselRenderState morselRenderState -> {
                     float halfWidth = 0.25f;
                     float halfHeight = 0.25f;
                     drawWithTexture(MORSEL_IDENTIFIER, (builder) -> {
-                        drawQuad(builder, x - halfWidth, x + halfWidth, y - halfHeight, y + halfHeight);
+                        drawQuad(pose, builder, x - halfWidth, x + halfWidth, y - halfHeight, y + halfHeight);
                     }, true);
                 }
                 case ItemRenderState itemRenderState -> {
@@ -163,14 +203,14 @@ public class HypoverseRenderer {
                     float halfWidth = 0.07f * sizeModifier;
                     float halfHeight = 0.07f * sizeModifier;
                     drawWithTexture(ITEM_IDENTIFIER, (builder) -> {
-                        drawQuad(builder, x - halfWidth, x + halfWidth, y - halfHeight, y + halfHeight);
+                        drawQuad(pose, builder, x - halfWidth, x + halfWidth, y - halfHeight, y + halfHeight);
                     }, true);
                 }
                 case PlayerRenderState playerRenderState -> {
                     float halfWidth = 0.2f;
                     float halfHeight = 0.2f;
                     drawWithTexture(PLAYER_IDENTIFIER, (builder) -> {
-                        drawQuad(builder, x - halfWidth, x + halfWidth, y - halfHeight, y + halfHeight);
+                        drawQuad(pose, builder, x - halfWidth, x + halfWidth, y - halfHeight, y + halfHeight);
                     }, true);
                 }
                 default -> {
@@ -179,20 +219,17 @@ public class HypoverseRenderer {
         }
 
         for (PortalRenderState portalRenderState : zoneRenderState.portals) {
-            float startX = portalRenderState.start.x - dimensions.minX;
-            float startY = portalRenderState.start.y - dimensions.minX;
-            float endX = portalRenderState.end.x - dimensions.minX;
-            float endY = portalRenderState.end.y - dimensions.minX;
+            poseStack.pushPose();
+            poseStack.translate(portalRenderState.center.x, portalRenderState.center.y, 0);
+            poseStack.mulPose(new Quaternionf().rotateZ((float) Math.toRadians(portalRenderState.angle - 90))); // offset by 90 to orient the texture properly
 
-            float dx = 0.03125f * portalRenderState.normal.x;
-            float dy = 0.03125f * portalRenderState.normal.y;
+            float halfLength = portalRenderState.length / 2;
+            float halfWidth = halfLength / 16;
 
-            drawWithTexture(PORTAL_IDENTIFIER, (builder) -> {
-                builder.addVertex(startX - dx, startY - dy, 0.0f).setUv(0, 1).setColor(255, 255, 255, 255);
-                builder.addVertex(startX + dx, startY + dy, 0.0f).setUv(1, 1).setColor(255, 255, 255, 255);
-                builder.addVertex(endX + dx, endY + dy, 0.0f).setUv(1, 0).setColor(255, 255, 255, 255);
-                builder.addVertex(endX - dx, endY - dy, 0.0f).setUv(0, 0).setColor(255, 255, 255, 255);
-            });
+            PoseStack.Pose pose2 = poseStack.last();
+            drawWithTexture(PORTAL_IDENTIFIER, builder -> drawQuad(pose2, builder, -halfWidth, halfWidth, -halfLength, halfLength));
+
+            poseStack.popPose();
         }
     }
 
@@ -202,7 +239,11 @@ public class HypoverseRenderer {
 
     public static void drawWithTexture(Identifier textureId, Consumer<BufferBuilder> runnable, boolean linear) {
         RenderType type = linear ? LINEAR_RENDER_TYPE.apply(textureId) : NEAREST_RENDER_TYPE.apply(textureId);
-        BufferBuilder builder = Tesselator.getInstance().begin(VertexFormat.Mode.QUADS, DefaultVertexFormat.POSITION_TEX_COLOR);
+        drawWithRenderType(type, runnable);
+    }
+
+    public static void drawWithRenderType(RenderType type, Consumer<BufferBuilder> runnable) {
+        BufferBuilder builder = Tesselator.getInstance().begin(type.mode(), type.format());
         runnable.accept(builder);
         MeshData mesh = builder.build();
         if (mesh != null) {
@@ -210,14 +251,14 @@ public class HypoverseRenderer {
         }
     }
 
-    public static void drawQuad(BufferBuilder builder, float x0, float x1, float y0, float y1) {
-        drawQuad(builder, x0, x1, y0, y1, 0, 1, 0, 1);
+    public static void drawQuad(PoseStack.Pose pose, BufferBuilder builder, float x0, float x1, float y0, float y1) {
+        drawQuad(pose, builder, x0, x1, y0, y1, 0, 1, 0, 1);
     }
 
-    public static void drawQuad(BufferBuilder builder, float x0, float x1, float y0, float y1, float u0, float u1, float v0, float v1) {
-        builder.addVertex(x0, y0, 0.0f).setUv(u0, v1).setColor(255, 255, 255, 255);
-        builder.addVertex(x1, y0, 0.0f).setUv(u1, v1).setColor(255, 255, 255, 255);
-        builder.addVertex(x1, y1, 0.0f).setUv(u1, v0).setColor(255, 255, 255, 255);
-        builder.addVertex(x0, y1, 0.0f).setUv(u0, v0).setColor(255, 255, 255, 255);
+    public static void drawQuad(PoseStack.Pose pose, BufferBuilder builder, float x0, float x1, float y0, float y1, float u0, float u1, float v0, float v1) {
+        builder.addVertex(pose, x0, y0, 0.0f).setUv(u0, v1).setColor(255, 255, 255, 255);
+        builder.addVertex(pose, x1, y0, 0.0f).setUv(u1, v1).setColor(255, 255, 255, 255);
+        builder.addVertex(pose, x1, y1, 0.0f).setUv(u1, v0).setColor(255, 255, 255, 255);
+        builder.addVertex(pose, x0, y1, 0.0f).setUv(u0, v0).setColor(255, 255, 255, 255);
     }
 }
