@@ -3,10 +3,12 @@ package phanastrae.voidstain_hypoidol.common.hypoverse.hypoentity;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
-import net.minecraft.world.item.Items;
+import net.minecraft.util.RandomSource;
+import net.minecraft.world.item.Item;
 import phanastrae.voidstain_hypoidol.common.hypoverse.HypoZone;
 import phanastrae.voidstain_hypoidol.common.hypoverse.Hypoverse;
 import phanastrae.voidstain_hypoidol.common.hypoverse.hypoentity.player.PlayerHypoEntity;
+import phanastrae.voidstain_hypoidol.common.item.VoidstainItems;
 import phanastrae.voidstain_hypoidol.common.network.s2c.UpdateHorrorFullnessPayload;
 
 public class HorrorHypoEntity extends BouncingHypoEntity {
@@ -52,16 +54,40 @@ public class HorrorHypoEntity extends BouncingHypoEntity {
         }
 
         if (onServer && this.random.nextInt(20) == 0) {
-            if (this.fullness >= 1000 && random.nextInt(3) == 0) {
+            if (this.fullness >= 500 && random.nextInt(3) == 0) {
+                Item itemItem = getItem(this.fullness, this.random);
+
                 ItemHypoEntity item = new ItemHypoEntity(this.zone);
                 item.setPos(this.x, this.y);
                 item.setOldPos(this.x, this.y);
+                float angle = (float) (this.random.nextFloat() * Math.TAU);
+                item.setAngle(angle);
+                item.setOldAngle(angle);
+                item.setAngleVelocity(this.random.nextFloat() * 0.04f + 0.01f);
                 item.setLife(30 * 20);
                 item.setVelocity(this.vx * -0.25f, this.vy * -0.25f);
-                item.setItem(Items.GOLD_NUGGET.getDefaultInstance());
+                item.setItem(itemItem.getDefaultInstance());
                 hypoverse.queueEntityAddition(item);
             }
             this.setFullness(this.fullness * 0.99f);
+        }
+    }
+
+    public Item getItem(float fullness, RandomSource random) {
+        int loveWeight = 600 + (int) Math.abs(Math.clamp(fullness - 4000, -500, 500));
+        int uncertaintyWeight = 600 + (int) Math.abs(Math.clamp(fullness - 3000, -500, 500));
+        int fearWeight = 600 + (int) Math.abs(Math.clamp(fullness - 2000, -500, 500));
+        int hatredWeight = 600 + (int) Math.abs(Math.clamp(fullness - 1000, -500, 500));
+
+        int r = random.nextInt(loveWeight + uncertaintyWeight + fearWeight + hatredWeight);
+        if (r < loveWeight) {
+            return VoidstainItems.LOVE;
+        } else if (r < loveWeight + uncertaintyWeight) {
+            return VoidstainItems.UNCERTAINTY;
+        } else if (r < loveWeight + uncertaintyWeight + fearWeight) {
+            return VoidstainItems.FEAR;
+        } else {
+            return VoidstainItems.HATRED;
         }
     }
 
@@ -95,6 +121,6 @@ public class HorrorHypoEntity extends BouncingHypoEntity {
     }
 
     public float getSizeModifier() {
-        return 0.4f + 0.6f * (float)Math.pow(Math.clamp(this.fullness / 4000, 0, 1), 2);
+        return 0.4f + 0.6f * (float) Math.pow(Math.clamp(this.fullness / 4000, 0, 1), 2);
     }
 }

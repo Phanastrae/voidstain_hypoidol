@@ -45,6 +45,11 @@ public class ItemHypoEntity extends HypoEntity {
                     }
                 });
             }
+
+            if (this.random.nextInt(40) == 0) {
+                this.vAngle += this.random.nextFloat() * 0.08f;
+                this.needsSync = true;
+            }
         }
         this.life--;
 
@@ -105,5 +110,9 @@ public class ItemHypoEntity extends HypoEntity {
 
     public void setItem(ItemStack item) {
         this.item = item;
+    }
+
+    public ItemStack getItem() {
+        return this.item;
     }
 }

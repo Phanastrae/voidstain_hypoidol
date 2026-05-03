@@ -17,10 +17,9 @@ import net.minecraft.resources.Identifier;
 import net.minecraft.util.ARGB;
 import net.minecraft.util.Mth;
 import net.minecraft.util.Util;
-import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.phys.Vec2;
 import org.jetbrains.annotations.Nullable;
-import org.joml.Matrix4f;
 import org.joml.Matrix4fStack;
 import org.joml.Quaternionf;
 import phanastrae.voidstain_hypoidol.client.VoidstainHypoidolClient;
@@ -36,6 +35,7 @@ import phanastrae.voidstain_hypoidol.common.hypoverse.hypoentity.HypoEntity;
 import phanastrae.voidstain_hypoidol.common.hypoverse.hypoentity.ItemHypoEntity;
 import phanastrae.voidstain_hypoidol.common.hypoverse.hypoentity.MorselHypoEntity;
 import phanastrae.voidstain_hypoidol.common.hypoverse.hypoentity.player.PlayerHypoEntity;
+import phanastrae.voidstain_hypoidol.common.item.VoidstainItems;
 
 import java.util.Optional;
 import java.util.UUID;
@@ -54,6 +54,10 @@ public class HypoverseRenderer {
             VoidstainHypoidol.id("textures/entity/canvas/painting/horror_2.png")
     };
     public static final Identifier ITEM_IDENTIFIER = VoidstainHypoidol.id("textures/entity/canvas/painting/item.png");
+    public static final Identifier LOVE_ITEM_IDENTIFIER = VoidstainHypoidol.id("textures/entity/canvas/painting/love.png");
+    public static final Identifier HATRED_ITEM_IDENTIFIER = VoidstainHypoidol.id("textures/entity/canvas/painting/uncertainty.png");
+    public static final Identifier UNCERTAINTY_ITEM_IDENTIFIER = VoidstainHypoidol.id("textures/entity/canvas/painting/hatred.png");
+    public static final Identifier FEAR_ITEM_IDENTIFIER = VoidstainHypoidol.id("textures/entity/canvas/painting/fear.png");
     public static final Identifier MORSEL_IDENTIFIER = VoidstainHypoidol.id("textures/entity/canvas/painting/morsel.png");
     public static final Identifier PLAYER_IDENTIFIER = VoidstainHypoidol.id("textures/entity/canvas/painting/player.png");
     public static final Identifier PORTAL_IDENTIFIER = VoidstainHypoidol.id("textures/entity/canvas/painting/portal.png");
@@ -127,6 +131,7 @@ public class HypoverseRenderer {
                 } else if (entity instanceof ItemHypoEntity item) {
                     ItemRenderState itemRenderState = new ItemRenderState();
                     itemRenderState.life = item.getLife();
+                    itemRenderState.stack = item.getItem().copy();
                     entityRenderState = itemRenderState;
                 } else if (entity instanceof PlayerHypoEntity player) {
                     entityRenderState = new PlayerRenderState();
@@ -185,7 +190,7 @@ public class HypoverseRenderer {
     public static void renderZone(PoseStack poseStack, HypoZoneRenderState zoneRenderState, @Nullable CanvasTexture backgroundRenderTarget) {
         HypoZone.Dimensions dimensions = zoneRenderState.dimensions;
 
-        if(backgroundRenderTarget != null) {
+        if (backgroundRenderTarget != null) {
             GpuTextureView colorOverride = RenderSystem.outputColorTextureOverride;
             GpuTextureView depthOverride = RenderSystem.outputDepthTextureOverride;
 
@@ -225,9 +230,9 @@ public class HypoverseRenderer {
             poseStack.pushPose();
             poseStack.translate(entityRenderState.x, entityRenderState.y, 0);
             poseStack.mulPose(new Quaternionf().rotateZ(entityRenderState.angle));
-            if(entityRenderState instanceof PlayerRenderState) {
+            if (entityRenderState instanceof PlayerRenderState) {
                 // rotate 180 degrees
-                poseStack.mulPose(new Quaternionf().rotateZ((float)Math.PI));
+                poseStack.mulPose(new Quaternionf().rotateZ((float) Math.PI));
             }
             PoseStack.Pose pose = poseStack.last();
             switch (entityRenderState) {
@@ -252,7 +257,19 @@ public class HypoverseRenderer {
                     sizeModifier = 1 - (1 - sizeModifier) * (1 - sizeModifier);
                     float halfWidth = 0.07f * sizeModifier;
                     float halfHeight = 0.07f * sizeModifier;
-                    drawWithTexture(ITEM_IDENTIFIER, (builder) -> {
+
+                    Identifier id = ITEM_IDENTIFIER;
+                    ItemStack stack = itemRenderState.stack;
+                    if (stack.is(VoidstainItems.LOVE)) {
+                        id = LOVE_ITEM_IDENTIFIER;
+                    } else if (stack.is(VoidstainItems.UNCERTAINTY)) {
+                        id = UNCERTAINTY_ITEM_IDENTIFIER;
+                    } else if (stack.is(VoidstainItems.FEAR)) {
+                        id = FEAR_ITEM_IDENTIFIER;
+                    } else if (stack.is(VoidstainItems.HATRED)) {
+                        id = HATRED_ITEM_IDENTIFIER;
+                    }
+                    drawWithTexture(id, (builder) -> {
                         drawQuad(pose, builder, -halfWidth, halfWidth, -halfHeight, halfHeight);
                     }, true);
                 }

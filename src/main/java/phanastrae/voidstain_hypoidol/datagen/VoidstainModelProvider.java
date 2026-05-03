@@ -20,6 +20,10 @@ public class VoidstainModelProvider extends FabricModelProvider {
     @Override
     public void generateItemModels(ItemModelGenerators itemModelGenerators) {
         itemModelGenerators.generateFlatItem(VoidstainItems.ELDRITCH_PAINTING, ModelTemplates.FLAT_ITEM);
+        itemModelGenerators.generateFlatItem(VoidstainItems.LOVE, ModelTemplates.FLAT_ITEM);
+        itemModelGenerators.generateFlatItem(VoidstainItems.UNCERTAINTY, ModelTemplates.FLAT_ITEM);
+        itemModelGenerators.generateFlatItem(VoidstainItems.HATRED, ModelTemplates.FLAT_ITEM);
+        itemModelGenerators.generateFlatItem(VoidstainItems.FEAR, ModelTemplates.FLAT_ITEM);
     }
 
     @Override
