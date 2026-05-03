@@ -5,7 +5,8 @@
   "mixins": [
     "common.MinecraftServerMixin",
     "common.ServerGamePacketListenerImplMixin",
-    "common.ServerLevelMixin"
+    "common.ServerLevelMixin",
+    "common.ServerPlayerMixin"
   ],
   "injectors": {
     "defaultRequire": 1
