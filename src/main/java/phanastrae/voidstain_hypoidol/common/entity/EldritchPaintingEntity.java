@@ -7,6 +7,7 @@ import net.minecraft.core.Direction;
 import net.minecraft.core.UUIDUtil;
 import net.minecraft.core.component.DataComponentGetter;
 import net.minecraft.core.component.DataComponentType;
+import net.minecraft.core.component.DataComponents;
 import net.minecraft.network.protocol.Packet;
 import net.minecraft.network.protocol.game.ClientGamePacketListener;
 import net.minecraft.network.protocol.game.ClientboundAddEntityPacket;
@@ -238,13 +239,15 @@ public class EldritchPaintingEntity extends HangingEntity {
             return InteractionResult.SUCCESS;
         }
         Optional<UUID> canvasUUID = this.getCanvasUUID();
+
+        // TODO this is terrible, tidy please
         boolean isBlaze = itemStack.is(Items.BLAZE_POWDER);
         boolean isGhast = itemStack.is(Items.GHAST_TEAR);
-        boolean isFood = itemStack.is(Items.CHORUS_FRUIT);
+        boolean isFood = itemStack.has(DataComponents.FOOD);
         boolean isPearl = itemStack.is(Items.ENDER_PEARL);
         boolean isCanvas = itemStack.is(VoidstainItems.ELDRITCH_PAINTING);
         boolean isCart = itemStack.is(Items.MINECART);
-        if (canvasUUID.isPresent() && !itemStack.isEmpty() && (isBlaze || isGhast || isFood || isPearl || isCanvas || isCart)) {
+        if (canvasUUID.isPresent() && !itemStack.isEmpty() && (isBlaze || isGhast || isFood || isPearl || isCanvas || isCart) && (player.getAbilities().mayBuild || isFood || isCart)) {
             if (player.level().isClientSide()) {
                 return InteractionResult.SUCCESS_SERVER;
             } else {
@@ -279,7 +282,8 @@ public class EldritchPaintingEntity extends HangingEntity {
                             }
                             return InteractionResult.SUCCESS_SERVER;
                         } else if (isFood) {
-                            HypoEntity hypoEntity = new MorselHypoEntity(zone);
+                            MorselHypoEntity hypoEntity = new MorselHypoEntity(zone);
+                            hypoEntity.setLife(20 * 20);
                             hypoEntity.setPos(canvasPos.x, canvasPos.y);
                             hypoEntity.setAngle(this.random.nextFloat() * (float)Math.TAU);
                             hypoEntity.setAngleVelocity((this.random.nextFloat() - 0.5f) * 0.05f);

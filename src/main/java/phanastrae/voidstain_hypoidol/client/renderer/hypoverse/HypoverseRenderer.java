@@ -121,7 +121,9 @@ public class HypoverseRenderer {
 
                     entityRenderState = state;
                 } else if (entity instanceof MorselHypoEntity morsel) {
-                    entityRenderState = new MorselRenderState();
+                    MorselRenderState morselRenderState = new MorselRenderState();
+                    morselRenderState.life = morsel.getLife();
+                    entityRenderState = morselRenderState;
                 } else if (entity instanceof ItemHypoEntity item) {
                     ItemRenderState itemRenderState = new ItemRenderState();
                     itemRenderState.life = item.getLife();
@@ -237,8 +239,10 @@ public class HypoverseRenderer {
                     }, true);
                 }
                 case MorselRenderState morselRenderState -> {
-                    float halfWidth = 0.125f;
-                    float halfHeight = 0.125f;
+                    float sizeModifier = Math.clamp(morselRenderState.life, 0, 200) / 200f;
+                    sizeModifier = 1 - (1 - sizeModifier) * (1 - sizeModifier);
+                    float halfWidth = 0.125f * sizeModifier;
+                    float halfHeight = 0.125f * sizeModifier;
                     drawWithTexture(MORSEL_IDENTIFIER, (builder) -> {
                         drawQuad(pose, builder, -halfWidth, halfWidth, -halfHeight, halfHeight);
                     }, true);
