@@ -9,6 +9,7 @@ import com.mojang.blaze3d.vertex.PoseStack;
 import net.minecraft.client.DeltaTracker;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.Projection;
+import net.minecraft.client.renderer.rendertype.RenderTypes;
 import net.minecraft.world.phys.Vec2;
 import org.jetbrains.annotations.Nullable;
 import org.joml.Matrix4fStack;
@@ -52,6 +53,8 @@ public class HypoverseFullscreenRenderer {
         if (renderState.cameraView != null) {
             RenderSystem.backupProjectionMatrix();
             Projection projection = new Projection();
+            projection.setupOrtho(-1.0f, 1.0f, 1, 1, false);
+            RenderSystem.setProjectionMatrix(HypoverseRenderer.CANVAS_PROJECTION_MATRIX_BUFFER.getBuffer(projection), ProjectionType.ORTHOGRAPHIC);
 
             Matrix4fStack modelViewStack = RenderSystem.getModelViewStack();
             modelViewStack.pushMatrix();
@@ -61,19 +64,26 @@ public class HypoverseFullscreenRenderer {
 
             // translate player to screen center
             modelViewStack.translate(0.5f, 0.5f, 0);
+
             // scale screen
             float scale = 0.25f;
             modelViewStack.scale(scale * window.getHeight() / window.getWidth(), scale, 1);
+
+            // draw background
+            HypoverseRenderer.drawWithRenderType(RenderTypes.endPortal(), builder -> {
+                // TODO scale this properly on weird aspect ratios
+                // TODO does this ever interact weridly with fog?
+                HypoverseRenderer.drawQuad(new PoseStack.Pose(), builder, -100f, 100f, -100f, 100f);
+            });
+
             // rotate camera
             modelViewStack.rotate(-renderState.cameraAngle, 0, 0, 1);
             // translate bottom left corner to player pos
             modelViewStack.translate(-renderState.cameraView.cameraPos.x, -renderState.cameraView.cameraPos.y, 0);
-
-            projection.setupOrtho(-1.0f, 1.0f, 1, 1, false);
-            RenderSystem.setProjectionMatrix(HypoverseRenderer.CANVAS_PROJECTION_MATRIX_BUFFER.getBuffer(projection), ProjectionType.ORTHOGRAPHIC);
             GpuTexture depthTexture = Minecraft.getInstance().getMainRenderTarget().getDepthTexture();
             if (depthTexture != null) {
                 clearDepthTexture(depthTexture, 1.0);
+
                 renderCameraView(renderState.cameraView, new PoseStack(), renderState, renderState.cameraView.zoneUUID, depthTexture);
                 clearDepthTexture(depthTexture, 1.0);
             }
