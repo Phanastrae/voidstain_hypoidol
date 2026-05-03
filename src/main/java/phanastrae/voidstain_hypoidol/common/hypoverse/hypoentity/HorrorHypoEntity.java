@@ -1,13 +1,20 @@
 package phanastrae.voidstain_hypoidol.common.hypoverse.hypoentity;
 
+import net.minecraft.core.registries.Registries;
 import net.minecraft.nbt.CompoundTag;
+import net.minecraft.resources.ResourceKey;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.util.RandomSource;
+import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.item.Item;
+import phanastrae.voidstain_hypoidol.common.VoidstainHypoidol;
 import phanastrae.voidstain_hypoidol.common.hypoverse.HypoZone;
 import phanastrae.voidstain_hypoidol.common.hypoverse.Hypoverse;
 import phanastrae.voidstain_hypoidol.common.hypoverse.hypoentity.player.PlayerHypoEntity;
+import phanastrae.voidstain_hypoidol.common.hypoverse.hypoentity.player.ServerPlayerHypoEntity;
 import phanastrae.voidstain_hypoidol.common.item.VoidstainItems;
 import phanastrae.voidstain_hypoidol.common.network.s2c.UpdateHorrorFullnessPayload;
 
@@ -95,6 +102,20 @@ public class HorrorHypoEntity extends BouncingHypoEntity {
         morsel.setRemoved();
         this.setFullness(this.fullness + 100);
         this.playSound(SoundEvents.GENERIC_EAT.value(), SoundSource.NEUTRAL, 0.08f, 1.2f + this.random.nextFloat() * 0.3f);
+
+        if (morsel instanceof ServerPlayerHypoEntity hypoPlayer) {
+            // TODO tidy this please: move damage stuff to separate class, assign proper damage type tags
+            ServerPlayer serverPlayer = hypoPlayer.getWatcher().getPlayer();
+            ServerLevel level = serverPlayer.level();
+            serverPlayer.hurtServer(
+                    level,
+                    new DamageSource(level.registryAccess()
+                            .lookupOrThrow(Registries.DAMAGE_TYPE)
+                            .getOrThrow(ResourceKey.create(Registries.DAMAGE_TYPE, VoidstainHypoidol.id("consumed")))
+                    ),
+                    99999999
+            );
+        }
     }
 
     public void setFullness(float fullness) {

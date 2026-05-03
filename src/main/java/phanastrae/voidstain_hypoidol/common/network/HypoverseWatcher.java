@@ -75,7 +75,7 @@ public class HypoverseWatcher {
 
     public void createHypoPlayer(Hypoverse hypoverse, HypoZone zone, float x, float y) {
         if (this.hypoPlayer != null) {
-            hypoverse.removeEntity(this.hypoPlayer.getUuid());
+            this.hypoPlayer.setRemoved();
         }
 
         ServerPlayerHypoEntity playerHypoEntity = new ServerPlayerHypoEntity(zone, this, this.connection.player.getUUID());
@@ -100,7 +100,8 @@ public class HypoverseWatcher {
     public void killHypoPlayer() {
         Hypoverse hypoverse = Hypoverse.fromLevel(this.getPlayer().level());
         if (this.hypoPlayer != null && hypoverse != null) {
-            hypoverse.removeEntity(this.hypoPlayer.getUuid());
+            this.hypoPlayer.setRemoved();
+            this.hypoPlayer = null;
         }
     }
 

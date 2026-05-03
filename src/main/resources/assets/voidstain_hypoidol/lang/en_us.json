@@ -1,6 +1,9 @@
 {
   "creativeTab.voidstain_hypoidol": "Voidstain Hypoidol",
 
+  "death.attack.voidstain_hypoidol.consumed": "%1$s was consumed by a Horror",
+  "death.attack.voidstain_hypoidol.consumed.player": "%1$s was consumed by a Horror",
+
   "entity.voidstain_hypoidol.eldritch_painting": "Eldritch Painting",
 
   "item.voidstain_hypoidol.eldritch_painting": "Eldritch Painting",
