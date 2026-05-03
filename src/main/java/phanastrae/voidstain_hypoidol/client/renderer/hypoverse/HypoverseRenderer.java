@@ -6,6 +6,7 @@ import com.mojang.blaze3d.pipeline.RenderPipeline;
 import com.mojang.blaze3d.platform.CompareOp;
 import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.blaze3d.textures.FilterMode;
+import com.mojang.blaze3d.textures.GpuTextureView;
 import com.mojang.blaze3d.vertex.*;
 import net.minecraft.client.DeltaTracker;
 import net.minecraft.client.renderer.ProjectionMatrixBuffer;
@@ -13,9 +14,13 @@ import net.minecraft.client.renderer.RenderPipelines;
 import net.minecraft.client.renderer.rendertype.RenderSetup;
 import net.minecraft.client.renderer.rendertype.RenderType;
 import net.minecraft.resources.Identifier;
+import net.minecraft.util.ARGB;
 import net.minecraft.util.Mth;
 import net.minecraft.util.Util;
 import net.minecraft.world.phys.Vec2;
+import org.jetbrains.annotations.Nullable;
+import org.joml.Matrix4f;
+import org.joml.Matrix4fStack;
 import org.joml.Quaternionf;
 import phanastrae.voidstain_hypoidol.client.VoidstainHypoidolClient;
 import phanastrae.voidstain_hypoidol.client.hypoverse.ClientHypoverse;
@@ -94,6 +99,7 @@ public class HypoverseRenderer {
 
     public static void close() {
         CANVAS_PROJECTION_MATRIX_BUFFER.close();
+        FULLSCREEN_RENDERER.close();
     }
 
     public static void extractHypoverseData(HypoverseRenderState renderState, DeltaTracker deltaTracker) {
@@ -163,21 +169,54 @@ public class HypoverseRenderer {
     }
 
     public static void tryRenderZone(UUID zoneUUID, HypoverseRenderState hypoverseRenderState) {
-        tryRenderZone(new PoseStack(), zoneUUID, hypoverseRenderState);
+        tryRenderZone(new PoseStack(), zoneUUID, hypoverseRenderState, null);
     }
 
-    public static void tryRenderZone(PoseStack poseStack, UUID zoneUUID, HypoverseRenderState hypoverseRenderState) {
+    public static void tryRenderZone(PoseStack poseStack, UUID zoneUUID, HypoverseRenderState hypoverseRenderState, @Nullable CanvasTexture backgroundRenderTarget) {
         if (hypoverseRenderState.zones.containsKey(zoneUUID)) {
             HypoZoneRenderState zoneRenderState = hypoverseRenderState.zones.get(zoneUUID);
-            renderZone(poseStack, zoneRenderState);
+            renderZone(poseStack, zoneRenderState, backgroundRenderTarget);
         }
     }
 
-    public static void renderZone(PoseStack poseStack, HypoZoneRenderState zoneRenderState) {
+    public static void renderZone(PoseStack poseStack, HypoZoneRenderState zoneRenderState, @Nullable CanvasTexture backgroundRenderTarget) {
         HypoZone.Dimensions dimensions = zoneRenderState.dimensions;
-        drawWithTexture(BACKGROUND_IDENTIFIERS[zoneRenderState.backgroundId], (builder) -> {
-            drawQuad(poseStack.last(), builder, dimensions.minX, dimensions.maxX, dimensions.minY, dimensions.maxY);
-        }, true);
+
+        if(backgroundRenderTarget != null) {
+            GpuTextureView colorOverride = RenderSystem.outputColorTextureOverride;
+            GpuTextureView depthOverride = RenderSystem.outputDepthTextureOverride;
+
+            RenderSystem.outputColorTextureOverride = backgroundRenderTarget.getColorTexture().getTextureView();
+            RenderSystem.outputDepthTextureOverride = backgroundRenderTarget.getDepthTexture().getTextureView();
+
+            RenderSystem.getDevice().createCommandEncoder().clearColorAndDepthTextures(
+                    backgroundRenderTarget.getColorTexture().getTexture(), ARGB.color(255, 0, 0, 0),
+                    backgroundRenderTarget.getDepthTexture().getTexture(), 1.0
+            );
+
+            Matrix4fStack modelViewStack = RenderSystem.getModelViewStack();
+            modelViewStack.pushMatrix();
+            modelViewStack.identity();
+
+            poseStack.pushPose();
+            poseStack.setIdentity();
+            drawWithTexture(BACKGROUND_IDENTIFIERS[zoneRenderState.backgroundId], (builder) -> {
+                drawQuad(poseStack.last(), builder, 0, dimensions.width / 8f, 0, dimensions.height / 8f);
+            }, true);
+            poseStack.popPose();
+            modelViewStack.popMatrix();
+
+            RenderSystem.outputColorTextureOverride = colorOverride;
+            RenderSystem.outputDepthTextureOverride = depthOverride;
+
+            drawWithTexture(backgroundRenderTarget.getTextureIdentifier(), (builder) -> {
+                drawQuad(poseStack.last(), builder, dimensions.minX, dimensions.maxX, dimensions.minY, dimensions.maxY, 0, dimensions.width / 8f, dimensions.height / 8f, 0);
+            }, false);
+        } else {
+            drawWithTexture(BACKGROUND_IDENTIFIERS[zoneRenderState.backgroundId], (builder) -> {
+                drawQuad(poseStack.last(), builder, dimensions.minX, dimensions.maxX, dimensions.minY, dimensions.maxY);
+            }, true);
+        }
 
         for (HypoEntityRenderState entityRenderState : zoneRenderState.entities) {
             poseStack.pushPose();

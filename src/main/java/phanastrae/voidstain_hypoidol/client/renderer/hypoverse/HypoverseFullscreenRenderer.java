@@ -10,8 +10,9 @@ import net.minecraft.client.DeltaTracker;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.Projection;
 import net.minecraft.client.renderer.rendertype.RenderTypes;
+import net.minecraft.util.Mth;
+import net.minecraft.util.RandomSource;
 import net.minecraft.world.phys.Vec2;
-import org.jetbrains.annotations.Nullable;
 import org.joml.Matrix4fStack;
 import org.joml.Quaternionf;
 import phanastrae.voidstain_hypoidol.client.VoidstainHypoidolClient;
@@ -25,8 +26,11 @@ import java.util.UUID;
 public class HypoverseFullscreenRenderer {
     private final HypoverseRenderState hypoverseRenderState = new HypoverseRenderState();
     private boolean shouldRender;
-    @Nullable
-    private CameraView view;
+    private final CanvasTexture paintingTexture = new CanvasTexture(Mth.createInsecureUUID(RandomSource.create()), 8, 8);
+
+    public void close() {
+        this.paintingTexture.close();
+    }
 
     public void decideShouldRender() {
         this.shouldRender = VoidstainHypoidolClient.HYPOVERSE.hypoPlayer != null;
@@ -49,7 +53,7 @@ public class HypoverseFullscreenRenderer {
         }
     }
 
-    public static void renderFullscreen(HypoverseRenderState renderState) {
+    public void renderFullscreen(HypoverseRenderState renderState) {
         if (renderState.cameraView != null) {
             RenderSystem.backupProjectionMatrix();
             Projection projection = new Projection();
@@ -94,7 +98,7 @@ public class HypoverseFullscreenRenderer {
     }
 
 
-    public static void renderCameraView(CameraView cameraView, PoseStack poseStack, HypoverseRenderState hypoverseRenderState, UUID zoneUUID, GpuTexture depthTexture) {
+    public void renderCameraView(CameraView cameraView, PoseStack poseStack, HypoverseRenderState hypoverseRenderState, UUID zoneUUID, GpuTexture depthTexture) {
         if (!cameraView.occlusion.lines.isEmpty()) {
             // block drawing to portal interiors
             poseStack.pushPose();
@@ -114,7 +118,7 @@ public class HypoverseFullscreenRenderer {
             poseStack.popPose();
         }
 
-        HypoverseRenderer.tryRenderZone(poseStack, zoneUUID, hypoverseRenderState);
+        HypoverseRenderer.tryRenderZone(poseStack, zoneUUID, hypoverseRenderState, this.paintingTexture);
 
         if (!cameraView.childViews.isEmpty()) {
             // draw portal interiors
