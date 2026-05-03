@@ -126,6 +126,7 @@ public class HypoverseRenderer {
                 if (entityRenderState != null) {
                     entityRenderState.x = Mth.lerp(partialTick, entity.ox, entity.x);
                     entityRenderState.y = Mth.lerp(partialTick, entity.oy, entity.y);
+                    entityRenderState.angle = Mth.rotLerpRad(partialTick, entity.oAngle, entity.angle);
 
                     zoneRenderState.entities.add(entityRenderState);
                 }
@@ -147,8 +148,10 @@ public class HypoverseRenderer {
 
         LocalPlayerHypoEntity player = hypoverse.hypoPlayer;
         if (player == null) {
+            renderState.cameraAngle = 0;
             renderState.cameraView = null;
         } else {
+            renderState.cameraAngle = Mth.rotLerpRad(partialTick, player.oAngle, player.angle);
             renderState.cameraView = CameraView.create(
                     new Vec2(Mth.lerp(partialTick, player.ox, player.x), Mth.lerp(partialTick, player.oy, player.y)),
                     new Vec2(player.x, player.y),
@@ -171,30 +174,29 @@ public class HypoverseRenderer {
     }
 
     public static void renderZone(PoseStack poseStack, HypoZoneRenderState zoneRenderState) {
-        PoseStack.Pose pose = poseStack.last();
-
         HypoZone.Dimensions dimensions = zoneRenderState.dimensions;
-
         drawWithTexture(BACKGROUND_IDENTIFIERS[zoneRenderState.backgroundId], (builder) -> {
-            drawQuad(pose, builder, dimensions.minX, dimensions.maxX, dimensions.minY, dimensions.maxY);
+            drawQuad(poseStack.last(), builder, dimensions.minX, dimensions.maxX, dimensions.minY, dimensions.maxY);
         }, true);
 
         for (HypoEntityRenderState entityRenderState : zoneRenderState.entities) {
-            float x = entityRenderState.x;
-            float y = entityRenderState.y;
+            poseStack.pushPose();
+            poseStack.translate(entityRenderState.x, entityRenderState.y, 0);
+            poseStack.mulPose(new Quaternionf().rotateZ(entityRenderState.angle));
+            PoseStack.Pose pose = poseStack.last();
             switch (entityRenderState) {
                 case HorrorRenderState horrorRenderState -> {
                     float halfWidth = horrorRenderState.sizeModifier * 0.8f;
                     float halfHeight = horrorRenderState.sizeModifier * 0.8f;
                     drawWithTexture(HORROR_IDENTIFIERS[horrorRenderState.horrorId], (builder) -> {
-                        drawQuad(pose, builder, x - halfWidth, x + halfWidth, y - halfHeight, y + halfHeight);
+                        drawQuad(pose, builder, -halfWidth, halfWidth, -halfHeight, halfHeight);
                     }, true);
                 }
                 case MorselRenderState morselRenderState -> {
                     float halfWidth = 0.25f;
                     float halfHeight = 0.25f;
                     drawWithTexture(MORSEL_IDENTIFIER, (builder) -> {
-                        drawQuad(pose, builder, x - halfWidth, x + halfWidth, y - halfHeight, y + halfHeight);
+                        drawQuad(pose, builder, -halfWidth, halfWidth, -halfHeight, halfHeight);
                     }, true);
                 }
                 case ItemRenderState itemRenderState -> {
@@ -203,19 +205,20 @@ public class HypoverseRenderer {
                     float halfWidth = 0.07f * sizeModifier;
                     float halfHeight = 0.07f * sizeModifier;
                     drawWithTexture(ITEM_IDENTIFIER, (builder) -> {
-                        drawQuad(pose, builder, x - halfWidth, x + halfWidth, y - halfHeight, y + halfHeight);
+                        drawQuad(pose, builder, -halfWidth, halfWidth, -halfHeight, halfHeight);
                     }, true);
                 }
                 case PlayerRenderState playerRenderState -> {
                     float halfWidth = 0.2f;
                     float halfHeight = 0.2f;
                     drawWithTexture(PLAYER_IDENTIFIER, (builder) -> {
-                        drawQuad(pose, builder, x - halfWidth, x + halfWidth, y - halfHeight, y + halfHeight);
+                        drawQuad(pose, builder, -halfWidth, halfWidth, -halfHeight, halfHeight);
                     }, true);
                 }
                 default -> {
                 }
             }
+            poseStack.popPose();
         }
 
         for (PortalRenderState portalRenderState : zoneRenderState.portals) {
@@ -226,8 +229,7 @@ public class HypoverseRenderer {
             float halfLength = portalRenderState.length / 2;
             float halfWidth = halfLength / 16;
 
-            PoseStack.Pose pose2 = poseStack.last();
-            drawWithTexture(PORTAL_IDENTIFIER, builder -> drawQuad(pose2, builder, -halfWidth, halfWidth, -halfLength, halfLength));
+            drawWithTexture(PORTAL_IDENTIFIER, builder -> drawQuad(poseStack.last(), builder, -halfWidth, halfWidth, -halfLength, halfLength));
 
             poseStack.popPose();
         }

@@ -66,6 +66,9 @@ public abstract class Hypoverse {
     }
 
     public void addEntity(HypoEntity entity) {
+        entity.ox = entity.x;
+        entity.oy = entity.y;
+        entity.oAngle = entity.angle;
         this.activeEntities.put(entity.getUuid(), entity);
 
         HypoZone zone = entity.getZone();

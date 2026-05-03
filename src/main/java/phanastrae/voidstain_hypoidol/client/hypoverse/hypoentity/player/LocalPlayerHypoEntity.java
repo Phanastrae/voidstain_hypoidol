@@ -22,18 +22,23 @@ public class LocalPlayerHypoEntity extends ClientPlayerHypoEntity {
 
     @Override
     public void tick(boolean runsNormally, boolean onServer, Hypoverse hypoverse) {
-        if (this.upHeld) {
-            this.vy += 0.01f;
-        }
-        if (this.downHeld) {
-            this.vy -= 0.01f;
-        }
         if (this.leftHeld) {
-            this.vx -= 0.01f;
+            this.vAngle += 0.004f;
         }
         if (this.rightHeld) {
-            this.vx += 0.01f;
+            this.vAngle -= 0.004f;
         }
+        if (this.upHeld) {
+            this.vx += 0.01f * -(float)Math.sin(this.angle);
+            this.vy += 0.01f * (float)Math.cos(this.angle);
+        }
+        if (this.downHeld) {
+            this.vx -= 0.01f * -(float)Math.sin(this.angle);
+            this.vy -= 0.01f * (float)Math.cos(this.angle);
+        }
+
+        this.vx *= 0.93f;
+        this.vy *= 0.93f;
 
         super.tick(runsNormally, onServer, hypoverse);
     }
@@ -46,9 +51,9 @@ public class LocalPlayerHypoEntity extends ClientPlayerHypoEntity {
     @Override
     public void sendChanges() {
         if (!this.teleported) {
-            sendPacket(new MoveHypoPlayerPayload(this.x, this.y, this.vx, this.vy));
+            sendPacket(new MoveHypoPlayerPayload(this.x, this.y, this.vx, this.vy, this.angle, this.vAngle));
         } else {
-            sendPacket(new TeleportHypoPlayerPayload(this.zone.uuid, this.x, this.y, this.vx, this.vy));
+            sendPacket(new TeleportHypoPlayerPayload(this.zone.uuid, this.x, this.y, this.vx, this.vy, this.angle, this.vAngle));
         }
         this.teleported = false;
     }

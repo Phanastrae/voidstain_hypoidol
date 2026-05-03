@@ -34,6 +34,8 @@ public abstract class HypoEntity {
     public static final String KEY_Y = "y";
     public static final String KEY_VX = "vx";
     public static final String KEY_VY = "vy";
+    public static final String KEY_ANGLE = "angle";
+    public static final String KEY_V_ANGLE = "v_angle";
 
     protected final RandomSource random = RandomSource.create();
 
@@ -47,6 +49,9 @@ public abstract class HypoEntity {
     public float y;
     public float vx;
     public float vy;
+    public float oAngle;
+    public float angle;
+    public float vAngle;
     private boolean isRemoved = false;
 
     private int syncTickCount;
@@ -85,29 +90,38 @@ public abstract class HypoEntity {
 
     public void write(CompoundTag output) {
         output.store(KEY_UUID, UUIDUtil.CODEC, this.getUuid());
-        output.store(KEY_X, Codec.FLOAT, this.x);
-        output.store(KEY_Y, Codec.FLOAT, this.y);
-        output.store(KEY_VX, Codec.FLOAT, this.vx);
-        output.store(KEY_VY, Codec.FLOAT, this.vy);
+        output.putFloat(KEY_X, this.x);
+        output.putFloat(KEY_Y, this.y);
+        output.putFloat(KEY_VX, this.vx);
+        output.putFloat(KEY_VY, this.vy);
+        output.putFloat(KEY_ANGLE, this.angle);
+        output.putFloat(KEY_ANGLE, this.vAngle);
     }
 
     public void read(CompoundTag input) {
         input.read(KEY_UUID, UUIDUtil.CODEC).ifPresent(id -> {
             this.uuid = id;
         });
-        input.read(KEY_X, Codec.FLOAT).ifPresent(x -> {
+        input.getFloat(KEY_X).ifPresent(x -> {
             this.x = x;
             this.ox = x;
         });
-        input.read(KEY_Y, Codec.FLOAT).ifPresent(y -> {
+        input.getFloat(KEY_Y).ifPresent(y -> {
             this.y = y;
             this.oy = y;
         });
-        input.read(KEY_VX, Codec.FLOAT).ifPresent(vx -> {
+        input.getFloat(KEY_VX).ifPresent(vx -> {
             this.vx = vx;
         });
-        input.read(KEY_VY, Codec.FLOAT).ifPresent(vy -> {
+        input.getFloat(KEY_VY).ifPresent(vy -> {
             this.vy = vy;
+        });
+        input.getFloat(KEY_ANGLE).ifPresent(angle -> {
+            this.oAngle = angle;
+            this.angle = angle;
+        });
+        input.getFloat(KEY_V_ANGLE).ifPresent(vAngle -> {
+            this.vAngle = vAngle;
         });
     }
 
@@ -136,8 +150,16 @@ public abstract class HypoEntity {
         this.vx = newVel.x;
         this.vy = newVel.y;
 
+        float angleDif = (float)Math.toRadians(to.getAngle() - from.getAngle());
+        this.oAngle = limitAngleRange(this.oAngle + angleDif);
+        this.angle = limitAngleRange(this.angle + angleDif);
+
         this.needsSync = true;
         this.teleported = true;
+    }
+
+    public static float limitAngleRange(float angle) {
+        return (float)Mth.positiveModulo(angle, Math.TAU);
     }
 
     public void travel(Hypoverse hypoverse, Vec2 startPos, Vec2 endPos) {
@@ -164,6 +186,7 @@ public abstract class HypoEntity {
 
         this.x += this.vx;
         this.y += this.vy;
+        this.angle = limitAngleRange(this.angle + this.vAngle);
     }
 
     public void tick(boolean runsNormally, boolean onServer, Hypoverse hypoverse) {
@@ -173,9 +196,11 @@ public abstract class HypoEntity {
 
             this.ox = x;
             this.oy = y;
+            this.oAngle = angle;
 
             this.vx *= 0.99f;
             this.vy *= 0.99f;
+            this.vAngle *= 0.96f;
 
             this.travel(hypoverse, new Vec2(this.x, this.y), new Vec2(this.x + this.vx, this.y + this.vy));
 
@@ -223,6 +248,21 @@ public abstract class HypoEntity {
         this.needsSync = true;
     }
 
+    public void setAngle(float angle) {
+        this.angle = limitAngleRange(angle);
+        this.needsSync = true;
+    }
+
+    public void setOldAngle(float oAngle) {
+        this.oAngle = limitAngleRange(oAngle);
+        this.needsSync = true;
+    }
+
+    public void setAngleVelocity(float vAngle) {
+        this.vAngle = vAngle;
+        this.needsSync = true;
+    }
+
     public void setZone(HypoZone zone) {
         if (this.oldZone == null) {
             this.oldZone = this.zone;
@@ -260,11 +300,11 @@ public abstract class HypoEntity {
     }
 
     public CustomPacketPayload getUpdatePositionPayload() {
-        return new UpdateHypoEntityPositionPayload(this.getUuid(), this.x, this.y, this.vx, this.vy);
+        return new UpdateHypoEntityPositionPayload(this.getUuid(), this.x, this.y, this.vx, this.vy, this.angle, this.vAngle);
     }
 
     public CustomPacketPayload getTeleportPayload() {
-        return new TeleportHypoEntityPayload(this.getUuid(), this.zone.uuid, this.x, this.y, this.ox, this.oy, this.vx, this.vy);
+        return new TeleportHypoEntityPayload(this.getUuid(), this.zone.uuid, this.x, this.y, this.ox, this.oy, this.vx, this.vy, this.angle, this.oAngle, this.vAngle);
     }
 
     public CustomPacketPayload getAddEntityPayload(HypoverseWatcher watcher) {
@@ -278,7 +318,7 @@ public abstract class HypoEntity {
     }
 
     public void playSound(SoundEvent soundEvent, SoundSource source, float volume, float pitch) {
-        this.zone.playSound(this.x, this.y, soundEvent, source, volume, pitch);
+        this.playSound(this.x, this.y, soundEvent, source, volume, pitch);
     }
 
     public void playSound(float x, float y, SoundEvent soundEvent, SoundSource source, float volume, float pitch) {

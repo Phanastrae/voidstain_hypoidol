@@ -17,7 +17,6 @@ import phanastrae.voidstain_hypoidol.client.VoidstainHypoidolClient;
 import phanastrae.voidstain_hypoidol.client.renderer.hypoverse.occlusion.CameraView;
 import phanastrae.voidstain_hypoidol.client.renderer.hypoverse.occlusion.LineSegment;
 import phanastrae.voidstain_hypoidol.client.renderer.hypoverse.occlusion.SegmentedLine;
-import phanastrae.voidstain_hypoidol.client.renderer.hypoverse.occlusion.ViewOcclusion;
 import phanastrae.voidstain_hypoidol.client.renderer.hypoverse.state.HypoverseRenderState;
 
 import java.util.UUID;
@@ -65,6 +64,8 @@ public class HypoverseFullscreenRenderer {
             // scale screen
             float scale = 0.25f;
             modelViewStack.scale(scale * window.getHeight() / window.getWidth(), scale, 1);
+            // rotate camera
+            modelViewStack.rotate(-renderState.cameraAngle, 0, 0, 1);
             // translate bottom left corner to player pos
             modelViewStack.translate(-renderState.cameraView.cameraPos.x, -renderState.cameraView.cameraPos.y, 0);
 
@@ -84,8 +85,6 @@ public class HypoverseFullscreenRenderer {
 
 
     public static void renderCameraView(CameraView cameraView, PoseStack poseStack, HypoverseRenderState hypoverseRenderState, UUID zoneUUID, GpuTexture depthTexture) {
-        // TODO better handle player rotations
-
         if (!cameraView.occlusion.lines.isEmpty()) {
             // block drawing to portal interiors
             poseStack.pushPose();

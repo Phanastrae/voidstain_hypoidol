@@ -6,7 +6,7 @@ import net.minecraft.network.codec.StreamCodec;
 import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
 import phanastrae.voidstain_hypoidol.common.VoidstainHypoidol;
 
-public record MoveHypoPlayerPayload(float x, float y, float vx, float vy) implements CustomPacketPayload {
+public record MoveHypoPlayerPayload(float x, float y, float vx, float vy, float angle, float vAngle) implements CustomPacketPayload {
     public static final Type<MoveHypoPlayerPayload> TYPE = new Type<>(VoidstainHypoidol.id("move_hypoplayer"));
     public static final StreamCodec<RegistryFriendlyByteBuf, MoveHypoPlayerPayload> STREAM_CODEC = StreamCodec.composite(
             ByteBufCodecs.FLOAT,
@@ -17,6 +17,10 @@ public record MoveHypoPlayerPayload(float x, float y, float vx, float vy) implem
             MoveHypoPlayerPayload::vx,
             ByteBufCodecs.FLOAT,
             MoveHypoPlayerPayload::vy,
+            ByteBufCodecs.FLOAT,
+            MoveHypoPlayerPayload::angle,
+            ByteBufCodecs.FLOAT,
+            MoveHypoPlayerPayload::vAngle,
             MoveHypoPlayerPayload::new
     );
 

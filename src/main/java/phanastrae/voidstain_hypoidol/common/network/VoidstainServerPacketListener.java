@@ -31,9 +31,13 @@ public class VoidstainServerPacketListener {
             float y = payload.y();
             float vx = payload.vx();
             float vy = payload.vy();
-            if (Float.isFinite(x) && Float.isFinite(y) && Float.isFinite(vx) && Float.isFinite(vy)) {
+            float angle = payload.angle();
+            float vAngle = payload.vAngle();
+            if (Float.isFinite(x) && Float.isFinite(y) && Float.isFinite(vx) && Float.isFinite(vy) && Float.isFinite(angle) && Float.isFinite(vAngle)) {
                 hypoPlayer.setPos(x, y);
                 hypoPlayer.setVelocity(vx, vy);
+                hypoPlayer.setAngle(angle);
+                hypoPlayer.setAngleVelocity(vAngle);
             }
         }
     }
@@ -47,12 +51,17 @@ public class VoidstainServerPacketListener {
             float y = payload.y();
             float vx = payload.vx();
             float vy = payload.vy();
-            if (Float.isFinite(x) && Float.isFinite(y) && Float.isFinite(vx) && Float.isFinite(vy)) {
+            float angle = payload.angle();
+            float vAngle = payload.vAngle();
+            if (Float.isFinite(x) && Float.isFinite(y) && Float.isFinite(vx) && Float.isFinite(vy) && Float.isFinite(angle) && Float.isFinite(vAngle)) {
                 HypoZone zone = getHypoverse(context).getZone(payload.zoneUUID());
                 if (zone != null) {
                     hypoPlayer.setPos(x, y);
                     hypoPlayer.setVelocity(vx, vy);
                     hypoPlayer.setOldPos(x, y);
+                    hypoPlayer.setAngle(angle);
+                    hypoPlayer.setOldAngle(angle);
+                    hypoPlayer.setAngleVelocity(vAngle);
                     hypoPlayer.setZone(zone);
                 }
             }

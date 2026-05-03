@@ -16,6 +16,7 @@ public abstract class BouncingHypoEntity extends HypoEntity {
         if (onServer && this.random.nextInt(40) == 0) {
             this.vx += (this.random.nextFloat() - 0.5f) * 0.1f;
             this.vy += (this.random.nextFloat() - 0.5f) * 0.1f;
+            this.vAngle += (this.random.nextFloat() - 0.5f) * 0.03f;
             this.needsSync = true;
         }
     }

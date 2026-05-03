@@ -108,6 +108,8 @@ public class VoidstainClientPacketListener {
             if (!entity.isPlayerControlled()) {
                 entity.setPos(payload.x(), payload.y());
                 entity.setVelocity(payload.vx(), payload.vy());
+                entity.setAngle(payload.angle());
+                entity.setAngleVelocity(payload.vAngle());
             }
         } else {
             VoidstainHypoidol.LOGGER.warn("Received payload for missing HypoEntity {}", payload.entityUUID());
@@ -123,6 +125,9 @@ public class VoidstainClientPacketListener {
                 entity.setPos(payload.x(), payload.y());
                 entity.setOldPos(payload.ox(), payload.oy());
                 entity.setVelocity(payload.vx(), payload.vy());
+                entity.setAngle(payload.angle());
+                entity.setOldAngle(payload.oAngle());
+                entity.setAngleVelocity(payload.vAngle());
                 entity.setZone(zone);
             } else {
                 hypoverse.removeEntity(entity.getUuid());

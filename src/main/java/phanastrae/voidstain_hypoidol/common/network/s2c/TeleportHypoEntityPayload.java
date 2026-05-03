@@ -10,7 +10,7 @@ import phanastrae.voidstain_hypoidol.common.VoidstainHypoidol;
 import java.util.UUID;
 
 public record TeleportHypoEntityPayload(UUID entityUUID, UUID zoneUUID, float x, float y, float ox, float oy, float vx,
-                                        float vy) implements CustomPacketPayload {
+                                        float vy, float angle, float oAngle, float vAngle) implements CustomPacketPayload {
     public static final Type<TeleportHypoEntityPayload> TYPE = new Type<>(VoidstainHypoidol.id("teleport_hypoentity"));
     public static final StreamCodec<RegistryFriendlyByteBuf, TeleportHypoEntityPayload> STREAM_CODEC = StreamCodec.composite(
             UUIDUtil.STREAM_CODEC,
@@ -29,6 +29,12 @@ public record TeleportHypoEntityPayload(UUID entityUUID, UUID zoneUUID, float x,
             TeleportHypoEntityPayload::vx,
             ByteBufCodecs.FLOAT,
             TeleportHypoEntityPayload::vy,
+            ByteBufCodecs.FLOAT,
+            TeleportHypoEntityPayload::angle,
+            ByteBufCodecs.FLOAT,
+            TeleportHypoEntityPayload::oAngle,
+            ByteBufCodecs.FLOAT,
+            TeleportHypoEntityPayload::vAngle,
             TeleportHypoEntityPayload::new
     );
 

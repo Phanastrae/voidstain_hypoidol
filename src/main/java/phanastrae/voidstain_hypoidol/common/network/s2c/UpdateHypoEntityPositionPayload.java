@@ -9,7 +9,7 @@ import phanastrae.voidstain_hypoidol.common.VoidstainHypoidol;
 
 import java.util.UUID;
 
-public record UpdateHypoEntityPositionPayload(UUID entityUUID, float x, float y, float vx, float vy) implements CustomPacketPayload {
+public record UpdateHypoEntityPositionPayload(UUID entityUUID, float x, float y, float vx, float vy, float angle, float vAngle) implements CustomPacketPayload {
     public static final Type<UpdateHypoEntityPositionPayload> TYPE = new Type<>(VoidstainHypoidol.id("update_hypoentity_position"));
     public static final StreamCodec<RegistryFriendlyByteBuf, UpdateHypoEntityPositionPayload> STREAM_CODEC = StreamCodec.composite(
             UUIDUtil.STREAM_CODEC,
@@ -22,6 +22,10 @@ public record UpdateHypoEntityPositionPayload(UUID entityUUID, float x, float y,
             UpdateHypoEntityPositionPayload::vx,
             ByteBufCodecs.FLOAT,
             UpdateHypoEntityPositionPayload::vy,
+            ByteBufCodecs.FLOAT,
+            UpdateHypoEntityPositionPayload::angle,
+            ByteBufCodecs.FLOAT,
+            UpdateHypoEntityPositionPayload::vAngle,
             UpdateHypoEntityPositionPayload::new
     );
 

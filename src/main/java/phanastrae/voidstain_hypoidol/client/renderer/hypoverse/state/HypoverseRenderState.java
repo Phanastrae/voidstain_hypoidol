@@ -10,6 +10,7 @@ import java.util.UUID;
 public class HypoverseRenderState {
     public Map<UUID, HypoZoneRenderState> zones = new HashMap<>();
 
+    public float cameraAngle;
     @Nullable
     public CameraView cameraView;
 
