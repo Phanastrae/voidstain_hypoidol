@@ -19,9 +19,11 @@ import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.sounds.SoundEvent;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
+import net.minecraft.tags.DamageTypeTags;
 import net.minecraft.util.Mth;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
+import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.decoration.HangingEntity;
@@ -412,6 +414,21 @@ public class EldritchPaintingEntity extends HangingEntity {
         Optional<UUID> canvasUUID = this.getCanvasUUID();
         canvasUUID.ifPresent(value -> stack.set(VoidstainDataComponents.CANVAS_DATA, new CanvasData(value, this.getWidth(), this.getHeight())));
         return stack;
+    }
+
+    @Override
+    public boolean hurtServer(ServerLevel level, DamageSource source, float damage) {
+        return canBeHurtBy(source) && super.hurtServer(level, source, damage);
+    }
+
+    @Override
+    public boolean hurtClient(DamageSource source) {
+        return canBeHurtBy(source) && super.hurtClient(source);
+    }
+
+    public boolean canBeHurtBy(DamageSource source) {
+        // only allow damage from direct player hits by non-adventure players
+        return source.is(DamageTypeTags.IS_PLAYER_ATTACK) && source.getDirectEntity() instanceof Player player && player.getAbilities().mayBuild;
     }
 
     @Override
