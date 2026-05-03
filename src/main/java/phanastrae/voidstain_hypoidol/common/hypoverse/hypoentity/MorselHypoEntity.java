@@ -14,11 +14,11 @@ public class MorselHypoEntity extends BouncingHypoEntity {
 
     @Override
     public float getWidth() {
-        return 0.4f;
+        return 0.2f;
     }
 
     @Override
     public float getHeight() {
-        return 0.4f;
+        return 0.2f;
     }
 }

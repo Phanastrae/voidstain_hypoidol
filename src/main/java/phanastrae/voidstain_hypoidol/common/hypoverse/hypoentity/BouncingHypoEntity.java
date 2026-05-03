@@ -13,9 +13,9 @@ public abstract class BouncingHypoEntity extends HypoEntity {
     public void tick(boolean runsNormally, boolean onServer, Hypoverse hypoverse) {
         super.tick(runsNormally, onServer, hypoverse);
 
-        if (onServer && this.random.nextInt(40) == 0) {
-            this.vx += (this.random.nextFloat() - 0.5f) * 0.1f;
-            this.vy += (this.random.nextFloat() - 0.5f) * 0.1f;
+        if (onServer && this.random.nextInt(10) == 0) {
+            this.vx += (this.random.nextFloat() - 0.5f) * 0.04f;
+            this.vy += (this.random.nextFloat() - 0.5f) * 0.04f;
             this.vAngle += (this.random.nextFloat() - 0.5f) * 0.03f;
             this.needsSync = true;
         }

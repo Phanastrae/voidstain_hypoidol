@@ -5,6 +5,7 @@ import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
 import net.minecraft.world.item.component.TypedEntityData;
 import phanastrae.voidstain_hypoidol.common.hypoverse.HypoZone;
+import phanastrae.voidstain_hypoidol.common.hypoverse.Hypoverse;
 import phanastrae.voidstain_hypoidol.common.hypoverse.hypoentity.HypoEntity;
 import phanastrae.voidstain_hypoidol.common.hypoverse.hypoentity.HypoEntityTypes;
 import phanastrae.voidstain_hypoidol.common.network.s2c.AddHypoPlayerPayload;
@@ -23,13 +24,22 @@ public abstract class PlayerHypoEntity extends HypoEntity {
     }
 
     @Override
+    public void tick(boolean runsNormally, boolean onServer, Hypoverse hypoverse) {
+        this.vx *= 0.91f;
+        this.vy *= 0.91f;
+        this.vAngle *= 0.8f;
+
+        super.tick(runsNormally, onServer, hypoverse);
+    }
+
+    @Override
     public float getWidth() {
-        return 0.4f;
+        return 0.15f;
     }
 
     @Override
     public float getHeight() {
-        return 0.4f;
+        return 0.15f;
     }
 
     @Override

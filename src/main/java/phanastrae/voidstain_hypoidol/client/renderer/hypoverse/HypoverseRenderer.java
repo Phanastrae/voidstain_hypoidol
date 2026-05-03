@@ -17,6 +17,7 @@ import net.minecraft.resources.Identifier;
 import net.minecraft.util.ARGB;
 import net.minecraft.util.Mth;
 import net.minecraft.util.Util;
+import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.phys.Vec2;
 import org.jetbrains.annotations.Nullable;
 import org.joml.Matrix4f;
@@ -222,18 +223,22 @@ public class HypoverseRenderer {
             poseStack.pushPose();
             poseStack.translate(entityRenderState.x, entityRenderState.y, 0);
             poseStack.mulPose(new Quaternionf().rotateZ(entityRenderState.angle));
+            if(entityRenderState instanceof PlayerRenderState) {
+                // rotate 180 degrees
+                poseStack.mulPose(new Quaternionf().rotateZ((float)Math.PI));
+            }
             PoseStack.Pose pose = poseStack.last();
             switch (entityRenderState) {
                 case HorrorRenderState horrorRenderState -> {
-                    float halfWidth = horrorRenderState.sizeModifier * 0.8f;
-                    float halfHeight = horrorRenderState.sizeModifier * 0.8f;
+                    float halfWidth = horrorRenderState.sizeModifier * 0.4f;
+                    float halfHeight = horrorRenderState.sizeModifier * 0.4f;
                     drawWithTexture(HORROR_IDENTIFIERS[horrorRenderState.horrorId], (builder) -> {
                         drawQuad(pose, builder, -halfWidth, halfWidth, -halfHeight, halfHeight);
                     }, true);
                 }
                 case MorselRenderState morselRenderState -> {
-                    float halfWidth = 0.25f;
-                    float halfHeight = 0.25f;
+                    float halfWidth = 0.125f;
+                    float halfHeight = 0.125f;
                     drawWithTexture(MORSEL_IDENTIFIER, (builder) -> {
                         drawQuad(pose, builder, -halfWidth, halfWidth, -halfHeight, halfHeight);
                     }, true);
@@ -248,8 +253,8 @@ public class HypoverseRenderer {
                     }, true);
                 }
                 case PlayerRenderState playerRenderState -> {
-                    float halfWidth = 0.2f;
-                    float halfHeight = 0.2f;
+                    float halfWidth = 0.1f;
+                    float halfHeight = 0.1f;
                     drawWithTexture(PLAYER_IDENTIFIER, (builder) -> {
                         drawQuad(pose, builder, -halfWidth, halfWidth, -halfHeight, halfHeight);
                     }, true);

@@ -70,7 +70,7 @@ public class HypoverseFullscreenRenderer {
             modelViewStack.translate(0.5f, 0.5f, 0);
 
             // scale screen
-            float scale = 0.25f;
+            float scale = 0.6f;
             modelViewStack.scale(scale * window.getHeight() / window.getWidth(), scale, 1);
 
             // draw background

@@ -45,7 +45,7 @@ public class HorrorHypoEntity extends BouncingHypoEntity {
 
         if (onServer && this.random.nextInt(3) == 0) {
             for (HypoEntity entity : this.getZone().getEntitiesInArea(this.x - this.getWidth() * 0.4f, this.x + this.getWidth() * 0.4f, this.y - this.getHeight() * 0.4f, this.y + this.getHeight() * 0.4f)) {
-                if (entity instanceof MorselHypoEntity || (entity instanceof PlayerHypoEntity && this.fullness >= 2000)) {
+                if (entity instanceof MorselHypoEntity || (entity instanceof PlayerHypoEntity)) {
                     this.eat(entity);
                 }
             }
@@ -78,12 +78,12 @@ public class HorrorHypoEntity extends BouncingHypoEntity {
 
     @Override
     public float getWidth() {
-        return 1.6f * this.getSizeModifier();
+        return 0.7f * this.getSizeModifier();
     }
 
     @Override
     public float getHeight() {
-        return 1.6f * this.getSizeModifier();
+        return 0.7f * this.getSizeModifier();
     }
 
     public int getHorrorId() {
@@ -95,6 +95,6 @@ public class HorrorHypoEntity extends BouncingHypoEntity {
     }
 
     public float getSizeModifier() {
-        return 0.125f * (float) Math.pow(2, 3 * Math.clamp(this.fullness / 4000, 0, 1));
+        return 0.4f + 0.6f * (float)Math.pow(Math.clamp(this.fullness / 4000, 0, 1), 2);
     }
 }

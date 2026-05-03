@@ -23,22 +23,19 @@ public class LocalPlayerHypoEntity extends ClientPlayerHypoEntity {
     @Override
     public void tick(boolean runsNormally, boolean onServer, Hypoverse hypoverse) {
         if (this.leftHeld) {
-            this.vAngle += 0.004f;
+            this.vAngle += 0.025f;
         }
         if (this.rightHeld) {
-            this.vAngle -= 0.004f;
+            this.vAngle -= 0.025f;
         }
         if (this.upHeld) {
-            this.vx += 0.01f * -(float)Math.sin(this.angle);
-            this.vy += 0.01f * (float)Math.cos(this.angle);
+            this.vx += 0.008f * -(float)Math.sin(this.angle);
+            this.vy += 0.008f * (float)Math.cos(this.angle);
         }
         if (this.downHeld) {
-            this.vx -= 0.01f * -(float)Math.sin(this.angle);
-            this.vy -= 0.01f * (float)Math.cos(this.angle);
+            this.vx -= 0.003f * -(float)Math.sin(this.angle);
+            this.vy -= 0.003f * (float)Math.cos(this.angle);
         }
-
-        this.vx *= 0.93f;
-        this.vy *= 0.93f;
 
         super.tick(runsNormally, onServer, hypoverse);
     }
