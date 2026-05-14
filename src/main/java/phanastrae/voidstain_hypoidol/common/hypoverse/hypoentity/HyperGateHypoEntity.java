@@ -90,7 +90,7 @@ public class HyperGateHypoEntity extends HypoEntity {
 
                 realPlayer.teleport(new TeleportTransition(
                         targetLevel,
-                        painting.getPos().getCenter(),
+                        painting.getPos().getCenter().subtract(0, realPlayer.getBbHeight() / 2, 0),
                         direction.getUnitVec3().multiply(0.6f, 0.6f, 0.6f).add(0, 0.2f, 0),
                         direction.toYRot(),
                         0.0f,
