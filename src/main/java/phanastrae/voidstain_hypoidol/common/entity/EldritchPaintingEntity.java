@@ -227,9 +227,42 @@ public class EldritchPaintingEntity extends HangingEntity {
         }
     }
 
+    public boolean playerInsideTeleportZone(Player player) {
+        AABB paintingBox = this.getBoundingBox();
+
+        Direction direction = this.getDirection();
+        double expansionSize = player.getBbWidth() - DEPTH;
+        // expand box so that thinner side is same width as player
+        AABB playerEncloseBox = paintingBox.expandTowards(
+                direction.getStepX() * expansionSize,
+                0,
+                direction.getStepZ() * expansionSize
+        );
+
+        Direction.Axis axis = direction.getAxis();
+        double thinAdd = 1 / 128.0;
+        double thickAdd = 1 / 8.0;
+        // inflate box a bit, slightly along the thinner axis and moreso along the other two
+        AABB inflatedPlayerEncloseBox = playerEncloseBox.inflate(
+                axis == Direction.Axis.X ? thinAdd : thickAdd,
+                thickAdd,
+                axis == Direction.Axis.Z ? thinAdd : thickAdd
+        );
+
+        // shrink box by player dimensions
+        AABB playerCenterEnclosePos = inflatedPlayerEncloseBox.deflate(
+                player.getBbWidth() / 2,
+                player.getBbHeight() / 2,
+                player.getBbWidth() / 2
+        );
+
+        // check if player center is in the box
+        return playerCenterEnclosePos.contains(player.position().add(0, player.getBbHeight() / 2, 0));
+    }
+
     @Override
     public void playerTouch(Player player) {
-        if (player instanceof ServerPlayer serverPlayer && this.level() instanceof ServerLevel serverLevel) {
+        if (player instanceof ServerPlayer serverPlayer && this.level() instanceof ServerLevel serverLevel && playerInsideTeleportZone(player)) {
             HypoverseWatcher watcher = HypoverseWatcher.fromPlayer(serverPlayer);
             EldritchCanvas canvas = this.getCanvas();
             if (canvas != null && !watcher.hasHypoPlayer() && !player.isOnPortalCooldown()) {
