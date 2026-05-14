@@ -3,12 +3,12 @@
 	"id": "voidstain_hypoidol",
 	"version": "${version}",
 	"name": "Voidstain Hypoidol",
-	"description": "When the Voidstain is Hypoidol???",
+	"description": "A mod that adds 2-dimensional painting-creatures, and the ability to enter their homes.",
 	"authors": [
 		"Phanastrae"
 	],
 	"contact": {
-		"homepage": "https://github.com/Phanastrae/voidstain_hypoidol",
+		"homepage": "https://modrinth.com/mod/voidstain-hypoidol",
 		"sources": "https://github.com/Phanastrae/voidstain_hypoidol"
 	},
 	"license": "MIT",
