@@ -2,23 +2,24 @@ package phanastrae.voidstain_hypoidol.common.entity;
 
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.DataResult;
-import net.minecraft.core.BlockPos;
-import net.minecraft.core.Direction;
-import net.minecraft.core.GlobalPos;
-import net.minecraft.core.UUIDUtil;
+import net.minecraft.core.*;
 import net.minecraft.core.component.DataComponentGetter;
 import net.minecraft.core.component.DataComponentType;
 import net.minecraft.core.component.DataComponents;
 import net.minecraft.core.particles.ParticleTypes;
+import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.network.protocol.Packet;
 import net.minecraft.network.protocol.game.ClientGamePacketListener;
 import net.minecraft.network.protocol.game.ClientboundAddEntityPacket;
+import net.minecraft.network.protocol.game.ClientboundSoundPacket;
 import net.minecraft.network.syncher.EntityDataAccessor;
 import net.minecraft.network.syncher.EntityDataSerializers;
 import net.minecraft.network.syncher.SynchedEntityData;
+import net.minecraft.resources.ResourceKey;
 import net.minecraft.server.level.ServerEntity;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.server.players.PlayerList;
 import net.minecraft.sounds.SoundEvent;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
@@ -194,8 +195,31 @@ public class EldritchPaintingEntity extends HangingEntity {
                                 0.03f
                         );
 
-                        if (this.random.nextInt(25) == 0) {
-                            this.playSound(SoundEvents.PORTAL_AMBIENT);
+                        if (!this.isSilent() && this.random.nextInt(25) == 0) {
+                            // TODO implement a system to block all real-world noises for hypoverse players, instead of specifically blocking these portal sounds
+                            // send portal sound to nearby players, except those inside the hypoverse
+                            double x = this.getX();
+                            double y = this.getY();
+                            double z = this.getZ();
+                            Holder<SoundEvent> sound = BuiltInRegistries.SOUND_EVENT.wrapAsHolder(SoundEvents.PORTAL_AMBIENT);
+                            float volume = 1.0f;
+                            float pitch = 1.0f;
+                            long seed = this.random.nextLong();
+
+                            PlayerList playerList = serverLevel.getServer().getPlayerList();
+                            List<ServerPlayer> players = playerList.getPlayers();
+                            ResourceKey<Level> dimension = serverLevel.dimension();
+                            float range = sound.value().getRange(volume);
+
+                            ClientboundSoundPacket packet = new ClientboundSoundPacket(sound, this.getSoundSource(), x, y, z, volume, pitch, seed);
+                            for (ServerPlayer player : players) {
+                                double xd = x - player.getX();
+                                double yd = y - player.getY();
+                                double zd = z - player.getZ();
+                                if (player.level().dimension() == dimension && xd * xd + yd * yd + zd * zd < range * range && !HypoverseWatcher.fromPlayer(player).hasHypoPlayer()) {
+                                    player.connection.send(packet);
+                                }
+                            }
                         }
                     }
                 }
