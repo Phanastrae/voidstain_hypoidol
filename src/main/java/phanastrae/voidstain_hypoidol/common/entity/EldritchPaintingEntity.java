@@ -43,7 +43,10 @@ import net.minecraft.world.phys.Vec2;
 import net.minecraft.world.phys.Vec3;
 import org.jspecify.annotations.Nullable;
 import phanastrae.voidstain_hypoidol.common.hypoverse.*;
-import phanastrae.voidstain_hypoidol.common.hypoverse.hypoentity.*;
+import phanastrae.voidstain_hypoidol.common.hypoverse.hypoentity.HorrorHypoEntity;
+import phanastrae.voidstain_hypoidol.common.hypoverse.hypoentity.HyperGateHypoEntity;
+import phanastrae.voidstain_hypoidol.common.hypoverse.hypoentity.HypoEntity;
+import phanastrae.voidstain_hypoidol.common.hypoverse.hypoentity.MorselHypoEntity;
 import phanastrae.voidstain_hypoidol.common.hypoverse.hypoentity.player.PlayerHypoEntity;
 import phanastrae.voidstain_hypoidol.common.item.CanvasData;
 import phanastrae.voidstain_hypoidol.common.item.VoidstainDataComponents;
@@ -158,6 +161,17 @@ public class EldritchPaintingEntity extends HangingEntity {
         return super.applyImplicitComponent(type, value);
     }
 
+    public boolean isEntityAMatchingGate(HypoEntity entity) {
+        if (entity instanceof HyperGateHypoEntity hyperGate) {
+            GlobalPos pos = hyperGate.getTargetPaintingPos();
+            if (pos != null) {
+                return pos.pos().equals(this.pos) && pos.dimension().equals(this.level().dimension());
+            }
+        }
+
+        return false;
+    }
+
     @Override
     public void tick() {
         if (this.connectToHypoverse()) {
@@ -170,7 +184,7 @@ public class EldritchPaintingEntity extends HangingEntity {
                 ServerHypoverse hypoverse = ServerHypoverse.fromServer(serverLevel.getServer());
                 HypoZone zone = hypoverse.getZone(canvas.getZoneId());
                 if (zone != null) {
-                    if (zone.entities.stream().anyMatch(e -> e.getType().equals(HypoEntityTypes.HYPERGATE))) {
+                    if (zone.entities.stream().anyMatch(this::isEntityAMatchingGate)) {
                         AABB box = this.getBoundingBox();
                         serverLevel.sendParticles(
                                 ParticleTypes.REVERSE_PORTAL,
@@ -198,7 +212,7 @@ public class EldritchPaintingEntity extends HangingEntity {
                 ServerHypoverse hypoverse = ServerHypoverse.fromServer(serverLevel.getServer());
                 HypoZone zone = hypoverse.getZone(canvas.getZoneId());
                 if (zone != null) {
-                    List<HypoEntity> gates = zone.entities.stream().filter(e -> e.getType().equals(HypoEntityTypes.HYPERGATE)).toList();
+                    List<HypoEntity> gates = zone.entities.stream().filter(this::isEntityAMatchingGate).toList();
                     if (!gates.isEmpty()) {
                         HypoEntity gate = gates.get(this.random.nextInt(gates.size()));
                         if (gate instanceof HyperGateHypoEntity hyperGate) {

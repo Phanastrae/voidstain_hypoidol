@@ -23,7 +23,7 @@ public class HyperGateHypoEntity extends HypoEntity {
     public static final String KEY_TARGET_POS = "target_pos";
 
     @Nullable
-    private GlobalPos targetPaintingPos; // TODO dimension
+    private GlobalPos targetPaintingPos;
 
     public HyperGateHypoEntity(HypoEntityType<?> type, HypoZone zone) {
         super(type, zone);
@@ -56,7 +56,7 @@ public class HyperGateHypoEntity extends HypoEntity {
         if (onServer && this.targetPaintingPos != null && this.random.nextInt(3) == 0) {
             for (HypoEntity entity : this.getZone().getEntitiesInArea(this.x - 0.5f * this.getWidth(), this.x + 0.5f * this.getWidth(), this.y - 0.5f * this.getHeight(), this.y + 0.5f * this.getHeight())) {
                 if (entity instanceof ServerPlayerHypoEntity player) {
-                    if(player.getTeleportCooldown() <= 0) {
+                    if (player.getTeleportCooldown() <= 0) {
                         this.teleportPlayer(player, this.targetPaintingPos, hypoverse);
                     }
                 }
@@ -109,5 +109,10 @@ public class HyperGateHypoEntity extends HypoEntity {
     @Override
     public float getHeight() {
         return 0.6f;
+    }
+
+    @Nullable
+    public GlobalPos getTargetPaintingPos() {
+        return this.targetPaintingPos;
     }
 }
