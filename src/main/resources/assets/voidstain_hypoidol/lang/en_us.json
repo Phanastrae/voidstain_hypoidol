@@ -11,5 +11,7 @@
   "item.voidstain_hypoidol.fear": "\"FEAR\"",
   "item.voidstain_hypoidol.hatred": "\"HATRED\"",
   "item.voidstain_hypoidol.love": "\"LOVE\"",
-  "item.voidstain_hypoidol.uncertainty": "\"UNCERTAINTY\""
+  "item.voidstain_hypoidol.uncertainty": "\"UNCERTAINTY\"",
+
+  "menu.voidstain_hypoidol.leave_hypoverse": "Press [%s] to leave Hypoverse"
 }

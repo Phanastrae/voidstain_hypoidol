@@ -10,6 +10,8 @@ import net.minecraft.client.gui.screens.PauseScreen;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.client.input.KeyEvent;
 import net.minecraft.client.player.LocalPlayer;
+import net.minecraft.network.chat.Component;
+import net.minecraft.util.ARGB;
 import phanastrae.voidstain_hypoidol.client.VoidstainHypoidolClient;
 import phanastrae.voidstain_hypoidol.client.hypoverse.hypoentity.player.LocalPlayerHypoEntity;
 import phanastrae.voidstain_hypoidol.common.network.c2s.DebugKillHypoPlayerPayload;
@@ -59,8 +61,8 @@ public class HypoversePlayScreen extends Screen {
             }
         }
 
-        LocalPlayer realPlayer = Minecraft.getInstance().player;
-        if (realPlayer == null || !realPlayer.isAlive() || (options.keyDrop.matches(event) && realPlayer.getAbilities().instabuild)) {
+        LocalPlayer realPlayer = this.minecraft.player;
+        if (realPlayer == null || !realPlayer.isAlive() || (options.keyShift.matches(event) && realPlayer.getAbilities().instabuild)) {
             ClientPlayNetworking.send(DebugKillHypoPlayerPayload.INSTANCE);
             return true;
         }
@@ -97,6 +99,16 @@ public class HypoversePlayScreen extends Screen {
 
     @Override
     public void extractRenderState(GuiGraphicsExtractor graphics, int mouseX, int mouseY, float a) {
+        LocalPlayer player = this.minecraft.player;
+        if (player != null && player.getAbilities().instabuild) {
+            float alpha = 1f;
+            Component component = Component.translatable("menu.voidstain_hypoidol.leave_hypoverse", Component.translatable(this.minecraft.options.keyShift.getName()));
+            int width = font.width(component);
+            int color = ARGB.color(alpha, -1);
+            int textX = (graphics.guiWidth() - width) / 2;
+            int textY = graphics.guiHeight() - font.lineHeight - 5;
+            graphics.textWithBackdrop(this.font, component, textX, textY, width, color);
+        }
     }
 
     @Override
