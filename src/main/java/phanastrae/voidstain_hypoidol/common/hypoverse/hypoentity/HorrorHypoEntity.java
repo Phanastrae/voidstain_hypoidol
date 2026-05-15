@@ -54,7 +54,7 @@ public class HorrorHypoEntity extends BouncingHypoEntity {
 
         if (onServer && this.random.nextInt(3) == 0) {
             for (HypoEntity entity : this.getZone().getEntitiesInArea(this.x - this.getWidth() * 0.4f, this.x + this.getWidth() * 0.4f, this.y - this.getHeight() * 0.4f, this.y + this.getHeight() * 0.4f)) {
-                if (entity instanceof MorselHypoEntity || (entity instanceof PlayerHypoEntity)) {
+                if (entity instanceof MorselHypoEntity || (entity instanceof PlayerHypoEntity player && player.getTeleportCooldown() <= 0)) {
                     this.eat(entity);
                 }
             }
