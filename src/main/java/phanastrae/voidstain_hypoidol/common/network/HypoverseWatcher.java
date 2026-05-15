@@ -6,7 +6,6 @@ import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.server.network.ServerGamePacketListenerImpl;
 import net.minecraft.world.entity.player.Player;
 import org.jetbrains.annotations.Nullable;
-import phanastrae.voidstain_hypoidol.common.VoidstainHypoidol;
 import phanastrae.voidstain_hypoidol.common.duck.HypoverseWatcherAccess;
 import phanastrae.voidstain_hypoidol.common.duck.PlayerDuck;
 import phanastrae.voidstain_hypoidol.common.hypoverse.*;
@@ -85,6 +84,11 @@ public class HypoverseWatcher {
                 zone.removeWatcher(this);
             }
         }
+    }
+
+    public void markDirectlyWatchedZonesNeedUpdate() {
+        ServerHypoverse hypoverse = Hypoverse.fromServer(this.getPlayer().level().getServer());
+        hypoverse.markWatcherNeedsDirectlyWatchedZonesUpdate(this);
     }
 
     public void updateDirectlyWatchedZones() {
@@ -195,7 +199,7 @@ public class HypoverseWatcher {
             }
             ServerPlayNetworking.send(player, payload);
 
-            this.updateDirectlyWatchedZones();
+            this.markDirectlyWatchedZonesNeedUpdate();
         }
     }
 

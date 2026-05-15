@@ -21,7 +21,7 @@ public class ServerPlayerHypoEntity extends PlayerHypoEntity {
 
     @Override
     public void tick(boolean runsNormally, boolean onServer, Hypoverse hypoverse) {
-        this.watcher.updateDirectlyWatchedZones();
+        this.watcher.markDirectlyWatchedZonesNeedUpdate();
         super.tick(runsNormally, onServer, hypoverse);
     }
 

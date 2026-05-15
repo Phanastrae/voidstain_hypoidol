@@ -4,8 +4,11 @@ import net.minecraft.server.MinecraftServer;
 import org.jetbrains.annotations.Nullable;
 import phanastrae.voidstain_hypoidol.common.entity.EldritchPaintingEntity;
 import phanastrae.voidstain_hypoidol.common.hypoverse.hypoentity.HypoEntity;
+import phanastrae.voidstain_hypoidol.common.network.HypoverseWatcher;
 import phanastrae.voidstain_hypoidol.common.network.IdWatcher;
 
+import java.util.HashSet;
+import java.util.Set;
 import java.util.UUID;
 
 public class ServerHypoverse extends Hypoverse {
@@ -15,12 +18,17 @@ public class ServerHypoverse extends Hypoverse {
     private final IdWatcher canvasIdWatcher = new IdWatcher();
     private final IdWatcher zoneIdWatcher = new IdWatcher();
 
+    private final Set<HypoverseWatcher> watchersNeedingUpdates = new HashSet<>();
+
     public ServerHypoverse(MinecraftServer server) {
         this.server = server;
     }
 
     @Override
     public void tick(boolean runsNormally) {
+        this.watchersNeedingUpdates.forEach(HypoverseWatcher::updateDirectlyWatchedZones);
+        this.watchersNeedingUpdates.clear();
+
         this.tick(runsNormally, true);
 
         this.activeZones.forEach((uuid, zone) -> {
@@ -75,6 +83,10 @@ public class ServerHypoverse extends Hypoverse {
                 this.stopWatchingZone(uuid);
             }
         }
+    }
+
+    public void markWatcherNeedsDirectlyWatchedZonesUpdate(HypoverseWatcher watcher) {
+        this.watchersNeedingUpdates.add(watcher);
     }
 
     public void startWatchingZone(UUID zoneId, @Nullable EldritchCanvas.Dimensions dimensions) {
