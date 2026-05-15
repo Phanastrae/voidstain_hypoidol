@@ -94,7 +94,7 @@ public class HyperGateHypoEntity extends HypoEntity {
                         direction.getUnitVec3().multiply(0.6f, 0.6f, 0.6f).add(0, 0.2f, 0),
                         direction.toYRot(),
                         0.0f,
-                        Relative.union(Relative.ROTATION, Relative.DELTA),
+                        Relative.union(Relative.DELTA),
                         TeleportTransition.PLAY_PORTAL_SOUND
                 ));
             }
