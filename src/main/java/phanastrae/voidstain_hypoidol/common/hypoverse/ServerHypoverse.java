@@ -49,9 +49,7 @@ public class ServerHypoverse extends Hypoverse {
         if (this.canvasIdWatcher.startWatchingId(uuid)) {
             EldritchCanvas canvas = this.getOrCreateCanvas(uuid, new EldritchCanvas.Dimensions(painting.getWidth(), painting.getHeight()));
             UUID zoneId = canvas.getZoneId();
-            if (this.zoneIdWatcher.startWatchingId(zoneId)) {
-                this.getOrCreateZone(zoneId, new HypoZone.Dimensions(canvas.getDimensions().width, canvas.getDimensions().height));
-            }
+            this.startWatchingZone(zoneId, canvas.getDimensions());
 
             if (this.activeZones.containsKey(zoneId)) {
                 this.activeZones.get(zoneId).addLinkedCanvas(canvas);
@@ -74,11 +72,37 @@ public class ServerHypoverse extends Hypoverse {
                     this.activeZones.get(zoneId).removeLinkedCanvas(canvas);
                 }
 
-                if (this.zoneIdWatcher.stopWatchingId(zoneId)) {
-                    this.removeZone(zoneId);
-                }
+                this.stopWatchingZone(uuid);
             }
         }
+    }
+
+    public void startWatchingZone(UUID zoneId, @Nullable EldritchCanvas.Dimensions dimensions) {
+        if (this.zoneIdWatcher.startWatchingId(zoneId) || !this.activeZones.containsKey(zoneId)) {
+            if (dimensions != null) {
+                this.getOrCreateZone(zoneId, new HypoZone.Dimensions(dimensions.width, dimensions.height));
+            } else {
+                this.getZoneIfPresent(zoneId);
+            }
+        }
+    }
+
+    public void stopWatchingZone(UUID zoneId) {
+        if (this.zoneIdWatcher.stopWatchingId(zoneId)) {
+            this.removeZone(zoneId);
+        }
+    }
+
+    @Nullable
+    public HypoZone getZoneIfPresent(UUID zoneUUID) {
+        return this.activeZones.computeIfAbsent(zoneUUID, id -> {
+            HypoZone zone = this.getZoneFromSavedData(id);
+            if (zone != null) {
+                zone.setRemoved(false);
+                zone.entities.forEach(this::putEntity);
+            }
+            return zone;
+        });
     }
 
     public HypoZone getOrCreateZone(UUID zoneUUID, HypoZone.Dimensions dimensions) {
@@ -92,6 +116,11 @@ public class ServerHypoverse extends Hypoverse {
 
     public EldritchCanvas getOrCreateCanvas(UUID canvasUUID, EldritchCanvas.Dimensions dimensions) {
         return this.activeCanvases.computeIfAbsent(canvasUUID, id -> this.getOrComputeCanvasFromSavedData(id, dimensions));
+    }
+
+    @Nullable
+    public HypoZone getZoneFromSavedData(UUID zoneUUID) {
+        return this.server.getDataStorage().get(HypoZone.type(this, zoneUUID, new HypoZone.Dimensions(1, 1)));
     }
 
     public HypoZone getOrComputeZoneFromSavedData(UUID zoneUUID, HypoZone.Dimensions dimensions) {
