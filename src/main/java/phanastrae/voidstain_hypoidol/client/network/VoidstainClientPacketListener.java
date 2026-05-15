@@ -126,18 +126,20 @@ public class VoidstainClientPacketListener {
         ClientHypoverse hypoverse = getHypoverse();
         HypoEntity entity = hypoverse.getEntity(payload.entityUUID());
         if (entity != null) {
-            HypoZone zone = hypoverse.getZone(payload.zoneUUID());
-            if (zone != null) {
-                entity.setPos(payload.x(), payload.y());
-                entity.setOldPos(payload.ox(), payload.oy());
-                entity.setVelocity(payload.vx(), payload.vy());
-                entity.setAngle(payload.angle());
-                entity.setOldAngle(payload.oAngle());
-                entity.setAngleVelocity(payload.vAngle());
-                entity.setZone(zone);
-            } else {
-                hypoverse.removeEntity(entity.getUuid());
-                VoidstainHypoidol.LOGGER.warn("Removed HypoEntity {} that was teleported to missing HypoZone {}, this should have been a RemoveEntityPayload instead.", entity.getUuid(), payload.zoneUUID());
+            if (!entity.isPlayerControlled()) {
+                HypoZone zone = hypoverse.getZone(payload.zoneUUID());
+                if (zone != null) {
+                    entity.setPos(payload.x(), payload.y());
+                    entity.setOldPos(payload.ox(), payload.oy());
+                    entity.setVelocity(payload.vx(), payload.vy());
+                    entity.setAngle(payload.angle());
+                    entity.setOldAngle(payload.oAngle());
+                    entity.setAngleVelocity(payload.vAngle());
+                    entity.setZone(zone);
+                } else {
+                    hypoverse.removeEntity(entity.getUuid());
+                    VoidstainHypoidol.LOGGER.warn("Removed HypoEntity {} that was teleported to missing HypoZone {}, this should have been a RemoveEntityPayload instead.", entity.getUuid(), payload.zoneUUID());
+                }
             }
         } else {
             VoidstainHypoidol.LOGGER.warn("Received teleport payload for missing HypoEntity {}", payload.entityUUID());
