@@ -168,7 +168,7 @@ public class HypoverseWatcher {
     }
 
     public void killHypoPlayer() {
-        this.getPlayer().setPortalCooldown(80);
+        this.getPlayer().setPortalCooldown(50);
         Hypoverse hypoverse = Hypoverse.fromLevel(this.getPlayer().level());
         if (this.hypoPlayer != null && hypoverse != null) {
             this.hypoPlayer.setRemoved();

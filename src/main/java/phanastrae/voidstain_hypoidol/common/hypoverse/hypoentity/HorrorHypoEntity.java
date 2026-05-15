@@ -118,6 +118,8 @@ public class HorrorHypoEntity extends BouncingHypoEntity {
                     ),
                     99999999
             );
+
+            serverPlayer.setPortalCooldown(50);
         }
     }
 

@@ -279,7 +279,7 @@ public class EldritchPaintingEntity extends HangingEntity {
                                 p.setAngle(angle);
                                 p.setOldAngle(angle);
                             });
-                            hypoPlayer.setTeleportCooldown(60);
+                            hypoPlayer.setTeleportCooldown(50);
                         }
                     }
                 }
