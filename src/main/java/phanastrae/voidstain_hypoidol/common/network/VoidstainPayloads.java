@@ -28,6 +28,8 @@ public class VoidstainPayloads {
         registerClientboundPlay(StartWatchingCanvasPayload.TYPE, StartWatchingCanvasPayload.STREAM_CODEC);
         registerClientboundPlay(StopWatchingCanvasPayload.TYPE, StopWatchingCanvasPayload.STREAM_CODEC);
 
+        registerClientboundPlay(SetEntityInHypoversePayload.TYPE, SetEntityInHypoversePayload.STREAM_CODEC);
+
 
         registerServerboundPlay(MoveHypoPlayerPayload.TYPE, MoveHypoPlayerPayload.STREAM_CODEC);
         registerServerboundPlay(TeleportHypoPlayerPayload.TYPE, TeleportHypoPlayerPayload.STREAM_CODEC);

@@ -1,15 +1,19 @@
 package phanastrae.voidstain_hypoidol.common.network;
 
+import net.fabricmc.fabric.api.networking.v1.PlayerLookup;
 import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.server.network.ServerGamePacketListenerImpl;
+import net.minecraft.world.entity.player.Player;
 import org.jetbrains.annotations.Nullable;
 import phanastrae.voidstain_hypoidol.common.duck.HypoverseWatcherAccess;
+import phanastrae.voidstain_hypoidol.common.duck.PlayerDuck;
 import phanastrae.voidstain_hypoidol.common.hypoverse.EldritchCanvas;
 import phanastrae.voidstain_hypoidol.common.hypoverse.HypoZone;
 import phanastrae.voidstain_hypoidol.common.hypoverse.Hypoverse;
 import phanastrae.voidstain_hypoidol.common.hypoverse.hypoentity.player.PlayerHypoEntity;
 import phanastrae.voidstain_hypoidol.common.hypoverse.hypoentity.player.ServerPlayerHypoEntity;
+import phanastrae.voidstain_hypoidol.common.network.s2c.SetEntityInHypoversePayload;
 import phanastrae.voidstain_hypoidol.common.network.s2c.StartWatchingCanvasPayload;
 import phanastrae.voidstain_hypoidol.common.network.s2c.StopWatchingCanvasPayload;
 import phanastrae.voidstain_hypoidol.common.network.s2c.StopWatchingHypoZonePayload;
@@ -84,11 +88,13 @@ public class HypoverseWatcher {
         modifyPlayer.accept(playerHypoEntity);
         hypoverse.addEntity(playerHypoEntity);
         this.hypoPlayer = playerHypoEntity;
+        this.setPlayerInHypoverse(true);
         return this.hypoPlayer;
     }
 
     public void onHypoPlayerRemoval() {
         this.hypoPlayer = null;
+        this.setPlayerInHypoverse(false);
     }
 
     public boolean hasHypoPlayer() {
@@ -106,6 +112,7 @@ public class HypoverseWatcher {
         if (this.hypoPlayer != null && hypoverse != null) {
             this.hypoPlayer.setRemoved();
             this.hypoPlayer = null;
+            this.setPlayerInHypoverse(false);
         }
     }
 
@@ -115,5 +122,31 @@ public class HypoverseWatcher {
 
     public static HypoverseWatcher fromPlayer(ServerPlayer player) {
         return ((HypoverseWatcherAccess) player.connection).voidstain_hypoidol$getHypoverseWatcher();
+    }
+
+    public void setPlayerInHypoverse(boolean value) {
+        ServerPlayer player = this.getPlayer();
+        if (setPlayerInHypoverse(player, value)) {
+            SetEntityInHypoversePayload payload = new SetEntityInHypoversePayload(player.getId(), value);
+
+            for (ServerPlayer serverPlayer : PlayerLookup.tracking(player)) {
+                ServerPlayNetworking.send(serverPlayer, payload);
+            }
+            ServerPlayNetworking.send(player, payload);
+        }
+    }
+
+    public static boolean setPlayerInHypoverse(Player player, boolean value) {
+        PlayerDuck p = (PlayerDuck) player;
+        if (p.voidstain_hypoidol$isInHypoverse() != value) {
+            p.voidstain_hypoidol$setInHypoverse(value);
+            return true;
+        } else {
+            return false;
+        }
+    }
+
+    public static boolean isPlayerInHypoverse(Player player) {
+        return ((PlayerDuck) player).voidstain_hypoidol$isInHypoverse();
     }
 }

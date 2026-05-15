@@ -4,6 +4,8 @@ import net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking;
 import net.minecraft.core.UUIDUtil;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
+import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.player.Player;
 import phanastrae.voidstain_hypoidol.client.VoidstainHypoidolClient;
 import phanastrae.voidstain_hypoidol.client.hypoverse.ClientHypoverse;
 import phanastrae.voidstain_hypoidol.client.hypoverse.hypoentity.player.ClientPlayerHypoEntity;
@@ -18,6 +20,7 @@ import phanastrae.voidstain_hypoidol.common.hypoverse.hypoentity.HorrorHypoEntit
 import phanastrae.voidstain_hypoidol.common.hypoverse.hypoentity.HypoEntity;
 import phanastrae.voidstain_hypoidol.common.hypoverse.hypoentity.HypoEntityTypes;
 import phanastrae.voidstain_hypoidol.common.hypoverse.hypoentity.player.PlayerHypoEntity;
+import phanastrae.voidstain_hypoidol.common.network.HypoverseWatcher;
 import phanastrae.voidstain_hypoidol.common.network.s2c.*;
 
 import java.util.UUID;
@@ -40,6 +43,8 @@ public class VoidstainClientPacketListener {
 
         register(StartWatchingCanvasPayload.TYPE, VoidstainClientPacketListener::startWatchingCanvas);
         register(StopWatchingCanvasPayload.TYPE, VoidstainClientPacketListener::stopWatchingCanvas);
+
+        register(SetEntityInHypoversePayload.TYPE, VoidstainClientPacketListener::setEntityInHypoverse);
     }
 
     private static <T extends CustomPacketPayload> void register(CustomPacketPayload.Type<T> type, ClientPlayNetworking.PlayPayloadHandler<T> handler) {
@@ -175,6 +180,13 @@ public class VoidstainClientPacketListener {
     public static void stopWatchingCanvas(StopWatchingCanvasPayload payload, ClientPlayNetworking.Context context) {
         VoidstainHypoidolClient.HYPOVERSE.removeCanvas(payload.uuid());
         CanvasTextureHandler.removeCanvas(payload.uuid());
+    }
+
+    public static void setEntityInHypoverse(SetEntityInHypoversePayload payload, ClientPlayNetworking.Context context) {
+        Entity entity = context.player().level().getEntity(payload.entityId());
+        if (entity instanceof Player player) {
+            HypoverseWatcher.setPlayerInHypoverse(player, payload.value());
+        }
     }
 
     public static ClientHypoverse getHypoverse() {
