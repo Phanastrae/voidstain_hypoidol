@@ -24,6 +24,7 @@ public class VoidstainPayloads {
         registerClientboundPlay(UpdateHorrorFullnessPayload.TYPE, UpdateHorrorFullnessPayload.STREAM_CODEC);
 
         registerClientboundPlay(AddPortalPayload.TYPE, AddPortalPayload.STREAM_CODEC);
+        registerClientboundPlay(RemovePortalPayload.TYPE, RemovePortalPayload.STREAM_CODEC);
 
         registerClientboundPlay(StartWatchingCanvasPayload.TYPE, StartWatchingCanvasPayload.STREAM_CODEC);
         registerClientboundPlay(StopWatchingCanvasPayload.TYPE, StopWatchingCanvasPayload.STREAM_CODEC);

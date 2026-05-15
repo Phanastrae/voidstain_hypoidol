@@ -370,7 +370,9 @@ public class EldritchPaintingEntity extends HangingEntity {
         boolean isCanvas = itemStack.is(VoidstainItems.ELDRITCH_PAINTING);
         boolean isCart = itemStack.is(Items.MINECART);
         boolean isDoor = itemStack.is(ItemTags.DOORS);
-        if (canvasUUID.isPresent() && !itemStack.isEmpty() && (isBlaze || isGhast || isFood || isPearl || isCanvas || isCart || isDoor) && (player.getAbilities().mayBuild || isFood)) {
+        boolean isFire = itemStack.is(Items.FIRE_CHARGE);
+        boolean isSponge = itemStack.is(Items.SPONGE);
+        if (canvasUUID.isPresent() && !itemStack.isEmpty() && (isBlaze || isGhast || isFood || isPearl || isCanvas || isCart || isDoor || isFire || isSponge) && (player.getAbilities().mayBuild || isFood)) {
             if (player.level().isClientSide()) {
                 return InteractionResult.SUCCESS_SERVER;
             } else {
@@ -478,6 +480,20 @@ public class EldritchPaintingEntity extends HangingEntity {
                                 itemStack.split(1);
                             }
                             return InteractionResult.SUCCESS_SERVER;
+                        } else if (isFire) {
+                            // clear all entities
+                            zone.entities.forEach(HypoEntity::setRemoved);
+                        } else if (isSponge) {
+                            // clear all portals
+                            List<Portal> portals = zone.portals.values().stream().toList();
+                            portals.forEach(p -> zone.removePortal(p.getId()));
+                            portals.forEach(p -> {
+                                Portal.PortalId target = p.getTargetId();
+                                HypoZone targetZone = hypoverse.getZone(target.zoneUUID);
+                                if (targetZone != null) {
+                                    targetZone.removePortal(target.portalId);
+                                }
+                            });
                         }
                     }
                 }

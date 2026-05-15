@@ -40,6 +40,7 @@ public class VoidstainClientPacketListener {
         register(UpdateHorrorFullnessPayload.TYPE, VoidstainClientPacketListener::updateHorrorFullness);
 
         register(AddPortalPayload.TYPE, VoidstainClientPacketListener::addPortal);
+        register(RemovePortalPayload.TYPE, VoidstainClientPacketListener::removePortal);
 
         register(StartWatchingCanvasPayload.TYPE, VoidstainClientPacketListener::startWatchingCanvas);
         register(StopWatchingCanvasPayload.TYPE, VoidstainClientPacketListener::stopWatchingCanvas);
@@ -170,6 +171,18 @@ public class VoidstainClientPacketListener {
         } else {
             Portal portal = new Portal(payload.center(), payload.length(), payload.angle(), payload.id(), payload.target());
             zone.addPortal(portal);
+        }
+    }
+
+    public static void removePortal(RemovePortalPayload payload, ClientPlayNetworking.Context context) {
+        HypoZone zone = getHypoverse().getZone(payload.zoneUUID());
+        if (zone == null) {
+            VoidstainHypoidol.LOGGER.warn("Received payload for missing HypoZone {}", payload.zoneUUID());
+        } else {
+            Portal portal = zone.removePortal(payload.id());
+            if (portal != null) {
+                VoidstainHypoidol.LOGGER.warn("Tried to remove missing portal {} in HypoZone {}", payload.id(), payload.zoneUUID());
+            }
         }
     }
 

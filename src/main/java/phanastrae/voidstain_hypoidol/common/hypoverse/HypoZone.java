@@ -15,11 +15,13 @@ import net.minecraft.util.RandomSource;
 import net.minecraft.world.item.component.TypedEntityData;
 import net.minecraft.world.level.saveddata.SavedData;
 import net.minecraft.world.level.saveddata.SavedDataType;
+import org.jetbrains.annotations.Nullable;
 import phanastrae.voidstain_hypoidol.common.VoidstainHypoidol;
 import phanastrae.voidstain_hypoidol.common.hypoverse.hypoentity.HypoEntity;
 import phanastrae.voidstain_hypoidol.common.hypoverse.hypoentity.HypoEntityType;
-import phanastrae.voidstain_hypoidol.common.network.s2c.AddPortalPayload;
 import phanastrae.voidstain_hypoidol.common.network.HypoverseWatcher;
+import phanastrae.voidstain_hypoidol.common.network.s2c.AddPortalPayload;
+import phanastrae.voidstain_hypoidol.common.network.s2c.RemovePortalPayload;
 import phanastrae.voidstain_hypoidol.common.network.s2c.StartWatchingHypoZonePayload;
 import phanastrae.voidstain_hypoidol.common.network.s2c.UpdateHypoZonePayload;
 
@@ -174,6 +176,16 @@ public class HypoZone extends SavedData {
         this.portals.put(portal.getId(), portal);
         this.sendToAllWatchers(() -> getAddPortalPayload(portal));
         this.setDirty();
+    }
+
+    @Nullable
+    public Portal removePortal(int id) {
+        Portal portal = this.portals.remove(id);
+        if (portal != null) {
+            this.sendToAllWatchers(() -> new RemovePortalPayload(this.uuid, id));
+            this.setDirty();
+        }
+        return portal;
     }
 
     public void updateNewWatchers() {
