@@ -275,7 +275,9 @@ public class EldritchPaintingEntity extends HangingEntity {
                         if (gate instanceof HyperGateHypoEntity hyperGate) {
                             PlayerHypoEntity hypoPlayer = watcher.createHypoPlayer(hypoverse, zone, hyperGate.x, hyperGate.y, p -> {
                                 float angle = this.random.nextFloat() * (float) Math.TAU;
-                                p.setVelocity(Mth.cos(angle) * 0.2f, Mth.sin(angle) * 0.2f);
+                                p.setVelocity(-Mth.sin(angle) * 0.2f, Mth.cos(angle) * 0.2f);
+                                p.setAngle(angle);
+                                p.setOldAngle(angle);
                             });
                             hypoPlayer.setTeleportCooldown(60);
                         }
