@@ -30,7 +30,7 @@ public class VoidstainCreativeTabs {
         output.accept(VoidstainItems.ELDRITCH_PAINTING);
         output.accept(VoidstainItems.LOVE);
         output.accept(VoidstainItems.UNCERTAINTY);
-        output.accept(VoidstainItems.HATRED);
         output.accept(VoidstainItems.FEAR);
+        output.accept(VoidstainItems.HATRED);
     }
 }
