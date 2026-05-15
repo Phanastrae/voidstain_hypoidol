@@ -95,7 +95,7 @@ public abstract class HypoEntity {
         output.putFloat(KEY_VX, this.vx);
         output.putFloat(KEY_VY, this.vy);
         output.putFloat(KEY_ANGLE, this.angle);
-        output.putFloat(KEY_ANGLE, this.vAngle);
+        output.putFloat(KEY_V_ANGLE, this.vAngle);
     }
 
     public void read(CompoundTag input) {
