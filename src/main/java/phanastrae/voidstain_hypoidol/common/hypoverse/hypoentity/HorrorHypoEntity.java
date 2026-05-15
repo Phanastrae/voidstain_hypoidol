@@ -9,6 +9,7 @@ import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.util.RandomSource;
 import net.minecraft.world.damagesource.DamageSource;
+import net.minecraft.world.damagesource.DamageType;
 import net.minecraft.world.item.Item;
 import phanastrae.voidstain_hypoidol.common.VoidstainHypoidol;
 import phanastrae.voidstain_hypoidol.common.hypoverse.HypoZone;
@@ -19,6 +20,8 @@ import phanastrae.voidstain_hypoidol.common.item.VoidstainItems;
 import phanastrae.voidstain_hypoidol.common.network.s2c.UpdateHorrorFullnessPayload;
 
 public class HorrorHypoEntity extends BouncingHypoEntity {
+    public static final ResourceKey<DamageType> CONSUMED_DAMAGE_KEY = ResourceKey.create(Registries.DAMAGE_TYPE, VoidstainHypoidol.id("consumed"));
+
     public static final String KEY_HORROR_ID = "horror_id";
     public static final String KEY_FULLNESS = "fullness";
 
@@ -111,7 +114,7 @@ public class HorrorHypoEntity extends BouncingHypoEntity {
                     level,
                     new DamageSource(level.registryAccess()
                             .lookupOrThrow(Registries.DAMAGE_TYPE)
-                            .getOrThrow(ResourceKey.create(Registries.DAMAGE_TYPE, VoidstainHypoidol.id("consumed")))
+                            .getOrThrow(CONSUMED_DAMAGE_KEY)
                     ),
                     99999999
             );

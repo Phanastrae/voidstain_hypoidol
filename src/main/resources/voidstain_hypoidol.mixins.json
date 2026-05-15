@@ -3,6 +3,7 @@
   "package": "phanastrae.voidstain_hypoidol.mixin",
   "compatibilityLevel": "JAVA_25",
   "mixins": [
+    "common.EntityMixin",
     "common.MinecraftServerMixin",
     "common.PlayerMixin",
     "common.ServerEntityMixin",
