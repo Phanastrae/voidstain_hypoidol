@@ -118,7 +118,7 @@ public class VoidstainClientPacketListener {
                 entity.setAngleVelocity(payload.vAngle());
             }
         } else {
-            VoidstainHypoidol.LOGGER.warn("Received payload for missing HypoEntity {}", payload.entityUUID());
+            VoidstainHypoidol.LOGGER.warn("Received update payload for missing HypoEntity {}", payload.entityUUID());
         }
     }
 
@@ -140,7 +140,7 @@ public class VoidstainClientPacketListener {
                 VoidstainHypoidol.LOGGER.warn("Removed HypoEntity {} that was teleported to missing HypoZone {}, this should have been a RemoveEntityPayload instead.", entity.getUuid(), payload.zoneUUID());
             }
         } else {
-            VoidstainHypoidol.LOGGER.warn("Received payload for missing HypoEntity {}", payload.entityUUID());
+            VoidstainHypoidol.LOGGER.warn("Received teleport payload for missing HypoEntity {}", payload.entityUUID());
         }
     }
 
@@ -160,7 +160,7 @@ public class VoidstainClientPacketListener {
                 VoidstainHypoidol.LOGGER.warn("Tried to set fullness of invalid HypoEntity {}", payload.entityUUID());
             }
         } else {
-            VoidstainHypoidol.LOGGER.warn("Tried to update missing HypoEntity {}", payload.entityUUID());
+            VoidstainHypoidol.LOGGER.warn("Tried to update fullness of missing Horror {}", payload.entityUUID());
         }
     }
 
@@ -180,7 +180,7 @@ public class VoidstainClientPacketListener {
             VoidstainHypoidol.LOGGER.warn("Received payload for missing HypoZone {}", payload.zoneUUID());
         } else {
             Portal portal = zone.removePortal(payload.id());
-            if (portal != null) {
+            if (portal == null) {
                 VoidstainHypoidol.LOGGER.warn("Tried to remove missing portal {} in HypoZone {}", payload.id(), payload.zoneUUID());
             }
         }

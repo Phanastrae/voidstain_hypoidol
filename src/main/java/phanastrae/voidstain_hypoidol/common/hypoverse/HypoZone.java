@@ -20,10 +20,7 @@ import phanastrae.voidstain_hypoidol.common.VoidstainHypoidol;
 import phanastrae.voidstain_hypoidol.common.hypoverse.hypoentity.HypoEntity;
 import phanastrae.voidstain_hypoidol.common.hypoverse.hypoentity.HypoEntityType;
 import phanastrae.voidstain_hypoidol.common.network.HypoverseWatcher;
-import phanastrae.voidstain_hypoidol.common.network.s2c.AddPortalPayload;
-import phanastrae.voidstain_hypoidol.common.network.s2c.RemovePortalPayload;
-import phanastrae.voidstain_hypoidol.common.network.s2c.StartWatchingHypoZonePayload;
-import phanastrae.voidstain_hypoidol.common.network.s2c.UpdateHypoZonePayload;
+import phanastrae.voidstain_hypoidol.common.network.s2c.*;
 
 import java.util.*;
 import java.util.function.Function;
@@ -47,7 +44,7 @@ public class HypoZone extends SavedData {
     }
 
     private final Set<HypoverseWatcher> watchers = new HashSet<>();
-    private final List<HypoverseWatcher> newWatchers = new ArrayList<>();
+    private final List<HypoverseWatcher> watchersToUpdate = new ArrayList<>();
     private final Set<EldritchCanvas> linkedCanvases = new HashSet<>();
     private boolean isClientDirty;
 
@@ -58,6 +55,8 @@ public class HypoZone extends SavedData {
     private final Dimensions dimensions;
     public final List<HypoEntity> entities;
     public final Map<Integer, Portal> portals;
+
+    private boolean isRemoved = false;
 
     public HypoZone(UUID uuid, int backgroundId, Dimensions dimensions) {
         this(uuid, backgroundId, List.of(), dimensions, List.of());
@@ -98,12 +97,35 @@ public class HypoZone extends SavedData {
             this.setDirty();
             this.entities.stream().filter(HypoEntity::isRemoved).toList().forEach(e -> hypoverse.removeEntity(e.getUuid()));
 
-            if (!this.newWatchers.isEmpty()) {
-                this.updateNewWatchers();
-                this.watchers.addAll(this.newWatchers);
-                this.newWatchers.clear();
-            }
+            updateWatchers();
         }
+    }
+
+    public void updateWatchers() {
+        if (!this.watchersToUpdate.isEmpty()) {
+            List<HypoverseWatcher> watchersToAdd = new ArrayList<>();
+            List<HypoverseWatcher> watchersToRemove = new ArrayList<>();
+            for (HypoverseWatcher watcher : this.watchersToUpdate) {
+                if (watcher.isWatchingZone(this.uuid)) {
+                    watchersToAdd.add(watcher);
+                } else {
+                    watchersToRemove.add(watcher);
+                }
+            }
+            this.watchersToUpdate.clear();
+
+            this.updateNewWatchers(watchersToAdd);
+            this.updateRemovedWatchers(watchersToRemove);
+
+            this.watchers.addAll(watchersToAdd);
+            this.watchers.removeAll(watchersToRemove);
+        }
+    }
+
+    public void removeAllWatchers() {
+        this.watchersToUpdate.clear();
+        this.updateRemovedWatchers(this.watchers.stream().toList());
+        this.watchers.clear();
     }
 
     public Collection<HypoEntity> getEntitiesInArea(float minX, float maxX, float minY, float maxY) {
@@ -156,12 +178,31 @@ public class HypoZone extends SavedData {
     }
 
     public void addWatcher(HypoverseWatcher watcher) {
-        this.newWatchers.add(watcher);
+        this.watchersToUpdate.add(watcher);
     }
 
     public void removeWatcher(HypoverseWatcher watcher) {
-        this.watchers.remove(watcher);
-        this.newWatchers.remove(watcher);
+        this.watchersToUpdate.add(watcher);
+    }
+
+    public void updateNewWatchers(List<HypoverseWatcher> newWatchers) {
+        sendToAll(newWatchers, () -> new StartWatchingHypoZonePayload(this.uuid, this.getBackgroundId(), this.dimensions), w -> true);
+        for (HypoEntity entity : this.entities) {
+            sendToAll(newWatchers, entity::getAddEntityPayload, w -> true);
+        }
+        for (Portal portal : this.portals.values()) {
+            sendToAll(newWatchers, () -> this.getAddPortalPayload(portal), w -> true);
+        }
+    }
+
+    public void updateRemovedWatchers(List<HypoverseWatcher> removedWatchers) {
+        for (HypoEntity entity : this.entities) {
+            sendToAll(removedWatchers, entity::getRemoveEntityPayload, w -> true);
+        }
+        for (Portal portal : this.portals.values()) {
+            sendToAll(removedWatchers, () -> this.getRemovePortalPayload(portal.getId()), w -> true);
+        }
+        sendToAll(removedWatchers, () -> new StopWatchingHypoZonePayload(this.uuid), w -> true);
     }
 
     public void addLinkedCanvas(EldritchCanvas canvas) {
@@ -182,24 +223,18 @@ public class HypoZone extends SavedData {
     public Portal removePortal(int id) {
         Portal portal = this.portals.remove(id);
         if (portal != null) {
-            this.sendToAllWatchers(() -> new RemovePortalPayload(this.uuid, id));
+            this.sendToAllWatchers(() -> this.getRemovePortalPayload(id));
             this.setDirty();
         }
         return portal;
     }
 
-    public void updateNewWatchers() {
-        sendToAll(this.newWatchers, () -> new StartWatchingHypoZonePayload(this.uuid, this.getBackgroundId(), this.dimensions), w -> true);
-        for (HypoEntity entity : this.entities) {
-            sendToAll(this.newWatchers, entity::getAddEntityPayload, w -> true);
-        }
-        for (Portal portal : this.portals.values()) {
-            sendToAll(this.newWatchers, () -> getAddPortalPayload(portal), w -> true);
-        }
-    }
-
     private AddPortalPayload getAddPortalPayload(Portal portal) {
         return new AddPortalPayload(this.uuid, portal.getCenter(), portal.getLength(), portal.getAngle(), portal.getId(), portal.getTargetId());
+    }
+
+    private RemovePortalPayload getRemovePortalPayload(int id) {
+        return new RemovePortalPayload(this.uuid, id);
     }
 
     public void sendUpdates() {
@@ -269,6 +304,14 @@ public class HypoZone extends SavedData {
         }
         VoidstainHypoidol.LOGGER.error("Failed to generate an unused portal id for HypoZone {}???", this.uuid);
         return this.random.nextInt();
+    }
+
+    public void setRemoved(boolean value) {
+        this.isRemoved = value;
+    }
+
+    public boolean isRemoved() {
+        return this.isRemoved;
     }
 
     public static class Dimensions {

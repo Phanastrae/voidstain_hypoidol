@@ -1,6 +1,7 @@
 package phanastrae.voidstain_hypoidol.common.hypoverse;
 
 import net.minecraft.server.MinecraftServer;
+import org.jetbrains.annotations.Nullable;
 import phanastrae.voidstain_hypoidol.common.entity.EldritchPaintingEntity;
 import phanastrae.voidstain_hypoidol.common.hypoverse.hypoentity.HypoEntity;
 import phanastrae.voidstain_hypoidol.common.network.IdWatcher;
@@ -29,6 +30,19 @@ public class ServerHypoverse extends Hypoverse {
         });
 
         this.activeEntities.values().forEach(HypoEntity::sendChanges);
+    }
+
+    @Override
+    public @Nullable HypoZone removeZone(UUID uuid) {
+        HypoZone zone = super.removeZone(uuid);
+        if (zone != null) {
+            zone.entities.forEach(e -> this.activeEntities.remove(e.getUuid(), e));
+
+            zone.removeAllWatchers();
+
+            zone.entities.removeIf(e -> !e.getType().canSave());
+        }
+        return zone;
     }
 
     public void connectCanvas(UUID uuid, EldritchPaintingEntity painting) {
@@ -70,7 +84,8 @@ public class ServerHypoverse extends Hypoverse {
     public HypoZone getOrCreateZone(UUID zoneUUID, HypoZone.Dimensions dimensions) {
         return this.activeZones.computeIfAbsent(zoneUUID, id -> {
             HypoZone zone = this.getOrComputeZoneFromSavedData(id, dimensions);
-            zone.entities.forEach(e -> this.activeEntities.put(e.getUuid(), e));
+            zone.setRemoved(false);
+            zone.entities.forEach(this::putEntity);
             return zone;
         });
     }

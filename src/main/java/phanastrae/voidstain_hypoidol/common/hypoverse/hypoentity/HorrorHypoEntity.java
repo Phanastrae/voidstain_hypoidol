@@ -120,7 +120,9 @@ public class HorrorHypoEntity extends BouncingHypoEntity {
 
     public void setFullness(float fullness) {
         this.fullness = fullness;
-        this.getZone().sendToAllWatchers(() -> new UpdateHorrorFullnessPayload(this.uuid, this.fullness));
+        // TODO tidy this system? this doesn't feel great
+        HypoZone zone = this.oldZone != null ? this.oldZone : this.getZone();
+        zone.sendToAllWatchers(() -> new UpdateHorrorFullnessPayload(this.uuid, this.fullness));
     }
 
     @Override

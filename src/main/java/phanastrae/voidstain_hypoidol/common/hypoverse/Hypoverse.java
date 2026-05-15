@@ -1,9 +1,11 @@
 package phanastrae.voidstain_hypoidol.common.hypoverse;
 
 import net.minecraft.server.MinecraftServer;
+import net.minecraft.util.Mth;
 import net.minecraft.util.RandomSource;
 import net.minecraft.world.level.Level;
 import org.jetbrains.annotations.Nullable;
+import phanastrae.voidstain_hypoidol.common.VoidstainHypoidol;
 import phanastrae.voidstain_hypoidol.common.duck.HypoverseAccess;
 import phanastrae.voidstain_hypoidol.common.hypoverse.hypoentity.HypoEntity;
 
@@ -23,7 +25,7 @@ public abstract class Hypoverse {
     protected void tick(boolean runsNormally, boolean onServer) {
         this.activeZones.values().forEach(zone -> zone.tick(runsNormally, onServer, this));
         this.activeEntities.values().forEach(entity -> {
-            if (!entity.isRemoved()) {
+            if (!entity.isRemoved() && !entity.getZone().isRemoved()) {
                 entity.tick(runsNormally, onServer, this);
             }
         });
@@ -39,9 +41,8 @@ public abstract class Hypoverse {
     @Nullable
     public HypoZone removeZone(UUID uuid) {
         HypoZone zone = this.activeZones.remove(uuid);
-        if (zone != null) {
-            zone.entities.forEach(e -> this.activeEntities.remove(e.getUuid(), e));
-            zone.entities.removeIf(e -> !e.getType().canSave());
+        if(zone != null) {
+            zone.setRemoved(true);
         }
         return zone;
     }
@@ -69,12 +70,23 @@ public abstract class Hypoverse {
         entity.ox = entity.x;
         entity.oy = entity.y;
         entity.oAngle = entity.angle;
-        this.activeEntities.put(entity.getUuid(), entity);
+        this.putEntity(entity);
 
         HypoZone zone = entity.getZone();
         zone.entities.add(entity);
         zone.sendToAllWatchers(entity::getAddEntityPayload);
         zone.setDirty();
+    }
+
+    public void putEntity(HypoEntity entity) {
+        UUID uuid = entity.getUuid();
+        if (this.activeEntities.containsKey(uuid)) {
+            UUID newUuid = Mth.createInsecureUUID(this.random);
+            VoidstainHypoidol.LOGGER.error("Tried to add HypoEntity with pre-existing uuid {}, updating to new uuid {}", uuid, newUuid);
+            entity.setUuid(newUuid);
+        }
+
+        this.activeEntities.put(entity.getUuid(), entity);
     }
 
     public HypoEntity removeEntity(UUID uuid) {

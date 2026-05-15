@@ -17,7 +17,7 @@ import phanastrae.voidstain_hypoidol.common.VoidstainHypoidol;
 import phanastrae.voidstain_hypoidol.common.hypoverse.HypoZone;
 import phanastrae.voidstain_hypoidol.common.hypoverse.Hypoverse;
 import phanastrae.voidstain_hypoidol.common.hypoverse.Portal;
-import phanastrae.voidstain_hypoidol.common.network.*;
+import phanastrae.voidstain_hypoidol.common.network.HypoverseWatcher;
 import phanastrae.voidstain_hypoidol.common.network.s2c.AddHypoEntityPayload;
 import phanastrae.voidstain_hypoidol.common.network.s2c.RemoveHypoEntityPayload;
 import phanastrae.voidstain_hypoidol.common.network.s2c.TeleportHypoEntityPayload;
@@ -55,6 +55,7 @@ public abstract class HypoEntity {
     private boolean isRemoved = false;
 
     private int syncTickCount;
+    private int syncsSinceLastFullSync = 0;
     private final int updateInterval = 10;
     protected boolean needsSync;
     protected boolean teleported = false;
@@ -129,6 +130,10 @@ public abstract class HypoEntity {
         return this.uuid;
     }
 
+    public void setUuid(UUID uuid) {
+        this.uuid = uuid;
+    }
+
     public HypoZone getZone() {
         return this.zone;
     }
@@ -150,7 +155,7 @@ public abstract class HypoEntity {
         this.vx = newVel.x;
         this.vy = newVel.y;
 
-        float angleDif = (float)Math.toRadians(to.getAngle() - from.getAngle());
+        float angleDif = (float) Math.toRadians(to.getAngle() - from.getAngle());
         this.oAngle = limitAngleRange(this.oAngle + angleDif);
         this.angle = limitAngleRange(this.angle + angleDif);
 
@@ -159,7 +164,7 @@ public abstract class HypoEntity {
     }
 
     public static float limitAngleRange(float angle) {
-        return (float)Mth.positiveModulo(angle, Math.TAU);
+        return (float) Mth.positiveModulo(angle, Math.TAU);
     }
 
     public void travel(Hypoverse hypoverse, Vec2 startPos, Vec2 endPos) {
@@ -276,9 +281,11 @@ public abstract class HypoEntity {
 
     public void sendChanges() {
         if (this.syncTickCount % this.updateInterval == 0 || this.needsSync) {
-            if (!this.teleported) {
+            if (!this.teleported && this.syncsSinceLastFullSync < 10) {
                 this.zone.sendToAllWatchers(this::getUpdatePositionPayload);
+                this.syncsSinceLastFullSync++;
             } else {
+                this.syncsSinceLastFullSync = 0;
                 if (this.oldZone == null) {
                     // if zone has not changed, just send a teleport packet
                     this.zone.sendToAllWatchers(this::getTeleportPayload);

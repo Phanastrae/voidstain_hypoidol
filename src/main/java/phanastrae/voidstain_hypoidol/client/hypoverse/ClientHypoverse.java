@@ -49,6 +49,15 @@ public class ClientHypoverse extends Hypoverse {
         return super.removeEntity(uuid);
     }
 
+    @Override
+    public void putEntity(HypoEntity entity) {
+        UUID uuid = entity.getUuid();
+        if (this.activeEntities.containsKey(uuid)) {
+            this.removeEntity(uuid);
+        }
+        super.putEntity(entity);
+    }
+
     public void putZone(UUID uuid, HypoZone zone) {
         this.activeZones.put(uuid, zone);
     }
